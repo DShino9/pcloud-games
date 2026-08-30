@@ -167,7 +167,7 @@ CEOF
 fi
 
 # ---- 組む ----
-# 心臓は2種類組む。
+# コアは2種類組む。
 #   asyncify … どこでも動くが、1コマごとにスタックを巻き戻すので重い
 #   jspi     … ブラウザ側の仕組みで切り替える。速いが対応した端末だけ
 # NP2kai は1コマごとに emscripten_sleep(0) を呼ぶ造りなので、この差が大きく出る。
@@ -211,7 +211,7 @@ emcmake cmake .. -D__EMSCRIPTEN__=ON -DUSE_SDL=2 -DUSE_NETWORK=OFF \
 # 非同期の許可が無いと「Please compile your program with async support」で落ちる。
 #
 # FS と addRunDependency を外に出す。自前の画面は、ディスクと ROM を
-# 仮想の置き場へ書いてから心臓を起こす造りなので、この2つが要る。
+# 仮想の置き場へ書いてからコアを起こす造りなので、この2つが要る。
 # IDBFS はセーブを端末に残すため。
 # SDL2 版だけを組む。SDL3 版の的は USE_SDL=2 では入れ物が作られないのに
 # 繋ごうとして落ちる（本家の的の切り分けが甘い）。

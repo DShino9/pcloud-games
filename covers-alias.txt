@@ -1,0 +1,60 @@
+# 箱絵を引くための「読みの表」。
+# openvgdb に載っていない本（改造版・不完全な吸い出し・題名が半角カナ など）は、
+# 英語の題名を持っていないので、libretro の一覧（ローマ字）と機械的につながらない。
+# ここに読みを与えると引けるようになる。
+#   左＝台帳の題名（そのまま）  タブ  右＝libretro を探すための言い方
+# 「#」から後ろは覚え書き。BIOS など箱絵が存在しないものは右を空にして飛ばす。
+
+じゃじゃ丸の大冒険	Jajamaru no Daibouken
+じゃじゃ丸忍法帳	Jajamaru Ninpou Chou
+ギミック！	Gimmick
+キン肉マン マッスルタッグマッチ	Kinnikuman Muscle Tag Match
+ゲゲゲの鬼太郎 妖怪大魔境	Gegege no Kitarou Youkai Daimakyou
+サッカー (JU)	Soccer
+シティコネクション	City Connection
+スターフォース	Star Force
+スパルタンＸ２ [b1]	Spartan X 2
+スペランカー	Spelunker
+スペランカー２ 勇者への挑戦	Spelunker II Yuusha e no Chousen
+スーパーマリオブラザーズ (JU) [t1]	Super Mario Bros
+スーパーマリオブラザーズ２ (FDS Hack)	Super Mario Bros 2
+タッチ ミステリー・オブ・トライアングル	Touch Mystery of Triangle
+チャレンジャー	Challenger
+テトリスフラッシュ [b1]	Tetris Flash
+パックランド	Pac-Land
+プーヤン	Pooyan
+ファミコンウォーズ	Famicom Wars
+ファミコンジャンプ 英雄列伝	Famicom Jump Eiyuu Retsuden
+ファミコンディスクシステム ＢＩＯＳ	# BIOS。箱絵は無い
+ファミリーベーシックＶ３	Family BASIC V3
+フラッピー	Flappy
+ルナーボール	Lunar Ball
+ロードランナー	Lode Runner
+信長の野望 全国版	Nobunaga no Yabou Zenkoku Ban
+六三四の剣 ただいま修行中	Musashi no Ken Tadaima Shugyou Chuu
+北斗の拳	Hokuto no Ken
+影の伝説	Kage no Densetsu
+迷宮島	Meikyuu Jima
+迷宮組曲	Meikyuu Kumikyoku
+頭文字 イニシャルＤ (シティーコネクション海外版 改造品) [h]	City Connection
+高橋名人の冒険島	Takahashi Meijin no Bouken Jima
+ヨッシーストーリー	Yoshi's Story
+(N64 ROM)マリオカート64J	Mario Kart 64
+SmashBrosJ	Nintendo All-Star Dairantou Smash Brothers
+DRGQUEST５	Dragon Quest V
+ドラゴンクエスト１・２	Dragon Quest I & II
+マリオコレクション	Super Mario Collection
+ロックマンＸ２	Rockman X2
+新 桃太郎伝説	Shin Momotarou Densetsu
+# ロックマンX2 と ボンバーマン3 は前回 GitHub の呼び出し上限に当たった可能性
+ｴﾌｾﾞﾛ2	F-Zero
+ｴﾒﾗﾙﾄﾞﾄﾞﾗｺﾞﾝ	Emerald Dragon
+ｸﾆｵﾉﾄﾞｯｼﾞﾎﾞｰﾙ	Kunio-kun no Dodge Ball Da yo Zenin Shuugou
+ｽﾄﾂｰ	Street Fighter II
+ﾄﾞﾗｺﾞﾝﾎﾞｰﾙ	Dragon Ball Z Super Saiya Densetsu
+ﾎﾞﾝﾊﾞｰﾏﾝ	Super Bomberman
+ﾎﾞﾝﾊﾞｰﾏﾝ2	Super Bomberman 2
+ﾎﾞﾝﾊﾞｰﾏﾝ3	Super Bomberman 3
+ﾖｯｼｰｱｲﾗﾝﾄﾞ	Super Mario World 2 Yoshi's Island
+ﾛｯｸﾏﾝﾌｫﾙﾃ	Rockman & Forte
+ﾜｷﾞｬﾝﾊﾟﾗﾀﾞｲｽ	Wagyan Paradise

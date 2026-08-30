@@ -381,7 +381,7 @@ function play(id) {
   p.n++; p.last = Date.now(); S.plays[id] = p; LS.set('plays', S.plays);
   log.note('遊ぶ: ' + g.short + ' ' + g.name);
   $('#pname').textContent = g.name;
-  /* PC-98 は心臓が別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
+  /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=25'
     : './play.html?id=' + encodeURIComponent(id) +
@@ -392,7 +392,7 @@ function play(id) {
      （出だしだけ速い、という出方をする）。畳めば絵の分の重さを手放せる。 */
   main().style.display = 'none';
   /* 遊ぶ画面は iframe の中にある。そこへ焦点を移さないと、キーが棚側に吸われて
-     心臓まで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
+     コアまで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
   const fr = $('#pframe');
   fr.onload = () => { try { fr.contentWindow.focus(); } catch (e) {} };
 }
@@ -440,7 +440,7 @@ $('#pback').onclick = () => { $('#play').classList.remove('wide'); };
 $('#pclose').onclick = async () => {
   $('#play').classList.remove('wide');
   if (full()) { try { await document.exitFullscreen(); } catch (e) {} }
-  $('#pframe').src = 'about:blank';       // 中の心臓を確実に止める
+  $('#pframe').src = 'about:blank';       // 中のコアを確実に止める
   $('#play').classList.add('hide');
   main().style.display = '';
   await refreshHere();
@@ -807,7 +807,7 @@ function screenLog() {
       '<div class="msg err">games.json を取ってこられませんでした</div></div>';
     return;
   }
-  /* PC-98 の台帳は無くても棚は開く（心臓を組んでいない環境もある）。 */
+  /* PC-98 の台帳は無くても棚は開く（コアを組んでいない環境もある）。 */
   try { S.cat98 = await (await fetch('./pc98.json?v=1', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();

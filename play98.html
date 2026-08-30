@@ -24,7 +24,7 @@ html,body{overflow:hidden;background:#000}
 #bar{width:min(320px,78vw);height:6px;border-radius:3px;background:#22222b;overflow:hidden}
 #bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
 #err{color:var(--danger);font-size:13px;max-width:460px;line-height:1.7}
-/* 心臓の言い分。ここでしか分からないことがある。 */
+/* コアの言い分。ここでしか分からないことがある。 */
 /* 画面のキーボード。帯の上に重ねる。横持ちでも収まるよう、字は小さめ。 */
 #kb{position:absolute;left:0;right:0;bottom:var(--barh, 52px);z-index:8;
   padding:6px max(6px, env(safe-area-inset-right)) 6px max(6px, env(safe-area-inset-left));
@@ -83,22 +83,22 @@ html,body{overflow:hidden;background:#000}
 <script src="./core/pcloud.js?v=1"></script>
 <script>
 'use strict';
-/* PC-98 を遊ぶ画面。心臓は自分で組んだ NP2kai（MIT、np2/ にある）。
+/* PC-98 を遊ぶ画面。コアは自分で組んだ NP2kai（MIT、np2/ にある）。
    ファミコン・スーファミの play.html とは別立てにしてある。EmulatorJS ではないので。
 
-   心臓への渡し方（実測で確かめたもの）
+   コアへの渡し方（実測で確かめたもの）
     - ディスクは argv に並べる。np2_main が拡張子を見て FD / HDD のドライブに割り当てる。
     - BIOS・フォント・音の ROM は、動かす場所（カレント）に置いておけば読む。
-    - ROM もディスクも、心臓を起こす前に仮想の置き場へ書いておくこと。
+    - ROM もディスクも、コアを起こす前に仮想の置き場へ書いておくこと。
       addRunDependency で待たせられる（そのために FS ごと外に出して組んである）。
     - NP2kai は emscripten_set_main_loop を使わず emscripten_sleep で自分の輪を回す。
       隠れたページでは setTimeout が絞られるので、ほとんど進まない（不具合ではない）。 */
 
-/* 心臓は while ループの中で emscripten_sleep(0) を呼んで回る。
+/* コアは while ループの中で emscripten_sleep(0) を呼んで回る。
    それは setTimeout に化けるので、呼ばれた回数を数えれば「回っているか」が分かる。
    絵が出ないとき、止まっているのか描けていないのかを見分けるため。 */
 let TICKS = 0;
-let KEYS = 0;                 // 心臓までキーが届いた回数
+let KEYS = 0;                 // コアまでキーが届いた回数
 let DRAWS = 0;                // 絵を出した回数（＝おおよそのコマ数）
 let GAPS = [];                // コマとコマの間隔（ミリ秒）。直近だけ持つ
 let LONG = 0;                 // 100ms を超えて空いた回数（音が途切れる目安）
@@ -152,7 +152,7 @@ const qs   = new URLSearchParams(location.search);
 const id   = qs.get('id');
 const MUTE = qs.get('mute') === '1';                 // 中で確かめるとき用
 
-/* 心臓は2種類ある。NP2kai は1コマごとに emscripten_sleep(0) を呼ぶ造りなので、
+/* コアは2種類ある。NP2kai は1コマごとに emscripten_sleep(0) を呼ぶ造りなので、
    その中断・再開のやり方で滑らかさが決まる。
      jspi     … ブラウザ側の仕組みでスタックを切り替える。軽い（2.16MB）
      asyncify … スタックを毎回巻き戻して積み直す。どこでも動くが重い（3.09MB）
@@ -161,7 +161,7 @@ const JSPI_OK = typeof WebAssembly !== 'undefined' &&
                 typeof WebAssembly.Suspending === 'function' &&
                 typeof WebAssembly.promising === 'function';
 const CORE_KIND = qs.get('core') || (JSPI_OK ? 'jspi' : 'asyncify');
-/* 心臓の版。**組み直したら必ず上げる。**
+/* コアの版。**組み直したら必ず上げる。**
    .js だけ版を付けて .wasm に付けていなかったため、
    「新しい JS ＋ 古い wasm」になって起動が死んだ（missing Wasm export）。
    locateFile で wasm にも同じ版を付け、必ず対で取り替える。 */
@@ -184,7 +184,7 @@ if (MUTE) {
 
 const say  = t => { $('#st').textContent = t; };
 
-/* 心臓の言い分を溜めておく。ここでしか分からないことがあるので、画面から読めるようにする。 */
+/* コアの言い分を溜めておく。ここでしか分からないことがあるので、画面から読めるようにする。 */
 const NPLOG = [];
 function np(tag, t) {
   NPLOG.push(tag + ' ' + t);
@@ -198,7 +198,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
 
 /* PC-98 を動かすのに要る、ディスク以外のもの。棚と同じフォルダに置いてある前提。 */
 const ROMS = ['BIOS.ROM', 'FONT.ROM', 'sound.rom', 'itf.rom', 'font.bmp'];
-/* 心臓は動かす場所を「./」＝根として組み立てる（np2cfg.biospath の既定）。
+/* コアは動かす場所を「./」＝根として組み立てる（np2cfg.biospath の既定）。
    別のフォルダに置いて chdir しても、設定は /np21kai.cfg を見に行く。
    置き場を分けると ROM もディスクも見つからないので、根に揃える。 */
 const WORK = '';
@@ -292,7 +292,7 @@ function makeBlankFDI() {
   return buf;
 }
 /* いつでもセーブ／巻き戻し。3枠。
-   心臓の statsave を使う。書き出しは主ループがフレームの切れ目で行うので、
+   コアの statsave を使う。書き出しは主ループがフレームの切れ目で行うので、
    途中の状態を掴むことがない。
    出来たファイルは端末に残すので、次に開いたときも戻せる。 */
 const SLOTS = [1, 2, 3];
@@ -429,7 +429,7 @@ function drawDisksInner() {
   el.querySelectorAll('.hbtn[data-i]').forEach(b => b.onclick = () => { swap(Number(b.dataset.i)); $('#canvas').focus(); });
   const r = $('#rst');
   if (r) r.onclick = askReboot;
-  /* メニューとマウス捕獲。心臓に口があれば直に呼ぶ。
+  /* メニューとマウス捕獲。コアに口があれば直に呼ぶ。
      無ければ鍵を作って送る（本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
      口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。 */
   /* 口があるか確かめる。**触るだけで止まる**ことがあるので、必ず包む
@@ -476,18 +476,18 @@ function drawDisksInner() {
   };
   const sv = $('#stsave');
   if (sv) sv.onclick = () => slotRow('どの枠に残しますか', n => {
-    if (!has98('np2web_savestate')) return toast98('この心臓はセーブに対応していません');
+    if (!has98('np2web_savestate')) return toast98('このコアはセーブに対応していません');
     try {
       Module.ccall('np2web_savestate', null, ['string'], [slotPath(n)]);
       toast98(n + ' に残しました');
       setTimeout(() => keep(), 1500);        // 書き出しは次のコマ。少し待ってから控える
-    } catch (e) { toast98('残せませんでした（古い心臓かもしれません）'); }
+    } catch (e) { toast98('残せませんでした（古いコアかもしれません）'); }
   });
   const ld = $('#stload');
   if (ld) ld.onclick = () => slotRow('どの枠から戻しますか', n => {
     refreshSlots();
     if (!slotHas[n]) return toast98(n + ' は空です');
-    if (!has98('np2web_loadstate')) return toast98('この心臓は巻き戻しに対応していません');
+    if (!has98('np2web_loadstate')) return toast98('このコアは巻き戻しに対応していません');
     try {
       Module.ccall('np2web_loadstate', null, ['string'], [slotPath(n)]);
       toast98(n + ' から戻しました');
@@ -551,7 +551,7 @@ function report() {
     L.push('絵の出し方: ' + (gl ? 'WebGL' : cv.getContext('2d') ? '2D' : '不明'));
   } catch (e) {}
   L.push('見えているか: ' + document.visibilityState);
-  L.push('心臓の型: ' + (CORE_KIND || '不明'));
+  L.push('コアの型: ' + (CORE_KIND || '不明'));
   const sec = Math.max(1, (Date.now() - T0) / 1000);
   L.push('届いたキー: ' + KEYS + ' 回');
   L.push('コマ数: ' + DRAWS + ' 回 / ' + ((Date.now() - T0) / 1000).toFixed(0) + ' 秒 = 毎秒 ' +
@@ -560,7 +560,7 @@ function report() {
   L.push(j ? ('揺らぎ: 中央 ' + j.mid + 'ms ／ 95% ' + j.p95 + 'ms ／ 最大 ' + j.max +
               'ms ／ 大きく空いた ' + j.long + ' 回 ／ 荒れ ' + j.rough + '%')
            : '揺らぎ: まだ測れていない');
-  L.push('心臓の回り: ' + TICKS + ' 回 / ' + sec.toFixed(0) + ' 秒 = 毎秒 ' +
+  L.push('コアの回り: ' + TICKS + ' 回 / ' + sec.toFixed(0) + ' 秒 = 毎秒 ' +
          (TICKS / sec).toFixed(1) + ' 回' +
          (TICKS / sec > 5 ? '（回っている）' : '（止まっている）'));
   try {
@@ -570,7 +570,7 @@ function report() {
     L.push('真ん中の色: ' + [...px].join(','));
   } catch (e) { L.push('真ん中の色: 読めない'); }
   L.push('');
-  L.push('── 心臓の言い分 ──');
+  L.push('── コアの言い分 ──');
   L.push(NPLOG.length ? NPLOG.join('\n') : '（何も言っていない）');
   return L.join('\n');
 }
@@ -700,9 +700,9 @@ function drawKeys() {
 }
 
 /* ---- 触って操作する ----
-   iPhone にはマウスもキーボードも無い。心臓（SDL）はマウスの出来事しか知らないので、
+   iPhone にはマウスもキーボードも無い。コア（SDL）はマウスの出来事しか知らないので、
    指の動きをマウスの出来事に訳して渡す。
-   ・触った場所は画面の見た目の座標。心臓は 640×400 で考えているので、そこへ直す
+   ・触った場所は画面の見た目の座標。コアは 640×400 で考えているので、そこへ直す
    ・指を置く＝押す、離す＝離す、滑らす＝動かす
    ・長押しは右ボタン（PC-98 は右ボタンでキャンセルの本が多い） */
 const TOUCHY = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -719,7 +719,7 @@ function canvasXY(t) {
   return {
     x: Math.max(0, Math.min(cv.width - 1, x)),
     y: Math.max(0, Math.min(cv.height - 1, y)),
-    /* 心臓へ渡すのは、画面の見た目の座標のほう（SDL が自分で縮める） */
+    /* コアへ渡すのは、画面の見た目の座標のほう（SDL が自分で縮める） */
     cx: t.clientX, cy: t.clientY,
   };
 }
@@ -781,7 +781,7 @@ function bindTouch() {
   cv.addEventListener('touchcancel', end, opt);
 }
 
-/* 一度も触られていないと、キーは心臓まで届かない（この画面は iframe の中）。
+/* 一度も触られていないと、キーはコアまで届かない（この画面は iframe の中）。
    押す場所を出して、触られたら消す。 */
 function showHint() {
   if ($('#hint')) return;
@@ -808,8 +808,8 @@ function toast98(t) {
   toastT = setTimeout(() => { el.style.opacity = '0'; }, 2600);
 }
 
-/* 心臓の設定。組み直さずに効く。
-   - SampleHz … 心臓が作る音の周波数。**ブラウザが鳴らす周波数と揃える**。
+/* コアの設定。組み直さずに効く。
+   - SampleHz … コアが作る音の周波数。**ブラウザが鳴らす周波数と揃える**。
      食い違うと音程がずれる（低く聞こえる）。端末ごとに違うので、その場で聞いて合わせる。
    - Latencys … 音の溜め（ミリ秒）。大きいほど途切れにくい。遅れは増える。
    - MS_RAPID … マウスの動きを速くする。画面を引き伸ばしている分、既定では鈍い。
@@ -820,7 +820,7 @@ function browserRate() {
     const c = new AC();
     const r = c.sampleRate;
     c.close && c.close();
-    /* 心臓が受け付ける値だけ。外れていたら 48000 に寄せる。 */
+    /* コアが受け付ける値だけ。外れていたら 48000 に寄せる。 */
     return [11025, 22050, 44100, 48000, 88200, 96000].includes(r) ? r : 48000;
   } catch (e) { return 48000; }
 }
@@ -996,7 +996,7 @@ function askDisks() {
     bar(((i + 1) / total) * 100);
   }
 
-  say('心臓を起こしています…');
+  say('コアを起こしています…');
   window.Module = {
     canvas: $('#canvas'),
     /* wasm は JS が名前だけで取りに行く。版を付けないと古い控えを掴む。 */
@@ -1023,7 +1023,7 @@ function askDisks() {
     onRuntimeInitialized: () => {
       $('#load').classList.add('hide');
       drawDisks();
-      /* 画面を押したら鍵が心臓に向くようにしておく。帯のボタンを押すと外れるので。 */
+      /* 画面を押したら鍵がコアに向くようにしておく。帯のボタンを押すと外れるので。 */
       const cv = $('#canvas');
       cv.addEventListener('pointerdown', () => { cv.focus(); hideHint(); });
       /* 触って操作する端末では、指をマウスに訳す。 */
@@ -1048,14 +1048,14 @@ function askDisks() {
   /* 15秒たっても起きてこなければ、そう言う。黙って待たせない。 */
   setTimeout(() => {
     if (!$('#load').classList.contains('hide')) {
-      say('心臓が起きてきません。「ログ」を押すと、いま分かることが出ます');
+      say('コアが起きてきません。「ログ」を押すと、いま分かることが出ます');
       $('#bar').style.display = 'none';
     }
   }, 15000);
 
   const s = document.createElement('script');
   s.src = CORE_DIR + 'emnp21kai_sdl2.js?v=' + CORE_V;
-  s.onerror = () => fail('心臓を読み込めません（np2/ が置き場にありません）');
+  s.onerror = () => fail('コアを読み込めません（np2/ が置き場にありません）');
   document.body.appendChild(s);
 })();
 

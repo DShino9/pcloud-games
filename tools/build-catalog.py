@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent.parent
 OUT  = HERE / "games.json"
 COVERS = HERE / "covers"
 
-# ブラウザでどの心臓を使うか。無い機種は棚に並ぶだけ。
+# ブラウザでどのコアを使うか。無い機種は棚に並ぶだけ。
 CORES = {
     "Famicom":       "fceumm",
     "Super Famicom": "snes9x",

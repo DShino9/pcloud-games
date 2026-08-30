@@ -26,6 +26,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 HERE  = Path(__file__).resolve().parent.parent
+ALIAS = {}             # 読みの表（covers-alias.txt）。あれば使う
 CAT   = HERE / "games.json"
 COVERS = HERE / "covers"
 VG    = Path.home() / "Library/Application Support/OpenEmu/openvgdb.sqlite"
@@ -73,6 +74,23 @@ def shrink(src: Path, dst: Path):
     subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", "78",
                     "--resampleWidth", str(COVER_W), str(src), "--out", str(dst)],
                    check=True, capture_output=True)
+
+
+def load_alias():
+    """読みの表。台帳の題名 → libretro を探すための言い方。
+       英語の題名を持たない本（改造版・半角カナ など）は、これが無いと引けない。"""
+    f = HERE / "covers-alias.txt"
+    out = {}
+    if not f.exists():
+        return out
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.split("#")[0].rstrip()
+        if not line.strip() or "\t" not in line:
+            continue
+        k, v = line.split("\t", 1)
+        if k.strip() and v.strip():
+            out[k.strip()] = v.strip()
+    return out
 
 
 def clean_title(s):
@@ -136,14 +154,14 @@ def to_roman(name):
         return None
     return " ".join(s2.split())
 
-_tree_cache = [None]
+_tree_cache = {}
 
-def pc98_tree():
-    """libretro の PC-98 の箱絵一覧。一度だけ取って使い回す。"""
-    if _tree_cache[0] is not None:
-        return _tree_cache[0]
+def lr_tree(repo):
+    """libretro の箱絵一覧。機種ごとに一度だけ取って使い回す。"""
+    if repo in _tree_cache:
+        return _tree_cache[repo]
     try:
-        req = Request("https://api.github.com/repos/libretro-thumbnails/NEC_-_PC-98"
+        req = Request(f"https://api.github.com/repos/libretro-thumbnails/{repo}"
                       "/git/trees/master?recursive=1",
                       headers={"User-Agent": UA, "Accept": "application/vnd.github+json"})
         with urlopen(req, timeout=60) as r:
@@ -151,12 +169,15 @@ def pc98_tree():
         out = [t["path"][len("Named_Boxarts/"):-4]
                for t in j.get("tree", [])
                if t["path"].startswith("Named_Boxarts/") and t["path"].endswith(".png")]
-        _tree_cache[0] = out
+        _tree_cache[repo] = out
         return out
     except Exception as e:
-        print("一覧が取れない:", e)
-        _tree_cache[0] = []
+        print(f"一覧が取れない（{repo}）:", e)
+        _tree_cache[repo] = []
         return []
+
+def pc98_tree():
+    return lr_tree("NEC_-_PC-98")
 
 def numof(s2):
     """題名に付く番号（2 とか II とか）。シリーズ物を取り違えないための鍵。"""
@@ -173,6 +194,25 @@ def normnum(s2):
     """語に割る前に、ローマ数字を算用数字へ。
        「Brandish III」と「Brandish 3」が別の語に見えて外れるのを防ぐ。"""
     return [_ROM2N.get(w, w) for w in norm(s2).split()]
+
+def lr_match(want, tree, need=0.8):
+    """英語の題名を、libretro の名前（No-Intro）に突き合わせる。
+       **含まれ具合**で測り、**番号の一致**を求める。日本の版を優先する。"""
+    A = set(normnum(want))
+    if not A:
+        return None, 0.0
+    qn = numkey(want)
+    best, bs, bj = None, 0.0, False
+    for cand in tree:
+        if numkey(cand) != qn:
+            continue
+        B = set(normnum(cand))
+        s2 = len(A & B) / len(A)
+        jp = "japan" in B                       # 日本の版を優先
+        if s2 > bs or (s2 == bs and jp and not bj):
+            best, bs, bj = cand, s2, jp
+    return (best, bs) if bs >= need else (None, bs)
+
 
 def pc98_match(name, tree, need=0.8):
     """**題名の語がどれだけ含まれているか**で測る（Jaccard だと、余計な語
@@ -264,6 +304,10 @@ def main():
 
     COVERS.mkdir(exist_ok=True)
     tmp = HERE / ".cover.tmp"
+    global ALIAS
+    ALIAS = load_alias()
+    if ALIAS:
+        print(f"読みの表: {len(ALIAS)} 件")
     n = {"db": 0, "name": 0, "wiki": 0, "genre": 0, "ng": 0}
 
     if a.pc98:
@@ -366,6 +410,20 @@ def main():
                     g["cover"] = f"covers/{g['id']}.jpg"; n["wiki"] += 1
                     print(f"  [libretro] {g['name']}  ← {base}")
                     done = True
+        if not done:
+            # 4. libretro の一覧と**英語の題名**で突き合わせる。
+            #    openvgdb に載っていない本は、No-Intro の名前が手元に無いので、
+            #    一覧を丸ごと取ってから照らす（地道だが確実）。
+            want = ALIAS.get(g["name"]) or g.get("title") or g["name"]
+            repo = LR.get(g["system"])
+            if repo:
+                name2, sc2 = lr_match(want, lr_tree(repo))
+                if name2:
+                    u = lr_url(g["system"], name2)
+                    if u and save_cover(u, g["id"], tmp):
+                        g["cover"] = f"covers/{g['id']}.jpg"; n["wiki"] += 1
+                        print(f"  [一覧 {sc2:.2f}] {g['name']}  ← {name2}")
+                        done = True
         if not done:
             n["ng"] += 1
 
