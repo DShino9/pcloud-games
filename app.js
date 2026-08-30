@@ -64,7 +64,7 @@ function mergeCatalogs() {
     if (!g.core) continue;                       // ブラウザで動かない機種は出さない
     out.push({
       id: g.id, name: g.name, sub: g.title || '', system: g.system, short: g.short,
-      cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false,
+      cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
       files: [g.file],
     });
   }
@@ -73,7 +73,7 @@ function mergeCatalogs() {
       id: t.id, name: t.name,
       sub: t.count > 1 ? t.count + '枚' : (t.hdd ? 'HDD' : ''),
       system: 'PC-98', short: '98',
-      cover: null, bytes: t.bytes, kind: t.kind, pc98: true,
+      cover: t.cover || null, bytes: t.bytes, kind: t.kind, pc98: true, genre: '',
       files: t.disks.map(d => d.file),
       garbled: !!t.garbled,
     });
@@ -256,6 +256,7 @@ function shelfList() {
   if (!S.tools) list = list.filter(g => g.kind === 'game');   // 道具ディスクは既定で伏せる
   if (S.onlyHave) list = list.filter(hasAll);                 // 上げていないものは伏せる
   if (S.sys) list = list.filter(g => g.system === S.sys);
+  if (S.genre) list = list.filter(g => g.genre === S.genre);
   if (S.onlyHere) list = list.filter(g => S.here[g.id]);
   const q = S.q.trim().toLowerCase();
   if (q) list = list.filter(g =>
@@ -277,6 +278,10 @@ function shelfList() {
 function screenLib() {
   const list = shelfList();
   const systems = [...new Set(S.items.map(i => i.system))].sort();
+  /* ジャンルは多い順に。数が少ないものは末尾に沈むので探しやすい。 */
+  const gcount = {};
+  for (const i of S.items) if (i.genre) gcount[i.genre] = (gcount[i.genre] || 0) + 1;
+  const genres = Object.entries(gcount).sort((a, b) => b[1] - a[1]);
   $('#title').textContent = 'ゲーム棚';
   /* 「棚にない」は絞り込みに関係なく棚全体の話。並べ直しでは書き換わらないので、
      いま出ている一覧の数ではなく、遊べるもの全体から数える。 */
@@ -288,6 +293,10 @@ function screenLib() {
     <select id="sys">
       <option value=""${S.sys ? '' : ' selected'}>ぜんぶ</option>
       ${systems.map(n => `<option value="${esc(n)}"${S.sys === n ? ' selected' : ''}>${esc(n)}</option>`).join('')}
+    </select>
+    <select id="gen">
+      <option value=""${S.genre ? '' : ' selected'}>ジャンル：すべて</option>
+      ${genres.map(([g, n]) => `<option value="${esc(g)}"${S.genre === g ? ' selected' : ''}>${esc(g)}（${n}）</option>`).join('')}
     </select>
     <select id="sort">
       <option value="name"${S.sort === 'name' ? ' selected' : ''}>五十音</option>
@@ -303,10 +312,11 @@ function screenLib() {
   ${missing ? `<div class="msg warn" style="margin:0 0 10px">
     まだ pCloud に上げていない本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
   ${list.length ? `<div class="grid" id="g">${list.map(cellHtml).join('')}</div>`
-    : `<div class="empty">${S.q || S.sys || S.onlyHere ? '見つかりません' : '棚が空です'}</div>`}`;
+    : `<div class="empty">${S.q || S.sys || S.genre || S.onlyHere ? '見つかりません' : '棚が空です'}</div>`}`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
   $('#sys').onchange  = e => { S.sys = e.target.value; LS.set('sys', S.sys); screenLib(); };
+  $('#gen').onchange  = e => { S.genre = e.target.value; LS.set('genre', S.genre); screenLib(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
   $('#here').onclick  = () => { S.onlyHere = !S.onlyHere; LS.set('onlyHere', S.onlyHere); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
@@ -336,7 +346,7 @@ function cellHtml(g) {
       ${has ? '' : '<span class="no">未アップ</span>'}
     </div>
     <div class="t">${esc(nm)}</div>
-    <div class="s">${esc(sub)}</div>
+    <div class="s">${esc(sub || g.genre || '')}</div>
   </button>`;
 }
 
@@ -562,6 +572,10 @@ function screenEdit() {
   const list = list0();
   function list0() { return editList(); }
   const systems = [...new Set(S.items.map(i => i.system))].sort();
+  /* ジャンルは多い順に。数が少ないものは末尾に沈むので探しやすい。 */
+  const gcount = {};
+  for (const i of S.items) if (i.genre) gcount[i.genre] = (gcount[i.genre] || 0) + 1;
+  const genres = Object.entries(gcount).sort((a, b) => b[1] - a[1]);
   const n = Object.keys(E.pick).length;
   const have = list.filter(hasAll).length;
 
