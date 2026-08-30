@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゲーム棚</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#101014">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ゲーム棚">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-192.png">
+<!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
+<link rel="stylesheet" href="./core/shelf.css?v=1">
+<style>
+/* ここはゲーム棚だけの飾り。共通に効かせたいものは shelf-core/shelf.css へ。 */
+
+/* 箱絵は縦長。正方形に切ると題字が落ちるので、比率のまま収める。 */
+body{--ratio:3/4; --fit:contain}
+
+/* 遊ぶ画面。棚の上に覆いかぶせる。 */
+#play{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+#play .top{height:calc(var(--top) + 40px);padding-top:var(--top);flex:0 0 auto;
+  display:flex;align-items:center;gap:8px;padding-left:10px;padding-right:10px;
+  background:#0b0b0f;border-bottom:1px solid var(--line)}
+#play .top .nm{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+#play iframe{flex:1;width:100%;border:0;display:block;background:#000}
+/* 全画面のときは上の帯を薄くして、絵に場所を譲る。触れば戻る。 */
+#play:fullscreen .top{height:34px;padding-top:0;opacity:.25;transition:opacity .2s}
+#play:fullscreen .top:hover{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">ゲーム棚</h1>
+  <button class="hbtn hide" id="hcell">中</button>
+  <button class="hbtn" id="hset">設定</button>
+</header>
+<main id="main"></main>
+<div id="play" class="hide">
+  <div class="top">
+    <button class="hbtn" id="pclose">閉じる</button>
+    <span class="nm" id="pname"></span>
+    <button class="hbtn" id="pfull">全画面</button>
+  </div>
+  <iframe id="pframe" allow="autoplay; gamepad; fullscreen" allowfullscreen></iframe>
+</div>
+<div id="toast"></div>
+<script src="./core/pcloud.js?v=1"></script>
+<script src="./app.js?v=17"></script>
+</body>
+</html>

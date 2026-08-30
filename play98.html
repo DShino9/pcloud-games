@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PC-98</title>
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="./core/shelf.css?v=1">
+<style>
+html,body{overflow:hidden;background:#000}
+/* 下の帯のぶんを空ける。絵が帯に隠れないように。 */
+#wrap{position:absolute;left:0;right:0;top:0;bottom:52px;
+  display:flex;align-items:center;justify-content:center}
+/* PC-98 の画面は 640×400。
+   max-width だけだと「これ以上大きくしない」だけなので、640×400 のまま小さく置かれる。
+   width/height を目一杯にして、object-fit で縦横比を保ったまま引き伸ばす。
+   image-rendering:pixelated で、拡大しても粒がぼやけない。 */
+#canvas{display:block;background:#000;image-rendering:pixelated;
+  width:100%;height:100%;object-fit:contain}
+#load{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;padding:24px;text-align:center;background:#000;z-index:5}
+#load.hide{display:none}
+#load h2{margin:0;font-size:16px;font-weight:600}
+#bar{width:min(320px,78vw);height:6px;border-radius:3px;background:#22222b;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+#err{color:var(--danger);font-size:13px;max-width:460px;line-height:1.7}
+/* 心臓の言い分。ここでしか分からないことがある。 */
+#tst{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);z-index:9;
+  padding:8px 15px;border-radius:10px;background:rgba(28,28,36,.96);border:1px solid var(--line);
+  color:var(--fg);font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s;
+  max-width:88vw;text-align:center}
+#hint{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:8;
+  padding:8px 16px;border-radius:999px;background:rgba(110,168,254,.92);color:#0b0b0f;
+  font-size:13px;font-weight:600;pointer-events:none;transition:opacity .3s}
+#lg{position:absolute;left:0;right:0;top:0;bottom:52px;z-index:7;margin:0;padding:12px;
+  overflow:auto;background:rgba(8,8,11,.94);color:#c8c8d4;font:11.5px/1.55 ui-monospace,Menlo,monospace;
+  white-space:pre-wrap;word-break:break-all}
+/* ディスクの入れ替え。PC-98 のドライブは A・B の2つしかないので、3枚目からは差し替えが要る。 */
+#disks{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;
+  padding:8px 10px calc(var(--safe-b) + 8px);overflow-x:auto;background:rgba(11,11,15,.86);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);scrollbar-width:none}
+#disks::-webkit-scrollbar{display:none}
+#disks .hbtn{flex:0 0 auto;padding:5px 10px;font-size:12px}
+#disks .hbtn.in1{border-color:var(--accent);color:var(--accent)}
+#disks .hbtn.in2{border-color:var(--ok);color:var(--ok)}
+#disks .lbl{flex:0 0 auto;align-self:center;font-size:11px;color:var(--dim);padding-right:4px}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="canvas" tabindex="1" width="640" height="400"></canvas></div>
+<div id="disks" class="hide"></div>
+<pre id="lg" class="hide"></pre>
+<div id="load">
+  <h2 id="nm">読み込んでいます</h2>
+  <div id="bar"><i></i></div>
+  <div class="msg" id="st">棚から取り寄せています…</div>
+  <div id="err"></div>
+  <button class="hbtn hide" id="lgb2">ログ</button>
+</div>
+<script src="./core/pcloud.js?v=1"></script>
+<script>
+'use strict';
+/* PC-98 を遊ぶ画面。心臓は自分で組んだ NP2kai（MIT、np2/ にある）。
+   ファミコン・スーファミの play.html とは別立てにしてある。EmulatorJS ではないので。
+
+   心臓への渡し方（実測で確かめたもの）
+    - ディスクは argv に並べる。np2_main が拡張子を見て FD / HDD のドライブに割り当てる。
+    - BIOS・フォント・音の ROM は、動かす場所（カレント）に置いておけば読む。
+    - ROM もディスクも、心臓を起こす前に仮想の置き場へ書いておくこと。
+      addRunDependency で待たせられる（そのために FS ごと外に出して組んである）。
+    - NP2kai は emscripten_set_main_loop を使わず emscripten_sleep で自分の輪を回す。
+      隠れたページでは setTimeout が絞られるので、ほとんど進まない（不具合ではない）。 */
+
+/* 心臓は while ループの中で emscripten_sleep(0) を呼んで回る。
+   それは setTimeout に化けるので、呼ばれた回数を数えれば「回っているか」が分かる。
+   絵が出ないとき、止まっているのか描けていないのかを見分けるため。 */
+let TICKS = 0;
+let KEYS = 0;                 // 心臓までキーが届いた回数
+let DRAWS = 0;                // 絵を出した回数（＝おおよそのコマ数）
+let GAPS = [];                // コマとコマの間隔（ミリ秒）。直近だけ持つ
+let LONG = 0;                 // 100ms を超えて空いた回数（音が途切れる目安）
+let LASTDRAW = 0;
+(function () {
+  /* SDL は画面を1枚の板に貼って出す。drawArrays の回数がほぼコマ数になる。
+     **平均だけ見ても揺らぎは分からない**ので、間隔そのものを残す。
+     数えるだけで、描き方は変えない。 */
+  for (const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]) {
+    if (!C) continue;
+    const d = C.prototype.drawArrays;
+    C.prototype.drawArrays = function () {
+      DRAWS++;
+      const t = performance.now();
+      if (LASTDRAW) {
+        const dt = t - LASTDRAW;
+        GAPS.push(dt);
+        if (GAPS.length > 900) GAPS.shift();
+        if (dt > 100) LONG++;
+      }
+      LASTDRAW = t;
+      return d.apply(this, arguments);
+    };
+  }
+})();
+
+/* 揺らぎの具合。中央値と比べて、どれだけ散らばっているか。 */
+function jitter() {
+  if (GAPS.length < 8) return null;
+  const a = GAPS.slice().sort((x, y) => x - y);
+  const q = f => a[Math.min(a.length - 1, Math.floor(a.length * f))];
+  const mid = q(0.5);
+  return {
+    mid: +mid.toFixed(1), p95: +q(0.95).toFixed(1), max: +a[a.length - 1].toFixed(1),
+    long: LONG,
+    /* 中央値の2倍を超えたコマの割合。揺れているほど大きい。 */
+    rough: +(a.filter(x => x > mid * 2).length / a.length * 100).toFixed(1),
+  };
+}
+const T0 = Date.now();
+(function () {
+  const st = window.setTimeout;
+  window.setTimeout = function () { TICKS++; return st.apply(window, arguments); };
+})();
+
+const P    = window.PCloud;
+const LS   = P.store('pg');
+const DISK = P.shelfCache('roms-v1', 'rom.local');   // 棚と同じ置き場を使う
+const $    = s => document.querySelector(s);
+const qs   = new URLSearchParams(location.search);
+const id   = qs.get('id');
+const MUTE = qs.get('mute') === '1';                 // 中で確かめるとき用
+
+/* 心臓は2種類ある。NP2kai は1コマごとに emscripten_sleep(0) を呼ぶ造りなので、
+   その中断・再開のやり方で滑らかさが決まる。
+     jspi     … ブラウザ側の仕組みでスタックを切り替える。軽い（2.16MB）
+     asyncify … スタックを毎回巻き戻して積み直す。どこでも動くが重い（3.09MB）
+   使えるほうを選ぶ。?core=asyncify で古いほうも試せる（比べるため）。 */
+const JSPI_OK = typeof WebAssembly !== 'undefined' &&
+                typeof WebAssembly.Suspending === 'function' &&
+                typeof WebAssembly.promising === 'function';
+const CORE_KIND = qs.get('core') || (JSPI_OK ? 'jspi' : 'asyncify');
+/* 確かめのときは音を出さない。器が作られる前に塞いでおく必要がある
+   （出来てから止めても、一瞬鳴る）。 */
+if (MUTE) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (AC) {
+    const Quiet = function () {
+      const c = new AC(...arguments);
+      try { c.suspend(); } catch (e) {}
+      return c;
+    };
+    Quiet.prototype = AC.prototype;
+    window.AudioContext = Quiet; window.webkitAudioContext = Quiet;
+  }
+}
+
+const say  = t => { $('#st').textContent = t; };
+
+/* 心臓の言い分を溜めておく。ここでしか分からないことがあるので、画面から読めるようにする。 */
+const NPLOG = [];
+function np(tag, t) {
+  NPLOG.push(tag + ' ' + t);
+  if (NPLOG.length > 200) NPLOG.shift();
+  console.log('NP2' + tag, t);
+  const box = $('#lg');
+  if (box && !box.classList.contains('hide')) box.textContent = NPLOG.join('\n');
+}
+const bar  = p => { $('#bar i').style.width = Math.max(0, Math.min(100, p)) + '%'; };
+function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; }
+
+/* PC-98 を動かすのに要る、ディスク以外のもの。棚と同じフォルダに置いてある前提。 */
+const ROMS = ['BIOS.ROM', 'FONT.ROM', 'sound.rom', 'itf.rom', 'font.bmp'];
+/* 心臓は動かす場所を「./」＝根として組み立てる（np2cfg.biospath の既定）。
+   別のフォルダに置いて chdir しても、設定は /np21kai.cfg を見に行く。
+   置き場を分けると ROM もディスクも見つからないので、根に揃える。 */
+const WORK = '';
+
+/* どのディスクをどのドライブに入れたか、本ごとに覚える。台帳の見立て（A が本体だろう）は
+   当てにならないので、一度決めてもらったら次からはそれを使う。 */
+const PICK = LS.get('fdpick', {});
+/* 前に遊んだときの組み合わせを覚える。
+   選択画面で決めたときだけでなく、**遊んでいる最中に入れ替えたときも**残す。
+   次に開いたら、そのままの形で立ち上がるように。 */
+function rememberPick() {
+  if (!title) return;
+  PICK[title.id] = {
+    extra: DISKS.filter(d => d.borrowed).map(d => d.file),
+    blanks: DISKS.filter(d => d.blank).map(d => d.file),
+    a: inFD[0] != null && inFD[0] >= 0 ? DISKS[inFD[0]].file : null,
+    b: inFD[1] != null && inFD[1] >= 0 ? DISKS[inFD[1]].file : null,
+  };
+  LS.set('fdpick', PICK);
+}
+
+let title = null;                    // pc98.json の1件
+let files = {};                      // 名前 → fileid（棚が pCloud を走査した結果）
+let inFD  = [null, null];            // いま差さっているディスク（DISKS の番号）
+
+/* 組み合わせの作業台。
+   最初はその本のディスクだけだが、**他の本のディスクも足せる**。
+   HDD ものは起動に MS-DOS のフロッピーが要るので、その本の中だけでは組めない。 */
+let DISKS = [];
+let ALL   = [];                      // 台帳にあるディスク全部（他所から足すため）
+
+function buildAll(cat) {
+  const out = [];
+  for (const t of (cat.titles || [])) {
+    for (const d of t.disks) {
+      out.push({ file: d.file, label: d.label, hdd: d.hdd, bytes: d.bytes,
+                 from: t.name, kind: t.kind });
+    }
+  }
+  return out;
+}
+const diskName = d => (d.label || d.file.replace(/\.[^.]+$/, ''));
+
+/* ブランクディスク（セーブ用）をその場で作る。
+   本物の .fdi の頭をそのまま真似る（2HD・1024バイト×8セクタ×2面×77シリンダ）。
+      ダミー 0 / FDDの型 0x90 / 頭 4096 / 中身 1261568 /
+      セクタ 1024 / 1トラック8 / 2面 / 77シリンダ
+   中身は空。使うときは DOS の FORMAT を掛ける。 */
+const FDI_HEAD = 4096, SEC = 1024, TOTAL = 1232;      // 1024×8×2×77
+const FDI_BODY = SEC * TOTAL;                          // = 1261568
+
+/* 整形済み（FORMAT 済み）で作る。差せばすぐ書き込める。
+   手元の BLANKDISK.fdi は「消したファイルの跡が残った中古」だったので、真似ずに自分で組む。
+   PC-98 の 1.23MB 2HD の決まり（本物から読み取った値）:
+     1セクタ 1024 ／ クラスタ 1セクタ ／ 予約 1 ／ FAT 2つ ／ ルート 192項目
+     総セクタ 1232 ／ メディア 0xFE ／ FAT 2セクタ ／ 1トラック 8 ／ 2面
+   並び: 0=起動セクタ, 1-2=FAT1, 3-4=FAT2, 5-10=ルート, 11-=データ */
+function makeBlankFDI() {
+  const buf = new Uint8Array(FDI_HEAD + FDI_BODY);
+  const v = new DataView(buf.buffer);
+  const u32 = (o, n) => v.setUint32(o, n, true);
+  const u16 = (o, n) => v.setUint16(o, n, true);
+
+  /* FDI の頭 */
+  u32(0x00, 0); u32(0x04, 0x90); u32(0x08, FDI_HEAD); u32(0x0c, FDI_BODY);
+  u32(0x10, SEC); u32(0x14, 8); u32(0x18, 2); u32(0x1c, 77);
+
+  /* 起動セクタ。中身の見出し（BPB）だけ正しく置く。
+     起動用ではないので、起動コードは要らない。 */
+  const b = FDI_HEAD;
+  buf[b] = 0xEB; buf[b + 1] = 0x1C; buf[b + 2] = 0x90;
+  for (let i = 0; i < 8; i++) buf[b + 3 + i] = 'NEC 2.00'.charCodeAt(i);
+  u16(b + 11, SEC);      // 1セクタのバイト数
+  buf[b + 13] = 1;       // クラスタあたりのセクタ数
+  u16(b + 14, 1);        // 予約セクタ
+  buf[b + 16] = 2;       // FAT の数
+  u16(b + 17, 192);      // ルートの項目数
+  u16(b + 19, TOTAL);    // 総セクタ数
+  buf[b + 21] = 0xFE;    // メディアの型
+  u16(b + 22, 2);        // FAT 1つあたりのセクタ数
+  u16(b + 24, 8);        // 1トラックのセクタ数
+  u16(b + 26, 2);        // 面の数
+  u32(b + 28, 0);        // 隠しセクタ
+
+  /* FAT を2つ。先頭3バイトだけ埋める（メディアの型＋終端）。残りは空き。 */
+  for (const start of [1, 3]) {
+    const o = FDI_HEAD + start * SEC;
+    buf[o] = 0xFE; buf[o + 1] = 0xFF; buf[o + 2] = 0xFF;
+  }
+  /* ルートもデータも 0 のまま ＝ 何も入っていない整形済みディスク。 */
+  return buf;
+}
+/* いつでもセーブ／巻き戻し。3枠。
+   心臓の statsave を使う。書き出しは主ループがフレームの切れ目で行うので、
+   途中の状態を掴むことがない。
+   出来たファイルは端末に残すので、次に開いたときも戻せる。 */
+const SLOTS = [1, 2, 3];
+const slotPath = n => WORK + '/state' + n + '.n2s';
+const slotKey  = n => 'state-' + id + '-' + n;
+const slotHas  = {};                 // 枠に中身があるか（見た目のため）
+
+function refreshSlots() {
+  for (const n of SLOTS) {
+    try { FS.stat(slotPath(n)); slotHas[n] = true; }
+    catch (e) { slotHas[n] = false; }
+  }
+}
+
+/* 作ったブランクの中身。取り寄せずにここから渡す。 */
+const BLANKS = {};
+function addBlank() {
+  let n = 1;
+  while (DISKS.some(d => d.file === 'ブランク' + n + '.fdi')) n++;
+  const file = 'ブランク' + n + '.fdi';
+  BLANKS[file] = makeBlankFDI();
+  DISKS.push({ file, label: 'ブランク' + n, hdd: false, bytes: FDI_HEAD + FDI_BODY,
+               from: '新しく作った', kind: 'blank', blank: true });
+  return DISKS.length - 1;
+}
+const idxOfFile = f => DISKS.findIndex(d => d.file === f);
+function addDisk(f) {
+  let i = idxOfFile(f);
+  if (i >= 0) return i;
+  const src = ALL.find(d => d.file === f);
+  if (!src) return -1;
+  DISKS.push({ ...src, borrowed: true });
+  return DISKS.length - 1;
+}
+
+const fileidOf = name => files[P.nfc(name)] || null;
+
+/* 中身を取り寄せる。一度取れたら手元に残すので、次からは圏外でも動く。
+   遊んだ後に書き換わったディスクも、同じ鍵で上書きして残す。 */
+async function grab(name, expectBytes, onProg) {
+  /* ブランクは pCloud に無い。一度使ったものは手元に残してあるので、あればそれを。 */
+  if (BLANKS[name]) {
+    const key = 'blank-' + id + '-' + name;
+    const hit = await DISK.get(key);
+    if (hit) return new Uint8Array(await hit.arrayBuffer());
+    return BLANKS[name];
+  }
+  const fid = fileidOf(name);
+  if (!fid) throw new Error(name + ' が pCloud の棚にありません');
+  const hit = await DISK.get(String(fid));
+  if (hit) return new Uint8Array(await hit.arrayBuffer());
+  const relay = LS.get('relay', '');
+  const host = LS.get('host', P.HOSTS[0]);
+  const auth = LS.get('auth', '');
+  /* pCloud の配信元は CORS を返さないので、中継所を通さないと中身を掴めない。 */
+  if (!relay) throw new Error('中継所が設定されていません');
+  const blob = await P.download(
+    P.relayUrl(relay, { fileid: fid, host, auth, pub: LS.get('pub', false) }),
+    onProg, expectBytes || 0);
+  await DISK.put(String(fid), blob.slice(), { 'x-name': encodeURIComponent(name) });
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+/* 遊んだ跡を残す。PC-98 のセーブはディスクそのものに書かれるので、
+   中身を読み戻して手元の控えを上書きする。設定（np21kai.cfg）も同じ。 */
+async function keep() {
+  if (!window.FS) return;
+  /* セーブの枠も残す。端末を閉じても戻せるように。 */
+  for (const n of SLOTS) {
+    try {
+      const data = FS.readFile(slotPath(n));
+      await DISK.put(slotKey(n), new Blob([data]), { 'x-name': 'state' + n });
+    } catch (e) { /* その枠は空 */ }
+  }
+  const names = DISKS.map(d => d.file).concat(['np21kai.cfg']);
+  for (const n of names) {
+    try {
+      const data = FS.readFile(WORK + '/' + n);
+      /* ブランクは pCloud に無いので、本ごとの鍵で手元に残す。
+         セーブはディスクそのものに書かれるので、これを落とすと消える。 */
+      const key = n === 'np21kai.cfg' ? ('cfg-' + title.id)
+                : BLANKS[n]           ? ('blank-' + id + '-' + n)
+                : String(fileidOf(n));
+      if (key && key !== 'null') await DISK.put(key, new Blob([data]), { 'x-name': encodeURIComponent(n) });
+    } catch (e) { /* 無ければ書かれていないだけ */ }
+  }
+}
+
+/* ディスクの入れ替え。PC-98 のドライブは A・B の2つ。3枚目からはここで差し替える。 */
+function drawDisks() {
+  const el = $('#disks');
+  el.classList.remove('hide');
+  const many = DISKS.length > 1;
+  el.innerHTML =
+    /* 1枚ものでも必ず出す。道具ディスクを借りたり、ブランクを足したりするのに要る。
+       出していなかったため、覚えた組み合わせが悪いと抜け出せなくなっていた。 */
+    '<button class="hbtn" id="repick">ディスクを選び直す</button>' +
+    '<button class="hbtn" id="save">セーブ</button>' +
+    '<button class="hbtn" id="load">戻す</button>' +
+    '<button class="hbtn" id="blank">ブランクを足す</button>' +
+    '<button class="hbtn" id="menu">メニュー</button>' +
+    '<button class="hbtn" id="mouse">マウス</button>' +
+    '<button class="hbtn" id="rst">リセット</button>' +
+    '<button class="hbtn" id="lgb">ログ</button>' +
+    '<span class="lbl">Ctrl+F11 / Ctrl+F12 でも</span>' +
+    (many ? '<span class="lbl">｜ドライブ（押すと入れ替え）</span>' + DISKS.map((d, i) => {
+      const slot = inFD[0] === i ? ' in1' : inFD[1] === i ? ' in2' : '';
+      const nm = diskName(d);
+      const pre = inFD[0] === i ? 'A: ' : inFD[1] === i ? 'B: ' : '';
+      return '<button class="hbtn' + slot + '" data-i="' + i + '">' + pre + esc(nm) + '</button>';
+    }).join('') : '');
+  el.querySelectorAll('.hbtn[data-i]').forEach(b => b.onclick = () => { swap(Number(b.dataset.i)); $('#canvas').focus(); });
+  const r = $('#rst');
+  if (r) r.onclick = askReboot;
+  /* メニューとマウス捕獲。心臓に口があれば直に呼ぶ。
+     無ければ鍵を作って送る（本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
+     口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。 */
+  const has98 = fn => {
+    try { return typeof Module['_' + fn] === 'function'; } catch (e) { return false; }
+  };
+  const sendKey = code => {
+    const cv = $('#canvas');
+    cv.focus();
+    const num = code === 'F11' ? 122 : 123;
+    for (const target of [cv, document]) {
+      for (const type of ['keydown', 'keyup']) {
+        target.dispatchEvent(new KeyboardEvent(type, {
+          key: code, code, keyCode: num, which: num,
+          ctrlKey: true, bubbles: true, cancelable: true, composed: true,
+        }));
+      }
+    }
+  };
+  const call98 = (fn, code, label) => {
+    if (has98(fn)) {
+      try { Module.ccall(fn, null, [], []); $('#canvas').focus(); return; }
+      catch (e) {}
+    }
+    sendKey(code);
+    toast98(label + '（Ctrl+' + code + ' でも開きます）');
+  };
+  /* セーブと巻き戻し。押すと枠を選ばせる。
+     中身のある枠には印を付ける（間違って上書きしないように）。 */
+  const slotRow = (title2, act) => {
+    refreshSlots();
+    const el = $('#disks');
+    el.innerHTML = '<span class="lbl">' + title2 + '</span>' +
+      SLOTS.map(n => `<button class="hbtn${slotHas[n] ? ' in2' : ''}" data-s="${n}">` +
+                     `${n}${slotHas[n] ? '（あり）' : '（空）'}</button>`).join('') +
+      '<button class="hbtn" id="sx">やめる</button>';
+    $('#sx').onclick = () => { drawDisks(); $('#canvas').focus(); };
+    el.querySelectorAll('.hbtn[data-s]').forEach(b => b.onclick = () => {
+      act(Number(b.dataset.s));
+      drawDisks();
+      $('#canvas').focus();
+    });
+  };
+  const sv = $('#save');
+  if (sv) sv.onclick = () => slotRow('どの枠に残しますか', n => {
+    try {
+      Module.ccall('np2web_savestate', null, ['string'], [slotPath(n)]);
+      toast98(n + ' に残しました');
+      setTimeout(() => keep(), 1500);        // 書き出しは次のコマ。少し待ってから控える
+    } catch (e) { toast98('残せませんでした（古い心臓かもしれません）'); }
+  });
+  const ld = $('#load');
+  if (ld) ld.onclick = () => slotRow('どの枠から戻しますか', n => {
+    refreshSlots();
+    if (!slotHas[n]) return toast98(n + ' は空です');
+    try {
+      Module.ccall('np2web_loadstate', null, ['string'], [slotPath(n)]);
+      toast98(n + ' から戻しました');
+    } catch (e) { toast98('戻せませんでした'); }
+  });
+
+  const bk = $('#blank');
+  if (bk) bk.onclick = async () => {
+    const i = addBlank();
+    /* 作った中身をその場で置き場へ書き、B ドライブに入れる。 */
+    try { FS.writeFile(WORK + '/' + DISKS[i].file, BLANKS[DISKS[i].file]); } catch (e) {}
+    put(1, i);
+    toast98('ブランクを B ドライブに入れました（整形済み・そのまま使えます）');
+  };
+
+  const mn = $('#menu');
+  if (mn) mn.onclick = () => call98('np2web_menu', 'F11', 'メニュー');
+  const ms = $('#mouse');
+  if (ms) ms.onclick = () => {
+    call98('np2web_mouse', 'F12', 'マウス');
+    toast98('もう一度「マウス」で戻せます（Esc でも）');
+  };
+
+  const lb = $('#lgb');
+  if (lb) lb.onclick = () => {
+    const box = $('#lg');
+    box.classList.toggle('hide');
+    if (!box.classList.contains('hide')) box.textContent = report();
+  };
+}
+
+/* いま分かることを全部並べる。持ち帰って読めるように。 */
+function report() {
+  const L = [];
+  L.push('本: ' + title.name + '（' + DISKS.length + '枚）');
+  L.push('起動する1枚: ' + title.boot);
+  L.push('渡した argv: ' + JSON.stringify((window.Module && Module.arguments) || null));
+  try { L.push('置き場: ' + JSON.stringify(FS.readdir('/').filter(n => n !== '.' && n !== '..'))); }
+  catch (e) { L.push('置き場: 読めない ' + e.message); }
+  for (const n of ROMS.concat(DISKS.map(d => d.file))) {
+    try { const st = FS.stat('/' + n); L.push('  ' + n + ' … ' + st.size + ' バイト'); }
+    catch (e) { L.push('  ' + n + ' … 無い'); }
+  }
+  try {
+    const cfg = new TextDecoder().decode(FS.readFile('/np21kai.cfg'));
+    const fdd = (cfg.match(/^(fdd|hdd|sasi|scsi)[^\n]*/gim) || []).slice(0, 8);
+    L.push('設定: ' + cfg.length + ' 文字' + (fdd.length ? '\n  ' + fdd.join('\n  ') : ''));
+  } catch (e) { L.push('設定: まだ書かれていない'); }
+  const cv = $('#canvas');
+  L.push('画面: ' + cv.width + '×' + cv.height);
+  try {
+    const gl = cv.getContext('webgl2') || cv.getContext('webgl');
+    L.push('絵の出し方: ' + (gl ? 'WebGL' : cv.getContext('2d') ? '2D' : '不明'));
+  } catch (e) {}
+  L.push('見えているか: ' + document.visibilityState);
+  L.push('心臓の型: ' + (CORE_KIND || '不明'));
+  const sec = Math.max(1, (Date.now() - T0) / 1000);
+  L.push('届いたキー: ' + KEYS + ' 回');
+  L.push('コマ数: ' + DRAWS + ' 回 / ' + ((Date.now() - T0) / 1000).toFixed(0) + ' 秒 = 毎秒 ' +
+         (DRAWS / Math.max(1, (Date.now() - T0) / 1000)).toFixed(1) + ' コマ（PC-98 は 60 が満点）');
+  const j = jitter();
+  L.push(j ? ('揺らぎ: 中央 ' + j.mid + 'ms ／ 95% ' + j.p95 + 'ms ／ 最大 ' + j.max +
+              'ms ／ 大きく空いた ' + j.long + ' 回 ／ 荒れ ' + j.rough + '%')
+           : '揺らぎ: まだ測れていない');
+  L.push('心臓の回り: ' + TICKS + ' 回 / ' + sec.toFixed(0) + ' 秒 = 毎秒 ' +
+         (TICKS / sec).toFixed(1) + ' 回' +
+         (TICKS / sec > 5 ? '（回っている）' : '（止まっている）'));
+  try {
+    const gl2 = cv.getContext('webgl2') || cv.getContext('webgl');
+    const px = new Uint8Array(4);
+    gl2.readPixels(cv.width >> 1, cv.height >> 1, 1, 1, gl2.RGBA, gl2.UNSIGNED_BYTE, px);
+    L.push('真ん中の色: ' + [...px].join(','));
+  } catch (e) { L.push('真ん中の色: 読めない'); }
+  L.push('');
+  L.push('── 心臓の言い分 ──');
+  L.push(NPLOG.length ? NPLOG.join('\n') : '（何も言っていない）');
+  return L.join('\n');
+}
+
+const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+
+/* 押した1枚を、どちらのドライブに入れるか選ばせる。
+   1番を差し替えるのは「起動する1枚が違った」とき。台帳の見立ては当てにならないことがある
+   （A が本体とは限らない）ので、必ず選べるようにしておく。 */
+function swap(i) {
+  /* すでに入っている札も押せること。2枚組は最初から両方入っているので、
+     「入っていたら何もしない」にすると、いちばんやりたいこと
+     （B から起動し直す）ができなくなる。 */
+  const el = $('#disks');
+  const nm = DISKS[i].label || DISKS[i].file.replace(/\.[^.]+$/, '');
+  const now = inFD[0] === i ? 'A' : inFD[1] === i ? 'B' : '';
+  /* 入れ替えと起動し直しは必ず分ける。
+     遊んでいる最中の「2枚目を入れてください」で勝手にリセットしたら、そこまでが全部飛ぶ。
+     起動し直すのは、押した人がそう言ったときだけ。 */
+  el.innerHTML =
+    '<span class="lbl">' + esc(nm) + (now ? '（いま' + now + 'ドライブ）' : '') + ' を…</span>' +
+    (now === 'A' ? '' : '<button class="hbtn" id="to1">Aドライブに入れる</button>') +
+    (now === 'B' ? '' : '<button class="hbtn" id="to2">Bドライブに入れる</button>') +
+    (now === 'A' ? '' : '<button class="hbtn" id="to1r">Aに入れて起動し直す</button>') +
+    '<button class="hbtn" id="cx">やめる</button>';
+  $('#cx').onclick = () => { drawDisks(); $('#canvas').focus(); };
+  const b1 = $('#to1');  if (b1) b1.onclick = () => { put(0, i); };
+  const b2 = $('#to2');  if (b2) b2.onclick = () => { put(1, i); };
+  const br = $('#to1r'); if (br) br.onclick = () => {
+    if (confirm('起動し直すと、いま遊んでいるところまでが失われます。よろしいですか。')) {
+      put(0, i); reboot();
+    } else { drawDisks(); $('#canvas').focus(); }
+  };
+}
+
+/* ドライブに入れる。diskdrv_setfdd は入れ物（マクロ）で、実体は
+   diskdrv_setfddex(drv, name, ftype, readonly)。ftype=0 は拡張子から見分けさせる。 */
+function put(slot, i) {
+  const path = WORK + '/' + DISKS[i].file;
+  try {
+    Module.ccall('diskdrv_setfddex', null,
+                 ['number', 'string', 'number', 'number'], [slot, path, 0, 0]);
+    if (inFD[1 - slot] === i) inFD[1 - slot] = null;
+    inFD[slot] = i;
+    rememberPick();
+    drawDisks();
+    $('#canvas').focus();
+  } catch (e) {
+    alert('差し替えられませんでした');
+    drawDisks();
+  }
+}
+
+function reboot() {
+  try { Module.ccall('pccore_reset', null, [], []); $('#canvas').focus(); }
+  catch (e) { alert('起動し直せませんでした'); }
+}
+
+/* リセットは押し間違えると痛い。一度だけ確かめる。 */
+function askReboot() {
+  if (confirm('本体をリセットします。いま遊んでいるところまでが失われます。よろしいですか。')) reboot();
+  else $('#canvas').focus();
+}
+
+
+/* 一度も触られていないと、キーは心臓まで届かない（この画面は iframe の中）。
+   押す場所を出して、触られたら消す。 */
+function showHint() {
+  if ($('#hint')) return;
+  const d = document.createElement('div');
+  d.id = 'hint';
+  d.textContent = '画面をクリックすると操作できます';
+  document.body.appendChild(d);
+  setTimeout(() => { const h = $('#hint'); if (h && KEYS === 0) h.style.opacity = '.55'; }, 4000);
+}
+function hideHint() { const h = $('#hint'); if (h) h.remove(); }
+
+/* 短い言づて。画面の上に少しのあいだ出す。 */
+let toastT = null;
+function toast98(t) {
+  let el = $('#tst');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'tst';
+    document.body.appendChild(el);
+  }
+  el.textContent = t;
+  el.style.opacity = '1';
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.style.opacity = '0'; }, 2600);
+}
+
+/* 心臓の設定。組み直さずに効く。
+   - SampleHz … 心臓が作る音の周波数。**ブラウザが鳴らす周波数と揃える**。
+     食い違うと音程がずれる（低く聞こえる）。端末ごとに違うので、その場で聞いて合わせる。
+   - Latencys … 音の溜め（ミリ秒）。大きいほど途切れにくい。遅れは増える。
+   - MS_RAPID … マウスの動きを速くする。画面を引き伸ばしている分、既定では鈍い。
+   - clk_mult … CPU の倍率。URL に ?clk=N を付けたときだけ書く（重いときに下げる）。 */
+function browserRate() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const c = new AC();
+    const r = c.sampleRate;
+    c.close && c.close();
+    /* 心臓が受け付ける値だけ。外れていたら 48000 に寄せる。 */
+    return [11025, 22050, 44100, 48000, 88200, 96000].includes(r) ? r : 48000;
+  } catch (e) { return 48000; }
+}
+function defaultCfg() {
+  const clk = Number(qs.get('clk') || 0);
+  const lines = [
+    '[NekoProject21kai]',
+    'SampleHz=' + browserRate(),
+    'Latencys=' + (qs.get('lat') || 100),
+    'MS_RAPID=true',
+  ];
+  if (clk >= 1 && clk <= 32) lines.push('clk_mult=' + clk);
+  return lines.join('\n') + '\n';
+}
+let savedCfg = null;
+const savedSlots = {};
+
+/* 起動前にドライブを決める。
+   HDD ものは起動に MS-DOS のフロッピーが要るなど、その本のディスクだけでは組めないことがある。
+   台帳にあるディスクなら**どれでも足せる**ようにしておく。 */
+function askDisks() {
+  return new Promise(resolve => {
+    const draw = () => {
+      const opt = sel => DISKS.map((d, i) =>
+        `<option value="${i}"${sel === i ? ' selected' : ''}>${esc(diskName(d))}` +
+        `${d.borrowed ? '（' + esc(d.from) + '）' : ''}${d.hdd ? '［HDD］' : ''}</option>`
+      ).join('') + `<option value="-1"${sel == null || sel < 0 ? ' selected' : ''}>入れない</option>`;
+
+      /* 足せるものは、道具（MS-DOS 等）を先に。起動ディスクを探しているのだから。 */
+      const rest = ALL.filter(d => idxOfFile(d.file) < 0);
+      const tools = rest.filter(d => d.kind !== 'game');
+      const games = rest.filter(d => d.kind === 'game');
+      const grp = (label, list) => list.length
+        ? `<optgroup label="${esc(label)}">` + list.map(d =>
+            `<option value="${esc(d.file)}">${esc(d.from)} — ${esc(diskName(d))}${d.hdd ? '［HDD］' : ''}</option>`
+          ).join('') + '</optgroup>'
+        : '';
+
+      $('#st').innerHTML = `
+        <div style="text-align:left;max-width:520px;margin:0 auto">
+          <div style="color:var(--dim);font-size:12.5px;margin-bottom:12px">
+            どのディスクをどのドライブに入れますか。<br>
+            <b>HDD のものは、起動に MS-DOS のフロッピーが要ります。</b>
+            下の「ほかから足す」で持ってきてください。<br>
+            起動したあとも下の帯から入れ替えられます。
+          </div>
+          <div class="field"><label>Aドライブ（ここから起動します）</label>
+            <select id="fd1">${opt(inFD[0])}</select></div>
+          <div class="field"><label>Bドライブ</label>
+            <select id="fd2">${opt(inFD[1])}</select></div>
+          <div class="field"><label>ほかから足す（道具ディスク・別の本）</label>
+            <select id="fdadd">
+              <option value="">— 選ぶと組み合わせに加わります —</option>
+              ${grp('道具（MS-DOS・BASIC など）', tools)}
+              ${grp('ほかの本', games)}
+            </select></div>
+          <button class="hbtn" id="fdblank">ブランクディスクを作って足す</button>
+          <div style="color:var(--dim2);font-size:11.5px;margin:6px 0 14px">
+            セーブ用の空ディスクです。<b>整形済みなので、そのまま書き込めます。</b>
+            書いた中身は端末に残ります。
+          </div>
+          <button class="primary" id="fdgo">この組み合わせで起動</button>
+        </div>`;
+
+      /* 同じ1枚を両方には入れられない。選んだら、もう一方から外す。 */
+      $('#fd1').onchange = e => {
+        const n = Number(e.target.value);
+        inFD[0] = n < 0 ? null : n;
+        if (inFD[0] != null && inFD[0] === inFD[1]) inFD[1] = null;
+        draw();
+      };
+      $('#fd2').onchange = e => {
+        const n = Number(e.target.value);
+        inFD[1] = n < 0 ? null : n;
+        if (inFD[1] != null && inFD[1] === inFD[0]) inFD[0] = null;
+        draw();
+      };
+      $('#fdblank').onclick = () => {
+        const i = addBlank();
+        if (inFD[1] == null) inFD[1] = i; else if (inFD[0] == null) inFD[0] = i;
+        draw();
+      };
+      $('#fdadd').onchange = e => {
+        const f = e.target.value;
+        if (!f) return;
+        const i = addDisk(f);
+        /* 足したものは、空いているドライブに入れておく。たいてい起動ディスクなので A を優先。 */
+        if (inFD[0] == null) inFD[0] = i; else if (inFD[1] == null) inFD[1] = i;
+        draw();
+      };
+      $('#fdgo').onclick = () => {
+        rememberPick();
+        $('#bar').style.display = '';
+        $('#st').textContent = '';
+        resolve();
+      };
+    };
+
+    $('#load').classList.remove('hide');
+    $('#bar').style.display = 'none';
+    $('#err').textContent = '';
+    $('#nm').textContent = title.name;
+    draw();
+  });
+}
+
+(async function start() {
+  if (!id) return fail('どの本かが分かりません');
+  let cat;
+  try { cat = await (await fetch('./pc98.json?v=1', { cache: 'no-cache' })).json(); }
+  catch (e) { return fail('PC-98 の台帳が読めません'); }
+  title = (cat.titles || []).find(t => t.id === id);
+  if (!title) return fail('台帳にありません');
+  files = LS.get('files', {});
+  ALL = buildAll(cat);
+  DISKS = title.disks.map(d => ({ ...d, from: title.name, kind: title.kind }));
+  $('#nm').textContent = title.name;
+  document.title = title.name;
+
+  /* 起動する1枚。台帳の見立ては名前から推したものなので外れる（麻雀大会は B が本体だった）。
+     複数枚組と HDD ものは本人に決めてもらう。
+     HDD ものは起動に MS-DOS のフロッピーが要るので、1枚でも必ず聞く。 */
+  const order = DISKS.map((d, i) => i)
+    .sort((a, b) => (DISKS[b].file === title.boot) - (DISKS[a].file === title.boot));
+  inFD = [order[0] ?? null, order.length > 1 ? order[1] : null];
+
+  const saved = PICK[title.id];
+  if (saved && !Array.isArray(saved)) {
+    /* 前に決めた組み合わせを戻す。借りてきたディスクもここで作業台に戻す。 */
+    for (const f of (saved.extra || [])) addDisk(f);
+    /* 前に作ったブランクも戻す。中身は手元の控えから取る（セーブが入っている）。 */
+    for (const f of (saved.blanks || [])) {
+      if (DISKS.some(d => d.file === f)) continue;
+      BLANKS[f] = makeBlankFDI();
+      DISKS.push({ file: f, label: f.replace(/\.[^.]+$/, ''), hdd: false,
+                   bytes: FDI_HEAD + FDI_BODY, from: '新しく作った', kind: 'blank', blank: true });
+    }
+    inFD = [saved.a ? idxOfFile(saved.a) : null, saved.b ? idxOfFile(saved.b) : null];
+    if (inFD[0] === -1) inFD[0] = null;
+    if (inFD[1] === -1) inFD[1] = null;
+    /* 同じ1枚を両方の口に入れない。覚え書きが壊れていても、ここで弾く。 */
+    if (inFD[0] != null && inFD[0] === inFD[1]) inFD[1] = null;
+  } else if (DISKS.length > 1 || DISKS.some(d => d.hdd)) {
+    await askDisks();
+  }
+
+  /* 前に遊んだときの設定とセーブの枠を戻す */
+  try {
+    const c = await DISK.get('cfg-' + title.id);
+    if (c) savedCfg = new Uint8Array(await c.arrayBuffer());
+  } catch (e) {}
+  for (const n of SLOTS) {
+    try {
+      const h = await DISK.get(slotKey(n));
+      if (h) savedSlots[n] = new Uint8Array(await h.arrayBuffer());
+    } catch (e) {}
+  }
+
+  const want = ROMS.concat(DISKS.map(d => d.file));
+  const total = ROMS.length + DISKS.length;
+  const blobs = {};
+  for (let i = 0; i < want.length; i++) {
+    const n = want[i];
+    say(n + ' を取り寄せています…（' + (i + 1) + '/' + total + '）');
+    try {
+      blobs[n] = await grab(n, (DISKS.find(d => d.file === n) || {}).bytes,
+        (got, len) => bar(((i + got / len) / total) * 100));
+    } catch (e) {
+      if (ROMS.includes(n) && n !== 'FONT.ROM' && n !== 'BIOS.ROM') { blobs[n] = null; continue; }
+      return fail(e.message + '<br><br>PC-98 は BIOS と フォントの ROM が要ります。' +
+        '<code>tools/upload-to-pcloud.py --pc98</code> で棚へ上げてください。');
+    }
+    bar(((i + 1) / total) * 100);
+  }
+
+  say('心臓を起こしています…');
+  window.Module = {
+    canvas: $('#canvas'),
+    /* HDD は口が別なので必ず積む。フロッピーは選んだものだけ。
+       np2_main が拡張子を見て HDD / FD のドライブへ割り当てる。 */
+    arguments: DISKS.filter(d => d.hdd).map(d => d.file)
+      .concat(inFD.filter(i => i !== null && i >= 0).map(i => DISKS[i].file)),
+    print:    t => np('・', t),
+    printErr: t => np('!', t),
+    preRun: [function () {
+      Module.addRunDependency('np2files');
+      try {
+        for (const [n, d] of Object.entries(blobs)) if (d) FS.writeFile(WORK + '/' + n, d);
+        /* 前に遊んだときの設定があれば戻す。無ければこちらの見立てで書く。
+           一度書けば、あとは本体のメニューでの変更がそのまま残る。 */
+        if (savedCfg) FS.writeFile('/np21kai.cfg', savedCfg);
+        else FS.writeFile('/np21kai.cfg', defaultCfg());
+        /* 前に残したセーブの枠を戻す。 */
+        for (const n of SLOTS) if (savedSlots[n]) FS.writeFile(slotPath(n), savedSlots[n]);
+      } catch (e) { fail('置き場を作れません: ' + e.message); }
+      Module.removeRunDependency('np2files');
+    }],
+    onRuntimeInitialized: () => {
+      $('#load').classList.add('hide');
+      drawDisks();
+      /* 画面を押したら鍵が心臓に向くようにしておく。帯のボタンを押すと外れるので。 */
+      const cv = $('#canvas');
+      cv.addEventListener('pointerdown', () => { cv.focus(); hideHint(); });
+      addEventListener('keydown', () => { KEYS++; hideHint(); }, true);
+      cv.focus();
+      try { window.focus(); } catch (e) {}
+      /* 一度も押されていないうちは、押す場所を教える。
+         「どれかキーを押してください」で止まる本が多い。 */
+      showHint();
+    },
+  };
+  /* 起きてこないことがある。押せる場所が無いと何も分からないので、
+     待っているあいだにもログを出せるようにしておく。 */
+  const lb2 = $('#lgb2');
+  lb2.classList.remove('hide');
+  lb2.onclick = () => {
+    const box = $('#lg');
+    box.classList.toggle('hide');
+    if (!box.classList.contains('hide')) box.textContent = report();
+  };
+  /* 15秒たっても起きてこなければ、そう言う。黙って待たせない。 */
+  setTimeout(() => {
+    if (!$('#load').classList.contains('hide')) {
+      say('心臓が起きてきません。「ログ」を押すと、いま分かることが出ます');
+      $('#bar').style.display = 'none';
+    }
+  }, 15000);
+
+  const s = document.createElement('script');
+  s.src = './np2/emnp21kai_sdl2' + (CORE_KIND === 'jspi' ? '_jspi' : '') + '.js?v=2';
+  s.onerror = () => fail('心臓を読み込めません（np2/ が置き場にありません）');
+  document.body.appendChild(s);
+})();
+
+/* 離れるとき・隠れるときに、書き換わったディスクを手元へ書き戻す。 */
+/* 動きの記録。端末やブラウザをまたいで「機械のせいか」を見分けるために残す。
+   最新10回だけ。中身は数字と端末の型だけで、個人のものは入れない。 */
+function saveRun() {
+  try {
+    const sec = Math.max(1, (Date.now() - T0) / 1000);
+    if (sec < 8) return;                       // すぐ閉じたものは当てにならない
+    const runs = LS.get('runs', []);
+    runs.unshift({
+      at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      name: title ? title.name : '?',
+      core: CORE_KIND,
+      fps: +(DRAWS / sec).toFixed(1),
+      loop: +(TICKS / sec).toFixed(1),
+      j: jitter(),
+      sec: Math.round(sec),
+      rate: browserRate(),
+      cpu: navigator.hardwareConcurrency || 0,
+      mem: navigator.deviceMemory || 0,
+      ua: (navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/) || ['?'])[0],
+      os: (navigator.userAgent.match(/\((.*?)\)/) || ['', '?'])[1].slice(0, 40),
+      px: screen.width + '×' + screen.height,
+    });
+    LS.set('runs', runs.slice(0, 10));
+  } catch (e) {}
+}
+addEventListener('pagehide', () => { keep(); saveRun(); });
+addEventListener('visibilitychange', () => { if (document.hidden) { keep(); saveRun(); } });
+</script>
+</body>
+</html>
