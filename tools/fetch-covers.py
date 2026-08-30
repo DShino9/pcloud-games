@@ -37,7 +37,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 gamed
 # 守らないと 429（叩きすぎ）で全部断られる（実際に踏んだ）。
 WIKI_UA = "gamedana/1.0 (personal game shelf; d_shino@hotmail.com)"
 WIKI_WAIT = 1.5          # 秒。これより速く叩かない
-SEARCH_WAIT = 8.0        # 画像検索の間隔。速いと相手が壊れて無関係な結果を返す
+SEARCH_WAIT = 2.0        # 画像検索の間隔。速いと相手が壊れて無関係な結果を返す
 
 
 def vg_md5(p: Path):
@@ -77,35 +77,43 @@ def shrink(src: Path, dst: Path):
                    check=True, capture_output=True)
 
 
-def img_search(query, want=12):
-    """画像検索から「絵の直リンク」と「その絵に付いている題名」を拾う。**最後の手段。**
-       まとめ場（libretro）に無いもの——PC-98 の光栄ものなど——はここしかない。
+_VQD = {}
 
-       **絵だけ見て選んではいけない。** 大きさと縦横比だけで通すと、
-       ルンバの写真やF1の車やカタカナ表が箱絵として入る（実際に63枚入れて全部捨てた）。
-       検索結果には題名が付いているので、そこと本の名前を突き合わせる。"""
+def img_search(query, want=30):
+    """画像検索。**題名と大きさが JSON で返る口を使う。**
+
+       掻き取り（Bing の HTML）は続けて叩くと相手が壊れ、
+       水滸伝に Minecraft を返し始める（実測）。こちらは素直に JSON を返す。
+
+       戻すのは (絵の在処, その絵に付いている題名, 幅, 高さ)。
+       **絵だけ見て選んではいけない。** 大きさと形だけで通すと、
+       ルンバや F1 の車やカタカナ表が箱絵として入る（63枚入れて全部捨てた）。"""
     from urllib.parse import quote
-    import html as _h
-    url = "https://www.bing.com/images/search?q=" + quote(query) + "&form=HDRSC2"
-    try:
-        req = Request(url, headers={"User-Agent": UA})
-        with urlopen(req, timeout=30) as r:
-            s2 = r.read().decode("utf-8", "replace")
-    except Exception:
-        return []
-    out, seen = [], set()
-    for b in re.findall(r'm="(\{[^"]*?\})"', s2):
+    if "vqd" not in _VQD:
         try:
-            j = json.loads(_h.unescape(b))
+            with urlopen(Request("https://duckduckgo.com/?q=" + quote(query) +
+                                 "&iax=images&ia=images",
+                                 headers={"User-Agent": UA}), timeout=30) as r:
+                m = re.search(r'vqd=["\']?([\d-]+)', r.read().decode("utf-8", "replace"))
+            if not m:
+                return []
+            _VQD["vqd"] = m.group(1)
         except Exception:
-            continue
-        u, t = j.get("murl"), j.get("t") or ""
-        if not u or u in seen:
-            continue
-        seen.add(u)
-        out.append((u.replace("\\u0026", "&"), t))
-        if len(out) >= want:
-            break
+            return []
+    api = ("https://duckduckgo.com/i.js?l=jp-jp&o=json&q=" + quote(query) +
+           "&vqd=" + _VQD["vqd"] + "&f=,,,&p=1")
+    try:
+        with urlopen(Request(api, headers={"User-Agent": UA,
+                                           "Referer": "https://duckduckgo.com/"}),
+                     timeout=30) as r:
+            j = json.loads(r.read().decode("utf-8", "replace"))
+    except Exception:
+        _VQD.pop("vqd", None)      # 合言葉が古びたら取り直す
+        return []
+    out = []
+    for it in j.get("results", [])[:want]:
+        out.append((it.get("image", ""), it.get("title", ""),
+                    it.get("width", 0), it.get("height", 0)))
     return out
 
 
@@ -400,10 +408,21 @@ def main():
                     print(f"  無い: {t['name']}")
                     continue
                 # まとめ場に無い。画像検索で埋める。
-                q = f"{t['name']} PC-9801 パッケージ 箱"
+                # 言い方を変えて当て直す。一つ目で当たれば残りは叩かない。
+                # 「箱」を足すと箱の写真に寄るが、そもそも出ない本もあるので順に緩める。
+                cands = []
+                for q in (f"{t['name']} PC-9801 パッケージ 箱",
+                          f"{t['name']} PC98 パッケージ",
+                          f"{t['name']} PC-9801"):
+                    cands = img_search(q)
+                    if any(title_ok(t["name"], c[1]) for c in cands):
+                        break
+                    time.sleep(SEARCH_WAIT)
                 hit = False
-                for u, wt in img_search(q):
+                for u, wt, w, h in cands:
                     if not title_ok(t["name"], wt):
+                        continue
+                    if min(w, h) < 300 or not (0.55 <= w / max(h, 1) <= 1.6):
                         continue
                     if a.dry_run:
                         print(f"  [検索] {t['name']}  ← {wt[:50]}"); hit = True; break

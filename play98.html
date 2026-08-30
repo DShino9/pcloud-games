@@ -126,6 +126,16 @@ let LASTDRAW = 0;
 })();
 
 /* 揺らぎの具合。中央値と比べて、どれだけ散らばっているか。 */
+/* 10秒ごとの並び。**平均は揺れを打ち消す。**
+   「出だしは良く、途中から重くなる」も「速くなったり重くなったり」も、
+   通しの平均では 1つの数字に潰れて見えない。刻んで残す。 */
+const TL = [];
+let TLLAST = 0;
+setInterval(() => {
+  TL.push(Math.round((DRAWS - TLLAST) / 10));
+  TLLAST = DRAWS;
+  if (TL.length > 60) TL.shift();      // 10分ぶん
+}, 10000);
 function jitter() {
   if (GAPS.length < 8) return null;
   const a = GAPS.slice().sort((x, y) => x - y);

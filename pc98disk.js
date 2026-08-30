@@ -39,21 +39,41 @@ function makeBlank(opt = {}) {
     const o = FDI_HEAD + start * SEC;
     buf[o] = 0xFE; buf[o + 1] = 0xFF; buf[o + 2] = 0xFF;
   }
+
+  /* 名札（ボリュームラベル）。差したとき DIR で名前が出るので、
+     どのセーブディスクかが本体の中からも分かる。
+     **英数字だけ。** FAT の名札は 8.3 の枠に生バイトで入るので、
+     日本語は Shift-JIS に直さないと化ける。化けるくらいなら付けない。 */
+  const lb = String(opt.label || '').toUpperCase().replace(/[^A-Z0-9 _-]/g, '');
+  if (lb) {
+    const o = FDI_HEAD + 5 * SEC;               // 予約1 + FAT 2×2 = 5セクタ目がルート
+    const t = lb.padEnd(11).slice(0, 11);
+    for (let i = 0; i < 11; i++) buf[o + i] = t.charCodeAt(i);
+    buf[o + 11] = 0x08;                          // 名札の印
+  }
   return buf;
 }
 
 /* ---- 読む ---- */
-/* 頭を外して中身と見出しを取り出す。HDD（.hdi）も頭の大きさが書いてある。 */
+/* 頭を外して中身と見出しを取り出す。
+
+   **拡張子で決めない。** 道具箱で作ったディスクは名前に拡張子が無いことがあり、
+   名前だけで判断すると頭を外し損ねて「読めない」になる（実際にそうなった）。
+   候補をいくつか当てて、**見出しがちゃんと読めたところ**を採る。 */
 function open(bytes, name = '') {
   const ext = (name.split('.').pop() || '').toLowerCase();
-  let head = 0;
-  if (ext === 'fdi' || ext === 'hdi') {
-    const h = le32(bytes, 0x08);
-    if (h > 0 && h < bytes.length) head = h;
+  const tries = [];
+  const h = le32(bytes, 0x08);                 // FDI/HDI は頭の大きさが書いてある
+  if (h > 0 && h < bytes.length) tries.push(h);
+  tries.push(0, FDI_HEAD);
+  for (const head of tries) {
+    const body = bytes.subarray(head);
+    const bpb = readBPB(body);
+    if (bpb) return { head, body, bpb, ext };
   }
-  const body = bytes.subarray(head);
-  const bpb = readBPB(body);
-  return { head, body, bpb, ext };
+  /* どれも読めない。中身は返すので、生のまま扱う道は残す。 */
+  const head = tries[0] || 0;
+  return { head, body: bytes.subarray(head), bpb: null, ext };
 }
 
 function readBPB(b) {

@@ -116,6 +116,7 @@ function render() {
   if (h === '#/relay') return screenRelay();
   if (h === '#/edit')  return screenEdit();
   if (h === '#/runs')  return screenRuns();
+  if (h === '#/disks') return screenDisks();
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
@@ -468,6 +469,7 @@ function screenSet() {
       <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">選んで上げる・下げる</span></button>
       <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
+      <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
     </div>
@@ -486,6 +488,7 @@ function screenSet() {
   $('#log').onclick    = () => go('#/log');
   $('#runs').onclick   = () => go('#/runs');
   $('#relay').onclick  = () => go('#/relay');
+  $('#disks').onclick  = () => go('#/disks');
   $('#edit').onclick   = () => go('#/edit');
   $('#repick').onclick = () => go('#/pick/0');
   $('#rescan').onclick = async () => {
@@ -754,6 +757,25 @@ async function removeCached(key) {
 /* ============ 動きの記録 ============ */
 /* PC-98 を動かすたびに、毎秒何コマ出たかを端末の型と一緒に残している（最新10回）。
    「重いのは機械のせいか、作りのせいか」を、端末をまたいで見分けるため。 */
+/* 10秒ごとのコマ数を横に並べた棒。
+   通しの平均では見えないもの——「出だしは良く途中から重くなる」
+   「速くなったり重くなったり」——は、この形で初めて出る。 */
+function spark(tl) {
+  if (!Array.isArray(tl) || tl.length < 2) return '';
+  const top = Math.max(60, ...tl);
+  const bars = tl.map((v, i) => {
+    const h = Math.max(2, Math.round(v / top * 26));
+    const c = v >= 50 ? 'var(--ok)' : v >= 30 ? 'var(--warn)' : 'var(--danger)';
+    return `<i title="${i * 10}〜${i * 10 + 10}秒: ${v}コマ/秒"
+      style="display:inline-block;width:5px;height:${h}px;background:${c};
+             margin-right:1px;vertical-align:bottom;border-radius:1px"></i>`;
+  }).join('');
+  const lo = Math.min(...tl), hi = Math.max(...tl);
+  return `<div style="margin-top:6px;line-height:0">${bars}</div>
+    <div class="sub" style="margin-top:3px">10秒ごと・${tl.length * 10}秒ぶん
+      ・いちばん遅いとき ${lo}／速いとき ${hi} コマ/秒${hi - lo >= 15 ? '（<b>揺れている</b>）' : ''}</div>`;
+}
+
 function screenRuns() {
   $('#title').textContent = '動きの記録';
   const runs = LS.get('runs', []);
@@ -762,7 +784,8 @@ function screenRuns() {
     <h2>動きの記録</h2>
     <p>PC-98 を動かすたびに、毎秒何コマ出たかを残しています（最新10回）。
        端末やブラウザを変えて比べると、重さの出どころが分かります。<br>
-       <b>PC-98 は毎秒60コマが満点。</b></p>
+       <b>60コマ/秒が満点。</b>棒は10秒ごとの並びで、
+       通しの平均では見えない「途中から重くなる」「速くなったり遅くなったり」が出ます。</p>
     ${runs.length ? `<div class="rowlist">${runs.map(r => `
       <div class="row" style="display:block;padding:11px 14px">
         <div style="display:flex;gap:8px;align-items:baseline">
@@ -775,6 +798,7 @@ function screenRuns() {
           ${esc(r.at)}・${esc(r.core)}・輪 ${esc(String(r.loop))}/秒・${esc(String(r.sec))}秒
         </div>
         <div class="sub">${esc(r.ua)}・${esc(r.os)}・CPU ${esc(String(r.cpu))}・${esc(String(r.mem))}GB・${esc(r.px)}・音 ${esc(String(r.rate))}Hz</div>
+        ${spark(r.tl)}
       </div>`).join('')}</div>`
       : '<div class="empty">まだ記録がありません。PC-98 を少し動かすと残ります。</div>'}
     ${runs.length ? '<button class="hbtn" id="cp" style="margin-top:12px">写す</button>' : ''}
@@ -786,7 +810,9 @@ function screenRuns() {
   $('#clr').onclick  = () => { LS.del('runs'); screenRuns(); };
   const cp = $('#cp');
   if (cp) cp.onclick = async () => {
-    const t = runs.map(r => `${r.at} ${r.fps}コマ/秒 輪${r.loop} ${r.name} [${r.core}] ${r.ua} ${r.os} CPU${r.cpu} ${r.mem}GB ${r.rate}Hz`).join('\n');
+    const t = runs.map(r => `${r.at} ${r.fps}コマ/秒 輪${r.loop} ${r.name} [${r.core}] ${r.ua} ${r.os} CPU${r.cpu} ${r.mem}GB ${r.rate}Hz
+  10秒ごと: ${(r.tl || []).join(' ')}
+  間隔: 中${r.j?.mid} p95 ${r.j?.p95} 最大 ${r.j?.max} 荒れ ${r.j?.rough}%`).join('\n');
     try { await navigator.clipboard.writeText(t); toast('写しました'); }
     catch (e) { $('#m').textContent = t; }
   };
