@@ -366,7 +366,7 @@ function play(id) {
   $('#pname').textContent = g.name;
   /* PC-98 は心臓が別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
-    ? './play98.html?id=' + encodeURIComponent(id) + '&v=21'
+    ? './play98.html?id=' + encodeURIComponent(id) + '&v=22'
     : './play.html?id=' + encodeURIComponent(id) +
       '&fid=' + S.files[P.nfc(g.files[0])] + '&v=6';
   $('#play').classList.remove('hide');
