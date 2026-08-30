@@ -80,7 +80,7 @@ html,body{overflow:hidden;background:#000}
   <div id="err"></div>
   <button class="hbtn hide" id="lgb2">ログ</button>
 </div>
-<script src="./core/pcloud.js?v=1"></script>
+<script src="./core/pcloud.js?v=2"></script>
 <script>
 'use strict';
 /* PC-98 を遊ぶ画面。コアは自分で組んだ NP2kai（MIT、np2/ にある）。
@@ -350,11 +350,10 @@ async function grab(name, expectBytes, onProg) {
       ? LS.get('relay', '') : location.origin + '/relay';
   const host = LS.get('host', P.HOSTS[0]);
   const auth = LS.get('auth', '');
-  /* pCloud の配信元は CORS を返さないので、中継所を通さないと中身を掴めない。 */
-  if (!relay) throw new Error('中継所が設定されていません');
-  const blob = await P.download(
-    P.relayUrl(relay, { fileid: fid, host, auth, pub: LS.get('pub', false) }),
-    onProg, expectBytes || 0);
+  /* fetchFile が道を順に降りる：中継所の直リンク → 公開リンク → 中継所なし。
+     中継所が未設定でも落ちていても、遅くなるだけで届く。
+     （公開リンクを使うかどうかは fetchFile が自分で決めるので、pub の設定は要らない） */
+  const blob = await P.fetchFile(relay, { fileid: fid, host, auth }, onProg, expectBytes || 0);
   await DISK.put(String(fid), blob.slice(), { 'x-name': encodeURIComponent(name) });
   return new Uint8Array(await blob.arrayBuffer());
 }

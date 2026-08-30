@@ -27,7 +27,7 @@ html,body{overflow:hidden;background:#000}
   <div class="msg" id="st">棚から取り寄せています…</div>
   <div id="err"></div>
 </div>
-<script src="./core/pcloud.js?v=1"></script>
+<script src="./core/pcloud.js?v=2"></script>
 <script>
 'use strict';
 
@@ -110,15 +110,11 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
       say(Math.round(got / 1e3).toLocaleString() + ' / ' + Math.round(len / 1e3).toLocaleString() + ' KB');
     };
     try {
-      if (relay) {
-        /* 直リンクで渡してもらえないものがある。そのときは公開リンク経由に降りる。 */
-        blob = await P.fetchFile(relay, { fileid: fid, host, auth }, tell, g.bytes);
-      } else {
-        /* pCloud の配信元は CORS を返さないので、中継所なしでは中身を掴めない。
-           api ホストの file_open は CORS が開いているが 2003 で使えなかった（実測）。 */
-        return fail('中継所が要ります。<br>棚の「設定 → 中継所」を開いて、' +
-                    'ゲーム棚用の中継所を1台立ててください（手順はその画面に書いてあります）。');
-      }
+      /* fetchFile が道を順に降りる：中継所の直リンク → 公開リンク → 中継所なし。
+         中継所が未設定でも落ちていても、遅くなるだけで遊べる。
+         ROM は元々まるごと読んでから起こすので、頭出しが効かない不利は無い。 */
+      if (!relay) say('中継所なしで取り寄せます。少し待ってください…');
+      blob = await P.fetchFile(relay, { fileid: fid, host, auth }, tell, g.bytes);
     } catch (e) { return fail('取り寄せられません: ' + e.message); }
     /* 一度取れたら手元に置く。次からは圏外でも遊べる。 */
     await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
@@ -140,6 +136,13 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   /* 日本語の言語ファイルは配られていない（ja-JP も ja も 404）。
      指定すると毎回 404 を出しに行くので、指定しない。 */
   window.EJS_color       = '#6ea8fe';
+  /* 軽くするための既定。触って重い端末（iPhone）で効く。
+     利用者が本体の設定で変えれば、そちらが優先される。 */
+  window.EJS_defaultOptions = {
+    shader: 'disabled',          // 画面の飾りを掛けない
+    rewindEnabled: 'disabled',   // 巻き戻しは常に記録し続けるので高くつく
+    vsync: 'enabled',            // 画面の更新に合わせる（出しすぎない）
+  };
   window.EJS_onGameStart = () => { $('#load').classList.add('hide'); };
 
   const s = document.createElement('script');
