@@ -401,7 +401,14 @@ $('#pfull').onclick = () => {
     return;
   }
   const req = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!req) return toast('この端末は全画面に対応していません');
+  /* iOS の Safari は動画以外を全画面にできない。
+     そこでは上の帯を畳んで、絵に画面を全部渡す。左上の丸で戻せる。
+     本当の全画面が要るなら「ホーム画面に追加」して、そこから開く。 */
+  if (!req) {
+    el.classList.add('wide');
+    toast('帯を畳みました。ホーム画面に追加すると、本当の全画面で開けます', 3600);
+    return;
+  }
   /* 押した流れの中でそのまま頼むこと。await をはさむと「利用者の操作」の資格が切れる。 */
   let r;
   try { r = req.call(el); } catch (e) { return toast('全画面にできません: ' + e.message); }
@@ -411,7 +418,10 @@ for (const ev of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror
   document.addEventListener(ev, paintFull);
 }
 
+$('#pback').onclick = () => { $('#play').classList.remove('wide'); };
+
 $('#pclose').onclick = async () => {
+  $('#play').classList.remove('wide');
   if (full()) { try { await document.exitFullscreen(); } catch (e) {} }
   $('#pframe').src = 'about:blank';       // 中の心臓を確実に止める
   $('#play').classList.add('hide');

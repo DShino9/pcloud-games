@@ -21,7 +21,17 @@
 body{--ratio:3/4; --fit:contain}
 
 /* 遊ぶ画面。棚の上に覆いかぶせる。 */
-#play{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+/* iOS の Safari は動画以外を全画面にできない（Fullscreen API が無い）。
+   そこでは代わりに「できるだけ広く」＝上の帯を畳んで、絵に全部渡す。
+   dvh を使うのは、iOS の URL 欄の出入りで高さが変わるため。 */
+#play{position:fixed;inset:0;height:100dvh;z-index:80;background:#000;
+  display:flex;flex-direction:column}
+#play.wide .top{display:none}
+#play.wide .back{display:flex}
+.back{display:none;position:absolute;left:max(8px, env(safe-area-inset-left));
+  top:max(8px, env(safe-area-inset-top));z-index:90;
+  width:34px;height:34px;border-radius:50%;align-items:center;justify-content:center;
+  background:rgba(12,12,16,.55);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:15px}
 /* 横持ちのとき、ノッチとホームバーの側に余白が要る。
    縦の safe-area しか見ていなかったので、ボタンが画面の外へ出ていた。 */
 #play .top{height:calc(var(--top) + 40px);padding-top:var(--top);flex:0 0 auto;
@@ -50,10 +60,11 @@ body{--ratio:3/4; --fit:contain}
     <span class="nm" id="pname"></span>
     <button class="hbtn" id="pfull">全画面</button>
   </div>
+  <button class="back" id="pback" title="帯を出す">▾</button>
   <iframe id="pframe" allow="autoplay; gamepad; fullscreen" allowfullscreen></iframe>
 </div>
 <div id="toast"></div>
 <script src="./core/pcloud.js?v=1"></script>
-<script src="./app.js?v=18"></script>
+<script src="./app.js?v=19"></script>
 </body>
 </html>
