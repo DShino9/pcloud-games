@@ -344,7 +344,10 @@ async function grab(name, expectBytes, onProg) {
   if (!fid) throw new Error(name + ' が pCloud の棚にありません');
   const hit = await DISK.get(String(fid));
   if (hit) return new Uint8Array(await hit.arrayBuffer());
-  const relay = LS.get('relay', '');
+  /* 入口（ds9）の下では、中継所は入口の中に同居している。設定させない。
+       ここは棚の一覧とは別のページなので、同じ判断を自前で持つ必要がある。 */
+    const relay = /(^|\.)github\.io$/.test(location.hostname)
+      ? LS.get('relay', '') : location.origin + '/relay';
   const host = LS.get('host', P.HOSTS[0]);
   const auth = LS.get('auth', '');
   /* pCloud の配信元は CORS を返さないので、中継所を通さないと中身を掴めない。 */
