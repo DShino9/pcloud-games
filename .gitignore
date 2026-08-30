@@ -13,3 +13,5 @@ _t*/
 *.rom
 .DS_Store
 _sheet.html
+_rom/
+_crashtest.html
