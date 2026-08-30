@@ -58,6 +58,16 @@ const T0 = Date.now();
     }
   }
 })();
+/* 10秒ごとの並び。**平均は揺れを打ち消す。**
+   「出だしは良く、途中から重くなる」も「速くなったり重くなったり」も、
+   通しの平均では 1つの数字に潰れて見えない。刻んで残す。 */
+const TL = [];
+let TLLAST = 0;
+setInterval(() => {
+  TL.push(Math.round((DRAWS - TLLAST) / 10));
+  TLLAST = DRAWS;
+  if (TL.length > 60) TL.shift();      // 10分ぶん
+}, 10000);
 function jitter() {
   if (GAPS.length < 8) return null;
   const a = GAPS.slice().sort((x, y) => x - y);
@@ -163,7 +173,7 @@ function saveRun() {
       at: new Date().toISOString().slice(0, 16).replace('T', ' '),
       name: GAME.name, core: GAME.core,
       fps: +(DRAWS / sec).toFixed(1), loop: 0, sec: Math.round(sec),
-      j: jitter(), rate: 0,
+      j: jitter(), tl: TL.slice(), rate: 0,
       cpu: navigator.hardwareConcurrency || 0,
       mem: navigator.deviceMemory || 0,
       ua: (navigator.userAgent.match(/(CriOS|Chrome|Firefox|Version|Edg)\/[\d.]+/) || ['?'])[0],

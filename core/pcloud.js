@@ -234,6 +234,12 @@ function shelfCache(cacheName, prefix) {
       } catch (e) {}
       return out;
     },
+    /* 1枚だけ手元から外す。pCloud には触らない。 */
+    async del(id) {
+      if (!('caches' in window)) return false;
+      try { const c = await caches.open(cacheName); return await c.delete(key(id)); }
+      catch (e) { return false; }
+    },
     async clear() { if ('caches' in window) { try { await caches.delete(cacheName); } catch (e) {} } },
   };
 }
