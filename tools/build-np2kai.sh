@@ -174,11 +174,13 @@ fi
 MODE="${NP2KAI_MODE:-asyncify}"
 if [ "$MODE" = "jspi" ]; then
   EMLINK="-sALLOW_MEMORY_GROWTH=1 -sJSPI=1"
-  SUFFIX="_jspi"
 else
   EMLINK="-sALLOW_MEMORY_GROWTH=1 -sASYNCIFY=1 -sASYNCIFY_STACK_SIZE=32768"
-  SUFFIX=""
 fi
+# **器ごと分ける。** 出来上がりを後から改名しても、JS の中に焼き付いた
+# wasm の名前は変わらない。改名していたせいで
+# 「JSPI の JS が ASYNCIFY の wasm を読む」状態になり、起動が死んだ（実際に踏んだ）。
+OUT="$OUT/$MODE"
 EMLINK="$EMLINK -sFORCE_FILESYSTEM=1 -lidbfs.js"
 # 画面からディスクを差し替えるのに要る。diskdrv_setfdd は入れ物（マクロ）なので、
 # 実体の diskdrv_setfddex を名指しで外に出す。
@@ -219,10 +221,7 @@ make -j"$(sysctl -n hw.ncpu 2>/dev/null || echo 4)" emnp21kai_sdl2
 mkdir -p "$OUT"
 found=0
 for f in emnp21kai_sdl2.js emnp21kai_sdl2.wasm emnp21kai_sdl2.html emnp21kai_sdl2.data; do
-  if [ -f "$f" ]; then
-    out=$(echo "$f" | sed "s/emnp21kai_sdl2/emnp21kai_sdl2$SUFFIX/")
-    cp "$f" "$OUT/$out"; echo "置いた: np2/$out"; found=1
-  fi
+  if [ -f "$f" ]; then cp "$f" "$OUT/"; echo "置いた: np2/$MODE/$f"; found=1; fi
 done
 cp "$WORK/LICENSE" "$OUT/LICENSE.NP2kai"
 echo "NP2kai は MIT。LICENSE.NP2kai を必ず一緒に置くこと。" > "$OUT/README.txt"

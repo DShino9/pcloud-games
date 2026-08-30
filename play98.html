@@ -9,7 +9,7 @@
 <style>
 html,body{overflow:hidden;background:#000}
 /* 下の帯のぶんを空ける。絵が帯に隠れないように。 */
-#wrap{position:absolute;left:0;right:0;top:0;bottom:52px;
+#wrap{position:absolute;left:0;right:0;top:0;bottom:var(--barh, 52px);
   display:flex;align-items:center;justify-content:center}
 /* PC-98 の画面は 640×400。
    max-width だけだと「これ以上大きくしない」だけなので、640×400 のまま小さく置かれる。
@@ -26,7 +26,7 @@ html,body{overflow:hidden;background:#000}
 #err{color:var(--danger);font-size:13px;max-width:460px;line-height:1.7}
 /* 心臓の言い分。ここでしか分からないことがある。 */
 /* 画面のキーボード。帯の上に重ねる。横持ちでも収まるよう、字は小さめ。 */
-#kb{position:absolute;left:0;right:0;bottom:52px;z-index:8;
+#kb{position:absolute;left:0;right:0;bottom:var(--barh, 52px);z-index:8;
   padding:6px max(6px, env(safe-area-inset-right)) 6px max(6px, env(safe-area-inset-left));
   background:rgba(11,11,15,.96);border-top:1px solid var(--line)}
 #kb .kr{display:flex;gap:3px;margin-bottom:3px;justify-content:center}
@@ -54,6 +54,12 @@ html,body{overflow:hidden;background:#000}
           max(10px, env(safe-area-inset-left));
   overflow-x:auto;background:rgba(11,11,15,.94);
   border-top:1px solid var(--line);scrollbar-width:none}
+#disks::-webkit-scrollbar{display:none}
+/* 狭い画面では横に流さず折り返す。流すと、あるはずのボタンが見えない。 */
+@media (max-width:699px){
+  #disks{flex-wrap:wrap;overflow-x:visible;max-height:40vh;overflow-y:auto}
+  #disks .hbtn{padding:7px 9px;font-size:12.5px}
+}
 @media (min-width:700px){ #disks{backdrop-filter:blur(8px)} }
 #disks::-webkit-scrollbar{display:none}
 #disks .hbtn{flex:0 0 auto;padding:5px 10px;font-size:12px}
@@ -155,6 +161,12 @@ const JSPI_OK = typeof WebAssembly !== 'undefined' &&
                 typeof WebAssembly.Suspending === 'function' &&
                 typeof WebAssembly.promising === 'function';
 const CORE_KIND = qs.get('core') || (JSPI_OK ? 'jspi' : 'asyncify');
+/* 心臓の版。**組み直したら必ず上げる。**
+   .js だけ版を付けて .wasm に付けていなかったため、
+   「新しい JS ＋ 古い wasm」になって起動が死んだ（missing Wasm export）。
+   locateFile で wasm にも同じ版を付け、必ず対で取り替える。 */
+const CORE_V = '4';
+const CORE_DIR = './np2/' + CORE_KIND + '/';
 /* 確かめのときは音を出さない。器が作られる前に塞いでおく必要がある
    （出来てから止めても、一瞬鳴る）。 */
 if (MUTE) {
@@ -371,6 +383,20 @@ async function keep() {
 
 /* ディスクの入れ替え。PC-98 のドライブは A・B の2つ。3枚目からはここで差し替える。 */
 function drawDisks() {
+  try { drawDisksInner(); measureBar(); }
+  catch (e) {
+    /* 帯が組めないと、押す場所がひとつも無くなって手詰まりになる。
+       せめてログと閉じる手段は出す。 */
+    const el = $('#disks');
+    el.classList.remove('hide');
+    el.innerHTML = '<span class="lbl">帯を組めませんでした: ' + esc(e.message) + '</span>' +
+                   '<button class="hbtn" id="lgb3">ログ</button>';
+    const b = $('#lgb3');
+    if (b) b.onclick = () => { const x = $('#lg'); x.classList.toggle('hide'); x.textContent = report(); };
+  }
+}
+
+function drawDisksInner() {
   const el = $('#disks');
   el.classList.remove('hide');
   const many = DISKS.length > 1;
@@ -378,8 +404,12 @@ function drawDisks() {
     /* 1枚ものでも必ず出す。道具ディスクを借りたり、ブランクを足したりするのに要る。
        出していなかったため、覚えた組み合わせが悪いと抜け出せなくなっていた。 */
     '<button class="hbtn" id="repick">ディスクを選び直す</button>' +
-    '<button class="hbtn" id="save">セーブ</button>' +
-    '<button class="hbtn" id="load">戻す</button>' +
+    /* 名前は画面全体で一つ。読み込み中の覆いが load を名乗っているので、ここは別名にする。
+       同じ名前にしていたため、覆いの見た目（画面いっぱい）がボタンにも効いて帯を覆い尽くし、
+       さらに名前で引くと**ボタンのほうが先に見つかる**ので、
+       覆いを隠す命令がボタンに当たり、覆いが永遠に消えなかった。 */
+    '<button class="hbtn" id="stsave">セーブ</button>' +
+    '<button class="hbtn" id="stload">戻す</button>' +
     '<button class="hbtn" id="blank">ブランクを足す</button>' +
     (TOUCHY ? '<button class="hbtn" id="kbb">キー</button>' : '') +
     '<button class="hbtn" id="menu">メニュー</button>' +
@@ -399,6 +429,8 @@ function drawDisks() {
   /* メニューとマウス捕獲。心臓に口があれば直に呼ぶ。
      無ければ鍵を作って送る（本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
      口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。 */
+  /* 口があるか確かめる。**触るだけで止まる**ことがあるので、必ず包む
+     （emscripten は「無い口」に、触ると止まる仕掛けを置く）。 */
   const has98 = fn => {
     try { return typeof Module['_' + fn] === 'function'; } catch (e) { return false; }
   };
@@ -439,18 +471,20 @@ function drawDisks() {
       $('#canvas').focus();
     });
   };
-  const sv = $('#save');
+  const sv = $('#stsave');
   if (sv) sv.onclick = () => slotRow('どの枠に残しますか', n => {
+    if (!has98('np2web_savestate')) return toast98('この心臓はセーブに対応していません');
     try {
       Module.ccall('np2web_savestate', null, ['string'], [slotPath(n)]);
       toast98(n + ' に残しました');
       setTimeout(() => keep(), 1500);        // 書き出しは次のコマ。少し待ってから控える
     } catch (e) { toast98('残せませんでした（古い心臓かもしれません）'); }
   });
-  const ld = $('#load');
+  const ld = $('#stload');
   if (ld) ld.onclick = () => slotRow('どの枠から戻しますか', n => {
     refreshSlots();
     if (!slotHas[n]) return toast98(n + ' は空です');
+    if (!has98('np2web_loadstate')) return toast98('この心臓は巻き戻しに対応していません');
     try {
       Module.ccall('np2web_loadstate', null, ['string'], [slotPath(n)]);
       toast98(n + ' から戻しました');
@@ -537,6 +571,15 @@ function report() {
   L.push(NPLOG.length ? NPLOG.join('\n') : '（何も言っていない）');
   return L.join('\n');
 }
+
+/* 帯は折り返すので高さが変わる。絵と鍵盤の位置をそれに合わせる。 */
+function measureBar() {
+  const el = $('#disks');
+  const h = el.classList.contains('hide') ? 0 : Math.ceil(el.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--barh', h + 'px');
+}
+addEventListener('resize', measureBar);
+addEventListener('orientationchange', () => setTimeout(measureBar, 200));
 
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -953,6 +996,8 @@ function askDisks() {
   say('心臓を起こしています…');
   window.Module = {
     canvas: $('#canvas'),
+    /* wasm は JS が名前だけで取りに行く。版を付けないと古い控えを掴む。 */
+    locateFile: path => CORE_DIR + path + '?v=' + CORE_V,
     /* HDD は口が別なので必ず積む。フロッピーは選んだものだけ。
        np2_main が拡張子を見て HDD / FD のドライブへ割り当てる。 */
     arguments: DISKS.filter(d => d.hdd).map(d => d.file)
@@ -1006,7 +1051,7 @@ function askDisks() {
   }, 15000);
 
   const s = document.createElement('script');
-  s.src = './np2/emnp21kai_sdl2' + (CORE_KIND === 'jspi' ? '_jspi' : '') + '.js?v=2';
+  s.src = CORE_DIR + 'emnp21kai_sdl2.js?v=' + CORE_V;
   s.onerror = () => fail('心臓を読み込めません（np2/ が置き場にありません）');
   document.body.appendChild(s);
 })();
