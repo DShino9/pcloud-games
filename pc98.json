@@ -667,7 +667,8 @@
      "label": "(Disk 2 of 2)(Data Disk)",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0049.jpg"
   },
   {
    "id": "PC98-0001",
@@ -799,7 +800,8 @@
      "label": "B",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0052.jpg"
   },
   {
    "id": "PC98-0054",
@@ -832,7 +834,8 @@
      "label": "System",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0054.jpg"
   },
   {
    "id": "PC98-0056",
@@ -943,7 +946,8 @@
      "label": "ﾕｰｻﾞｰﾃﾞｨｽｸ",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0060.jpg"
   },
   {
    "id": "PC98-0062",
@@ -997,7 +1001,8 @@
      "label": "Program",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0062.jpg"
   },
   {
    "id": "PC98-0063",
@@ -1065,7 +1070,8 @@
      "label": "8",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0063.jpg"
   },
   {
    "id": "PC98-0061",
@@ -1119,7 +1125,8 @@
      "label": "ﾃﾞｨｽｸ5",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0061.jpg"
   },
   {
    "id": "PC98-0064",
@@ -1567,7 +1574,8 @@
      "label": "7",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0081.jpg"
   },
   {
    "id": "PC98-0082",
