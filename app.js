@@ -368,8 +368,12 @@ function play(id) {
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=21'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=5';
+      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=6';
   $('#play').classList.remove('hide');
+  /* 遊んでいるあいだ、棚は畳んでおく。
+     箱絵を数百枚抱えたままエミュレータを動かすと、iPhone では途中から重くなる
+     （出だしだけ速い、という出方をする）。畳めば絵の分の重さを手放せる。 */
+  main().style.display = 'none';
   /* 遊ぶ画面は iframe の中にある。そこへ焦点を移さないと、キーが棚側に吸われて
      心臓まで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
   const fr = $('#pframe');
@@ -411,6 +415,7 @@ $('#pclose').onclick = async () => {
   if (full()) { try { await document.exitFullscreen(); } catch (e) {} }
   $('#pframe').src = 'about:blank';       // 中の心臓を確実に止める
   $('#play').classList.add('hide');
+  main().style.display = '';
   await refreshHere();
   render();
 };
