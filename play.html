@@ -163,13 +163,32 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   setTimeout(() => { if (document.querySelector('#game canvas')) $('#load').classList.add('hide'); }, 8000);
 })();
 
-/* 動きの記録。棚の「設定 → 動きの記録」から読める。端末ごとの比較に使う。 */
-function saveRun() {
+/* 落ちたときに残す証拠。
+   **落ちると pagehide は来ない。** iOS が重さでページを畳むと、
+   その場で消えるので何も残らない。だから5秒ごとに書き続け、
+   ちゃんと閉じたときだけ「終わった」印を付ける。
+   印の無い記録＝**途中で切れた**＝落ちた、と読める。 */
+let ERR = '';
+addEventListener('error', e => {
+  ERR = ERR || ('しくじり: ' + (e.message || '') + ' @' + (e.filename || '').split('/').pop() + ':' + (e.lineno || ''));
+  saveRun(false);
+});
+addEventListener('unhandledrejection', e => {
+  ERR = ERR || ('待ちしくじり: ' + ((e.reason && e.reason.message) || e.reason || ''));
+  saveRun(false);
+});
+setInterval(() => saveRun(false), 5000);
+
+/* 動きの記録。棚の「設定 → 動きの記録」から読める。端末ごとの比較に使う。
+   done=false は書きかけ（同じ回を上書きしていく）。 */
+const RUNID = 'r' + T0;
+function saveRun(done = true) {
   try {
     const sec = Math.max(1, (Date.now() - T0) / 1000);
-    if (sec < 8 || !GAME) return;
-    const runs = LS.get('runs', []);
+    if (sec < 5 || !GAME) return;
+    const runs = LS.get('runs', []).filter(r => r.rid !== RUNID);   // 同じ回は上書き
     runs.unshift({
+      rid: RUNID, done, err: ERR,
       at: new Date().toISOString().slice(0, 16).replace('T', ' '),
       name: GAME.name, core: GAME.core,
       fps: +(DRAWS / sec).toFixed(1), loop: 0, sec: Math.round(sec),
@@ -183,8 +202,8 @@ function saveRun() {
     LS.set('runs', runs.slice(0, 10));
   } catch (e) {}
 }
-addEventListener('pagehide', saveRun);
-addEventListener('visibilitychange', () => { if (document.hidden) saveRun(); });
+addEventListener('pagehide', () => saveRun(true));
+addEventListener('visibilitychange', () => { if (document.hidden) saveRun(true); });
 </script>
 </body>
 </html>

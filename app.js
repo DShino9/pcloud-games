@@ -373,6 +373,39 @@ $('#hcell').onclick = () => {
 };
 $('#hset').onclick = () => go('#/set');
 
+/* ============ 動きの記録を棚へ上げる ============ */
+/* **手で写させない。** 落ちたときの記録は端末の中にあるが、
+   それを本人に写して貼ってもらうのは無駄。棚（pCloud）に上げておけば、
+   直す側がそのまま読める。
+
+   落ちると上げる隙も無いので、**遊んでいる最中に20秒ごと**上げ続ける。
+   中身は速さ・端末の型・しくじりの言い分だけ。遊んだ中身は入れない。 */
+function deviceTag() {
+  const ua = navigator.userAgent;
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad'
+           : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac'
+           : /Windows/.test(ua) ? 'Windows' : 'その他';
+  const br = (ua.match(/(CriOS|Chrome|Firefox|Edg)/) || [])[1] || 'Safari';
+  return `${os}-${br}-${screen.width}x${screen.height}`;
+}
+
+let RUNPUSH = 0, RUNTIMER = 0;
+async function pushRuns(force) {
+  if (!S.auth || !S.rootId) return;
+  const now = Date.now();
+  if (!force && now - RUNPUSH < 20000) return;
+  const runs = LS.get('runs', []);
+  if (!runs.length) return;
+  RUNPUSH = now;
+  try {
+    const fid = await P.ensureFolder(S.rootId, '_記録', { auth: S.auth });
+    const body = JSON.stringify({ 端末: deviceTag(), ua: navigator.userAgent,
+                                  上げた: new Date().toISOString(), runs }, null, 1);
+    await P.uploadFile(fid, deviceTag() + '.json',
+                       new Blob([body], { type: 'application/json' }), { auth: S.auth });
+  } catch (e) { RUNPUSH = 0; }      // 駄目なら次の機会にすぐ試す
+}
+
 /* ============ 遊ぶ ============ */
 function play(id) {
   const g = S.items.find(x => x.id === id);
@@ -386,7 +419,7 @@ function play(id) {
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=26'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=8';
+      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=9';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
@@ -399,6 +432,9 @@ function play(id) {
      コアまで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
   const fr = $('#pframe');
   fr.onload = () => { try { fr.contentWindow.focus(); } catch (e) {} };
+  /* 遊んでいるあいだ上げ続ける。落ちても直前までは棚に残る。 */
+  clearInterval(RUNTIMER);
+  RUNTIMER = setInterval(() => pushRuns(), 20000);
 }
 
 /* 棚側でキーが押されたら、それは行き先を間違えている。iframe へ焦点を戻す。 */
@@ -448,6 +484,8 @@ $('#pclose').onclick = async () => {
   $('#play').classList.add('hide');
   main().style.display = '';
   document.querySelector('header').style.display = '';
+  clearInterval(RUNTIMER); RUNTIMER = 0;
+  await pushRuns(true);
   await refreshHere();
   render();
 };
@@ -785,7 +823,9 @@ function screenRuns() {
     <p>PC-98 を動かすたびに、毎秒何コマ出たかを残しています（最新10回）。
        端末やブラウザを変えて比べると、重さの出どころが分かります。<br>
        <b>60コマ/秒が満点。</b>棒は10秒ごとの並びで、
-       通しの平均では見えない「途中から重くなる」「速くなったり遅くなったり」が出ます。</p>
+       通しの平均では見えない「途中から重くなる」「速くなったり遅くなったり」が出ます。<br>
+       <b>遊んでいるあいだ20秒ごとに棚へ上がります。</b>落ちても直前までは残るので、
+       手で写す必要はありません。</p>
     ${runs.length ? `<div class="rowlist">${runs.map(r => `
       <div class="row" style="display:block;padding:11px 14px">
         <div style="display:flex;gap:8px;align-items:baseline">
@@ -796,18 +836,27 @@ function screenRuns() {
         </div>
         <div class="sub" style="margin-top:3px">
           ${esc(r.at)}・${esc(r.core)}・輪 ${esc(String(r.loop))}/秒・${esc(String(r.sec))}秒
+          ${r.done === false ? '<b style="color:var(--danger)">・途中で切れた（落ちた）</b>' : ''}
         </div>
+        ${r.err ? `<div class="sub" style="color:var(--danger)">${esc(r.err)}</div>` : ''}
         <div class="sub">${esc(r.ua)}・${esc(r.os)}・CPU ${esc(String(r.cpu))}・${esc(String(r.mem))}GB・${esc(r.px)}・音 ${esc(String(r.rate))}Hz</div>
         ${spark(r.tl)}
       </div>`).join('')}</div>`
       : '<div class="empty">まだ記録がありません。PC-98 を少し動かすと残ります。</div>'}
     ${runs.length ? '<button class="hbtn" id="cp" style="margin-top:12px">写す</button>' : ''}
+    ${runs.length ? '<button class="hbtn" id="push" style="margin-top:12px;margin-left:6px">棚へ上げる</button>' : ''}
     <button class="hbtn" id="clr" style="margin-top:12px${runs.length ? ';margin-left:6px' : ''}">消す</button>
     <button class="hbtn" id="back" style="margin-left:6px">← 設定へ</button>
     <div class="msg" id="m"></div>
   </div>`;
   $('#back').onclick = () => go('#/set');
   $('#clr').onclick  = () => { LS.del('runs'); screenRuns(); };
+  const pu = $('#push');
+  if (pu) pu.onclick = async () => {
+    pu.disabled = true; $('#m').textContent = '上げています…';
+    await pushRuns(true);
+    $('#m').textContent = '棚の「_記録」に上げました'; pu.disabled = false;
+  };
   const cp = $('#cp');
   if (cp) cp.onclick = async () => {
     const t = runs.map(r => `${r.at} ${r.fps}コマ/秒 輪${r.loop} ${r.name} [${r.core}] ${r.ua} ${r.os} CPU${r.cpu} ${r.mem}GB ${r.rate}Hz
