@@ -30,11 +30,48 @@ html,body{overflow:hidden;background:#000}
 <script src="./core/pcloud.js?v=1"></script>
 <script>
 'use strict';
+
+/* 動きを測る。EmulatorJS は自分の中で絵を出すので、
+   WebGL の描画回数を数えて「毎秒何コマ出ているか」を見る。
+   iPhone で重いと言われたとき、憶測でなく数字で当たれるように。 */
+let DRAWS = 0, GAPS = [], LONG = 0, LASTDRAW = 0;
+const T0 = Date.now();
+(function () {
+  for (const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]) {
+    if (!C) continue;
+    for (const fn of ['drawArrays', 'drawElements']) {
+      const d = C.prototype[fn];
+      if (!d) continue;
+      C.prototype[fn] = function () {
+        if (fn === 'drawArrays') {
+          DRAWS++;
+          const t = performance.now();
+          if (LASTDRAW) {
+            const dt = t - LASTDRAW;
+            GAPS.push(dt); if (GAPS.length > 900) GAPS.shift();
+            if (dt > 100) LONG++;
+          }
+          LASTDRAW = t;
+        }
+        return d.apply(this, arguments);
+      };
+    }
+  }
+})();
+function jitter() {
+  if (GAPS.length < 8) return null;
+  const a = GAPS.slice().sort((x, y) => x - y);
+  const q = f => a[Math.min(a.length - 1, Math.floor(a.length * f))];
+  const mid = q(0.5);
+  return { mid: +mid.toFixed(1), p95: +q(0.95).toFixed(1), max: +a[a.length - 1].toFixed(1),
+           long: LONG, rough: +(a.filter(x => x > mid * 2).length / a.length * 100).toFixed(1) };
+}
 /* 遊ぶ画面。棚とは別の文書にしてある。
    EmulatorJS は同じ文書の中で作り直すのが難しく、前の心臓が残ると音だけ鳴り続ける。
    1本につき1文書にすれば、閉じた時点（iframe を about:blank にした時点）で確実に止まる。 */
 
 const P   = window.PCloud;
+let GAME = null;
 const LS  = P.store('pg');
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
 const $   = s => document.querySelector(s);
@@ -54,6 +91,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   const g = (cat.games || []).find(x => x.id === id);
   if (!g)      return fail('台帳にありません');
   if (!g.core) return fail(g.system + ' はブラウザでは動きません');
+  GAME = g;
   $('#nm').textContent = g.name;
   document.title = g.name;
 
@@ -108,6 +146,29 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   /* 起動の合図が来ないことがある。少し待って画面が出ていれば覆いを外す。 */
   setTimeout(() => { if (document.querySelector('#game canvas')) $('#load').classList.add('hide'); }, 8000);
 })();
+
+/* 動きの記録。棚の「設定 → 動きの記録」から読める。端末ごとの比較に使う。 */
+function saveRun() {
+  try {
+    const sec = Math.max(1, (Date.now() - T0) / 1000);
+    if (sec < 8 || !GAME) return;
+    const runs = LS.get('runs', []);
+    runs.unshift({
+      at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      name: GAME.name, core: GAME.core,
+      fps: +(DRAWS / sec).toFixed(1), loop: 0, sec: Math.round(sec),
+      j: jitter(), rate: 0,
+      cpu: navigator.hardwareConcurrency || 0,
+      mem: navigator.deviceMemory || 0,
+      ua: (navigator.userAgent.match(/(CriOS|Chrome|Firefox|Version|Edg)\/[\d.]+/) || ['?'])[0],
+      os: (navigator.userAgent.match(/\((.*?)\)/) || ['', '?'])[1].slice(0, 40),
+      px: screen.width + '×' + screen.height + '@' + (window.devicePixelRatio || 1),
+    });
+    LS.set('runs', runs.slice(0, 10));
+  } catch (e) {}
+}
+addEventListener('pagehide', saveRun);
+addEventListener('visibilitychange', () => { if (document.hidden) saveRun(); });
 </script>
 </body>
 </html>

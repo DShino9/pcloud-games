@@ -22,8 +22,12 @@ body{--ratio:3/4; --fit:contain}
 
 /* 遊ぶ画面。棚の上に覆いかぶせる。 */
 #play{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+/* 横持ちのとき、ノッチとホームバーの側に余白が要る。
+   縦の safe-area しか見ていなかったので、ボタンが画面の外へ出ていた。 */
 #play .top{height:calc(var(--top) + 40px);padding-top:var(--top);flex:0 0 auto;
-  display:flex;align-items:center;gap:8px;padding-left:10px;padding-right:10px;
+  display:flex;align-items:center;gap:8px;
+  padding-left:max(10px, env(safe-area-inset-left));
+  padding-right:max(10px, env(safe-area-inset-right));
   background:#0b0b0f;border-bottom:1px solid var(--line)}
 #play .top .nm{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis}
@@ -50,6 +54,6 @@ body{--ratio:3/4; --fit:contain}
 </div>
 <div id="toast"></div>
 <script src="./core/pcloud.js?v=1"></script>
-<script src="./app.js?v=17"></script>
+<script src="./app.js?v=18"></script>
 </body>
 </html>

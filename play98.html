@@ -36,9 +36,14 @@ html,body{overflow:hidden;background:#000}
   overflow:auto;background:rgba(8,8,11,.94);color:#c8c8d4;font:11.5px/1.55 ui-monospace,Menlo,monospace;
   white-space:pre-wrap;word-break:break-all}
 /* ディスクの入れ替え。PC-98 のドライブは A・B の2つしかないので、3枚目からは差し替えが要る。 */
+/* 横持ちのとき、ノッチとホームバーの側に余白が要る。
+   ぼかしは iPhone では毎コマ高くつくので、横持ちのときは使わない。 */
 #disks{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;
-  padding:8px 10px calc(var(--safe-b) + 8px);overflow-x:auto;background:rgba(11,11,15,.86);
-  backdrop-filter:blur(8px);border-top:1px solid var(--line);scrollbar-width:none}
+  padding:8px max(10px, env(safe-area-inset-right)) calc(var(--safe-b) + 8px)
+          max(10px, env(safe-area-inset-left));
+  overflow-x:auto;background:rgba(11,11,15,.94);
+  border-top:1px solid var(--line);scrollbar-width:none}
+@media (min-width:700px){ #disks{backdrop-filter:blur(8px)} }
 #disks::-webkit-scrollbar{display:none}
 #disks .hbtn{flex:0 0 auto;padding:5px 10px;font-size:12px}
 #disks .hbtn.in1{border-color:var(--accent);color:var(--accent)}

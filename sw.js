@@ -5,7 +5,7 @@
    ここでは必ず no-cache を付けて取りに行く。公開しただけで直ったことにしない。 */
 const SHELL = 'pg-shell-v1';
 const FILES = [
-  './', './index.html', './app.js?v=17', './play.html',
+  './', './index.html', './app.js?v=18', './play.html',
   './core/pcloud.js?v=1', './core/shelf.css?v=1',
   './np2/emnp21kai_sdl2_jspi.js?v=2', './np2/emnp21kai_sdl2_jspi.wasm',
   './games.json?v=1', './pc98.json?v=1', './play98.html',
