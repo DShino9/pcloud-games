@@ -1,0 +1,3093 @@
+{
+ "note": "RetroArch の np2kai フォルダから起こした。作り直すには tools/build-pc98-catalog.py",
+ "source": "/Users/daisukeshinohara/Documents/RetroArch/system/np2kai/PC98 select",
+ "titles": [
+  {
+   "id": "PC98-0004",
+   "name": "Aya3",
+   "kind": "game",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1466368,
+   "boot": "Aya3.hdi",
+   "disks": [
+    {
+     "file": "Aya3.hdi",
+     "path": "Aya3.hdi",
+     "bytes": 1466368,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0005",
+   "name": "Aya3M",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "Aya3M_A.fdi",
+   "disks": [
+    {
+     "file": "Aya3M_A.fdi",
+     "path": "Aya3M_A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "Aya3M_B.fdi",
+     "path": "Aya3M_B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0008",
+   "name": "CASTLES",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "CASTLES_system.fdi",
+   "disks": [
+    {
+     "file": "CASTLES_data.fdi",
+     "path": "CASTLES_data.fdi",
+     "bytes": 1265664,
+     "label": "data",
+     "hdd": false
+    },
+    {
+     "file": "CASTLES_system.fdi",
+     "path": "CASTLES_system.fdi",
+     "bytes": 1265664,
+     "label": "system",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0015",
+   "name": "HUSLER 2055",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "HUSLER 2055 A.fdi",
+   "disks": [
+    {
+     "file": "HUSLER 2055 A.fdi",
+     "path": "HUSLER 2055 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "HUSLER 2055 B.fdi",
+     "path": "HUSLER 2055 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0017",
+   "name": "LIPSTICK ADV2",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "LIPSTICK ADV2 A.fdi",
+   "disks": [
+    {
+     "file": "LIPSTICK ADV2 A.fdi",
+     "path": "LIPSTICK ADV2 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "LIPSTICK ADV2 B.fdi",
+     "path": "LIPSTICK ADV2 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0018",
+   "name": "LIPSTICK ADV3",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 5,
+   "bytes": 6328320,
+   "boot": "LIPSTICK ADV3 A.fdi",
+   "disks": [
+    {
+     "file": "LIPSTICK ADV3 A.fdi",
+     "path": "LIPSTICK ADV3 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "LIPSTICK ADV3 B.fdi",
+     "path": "LIPSTICK ADV3 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "LIPSTICK ADV3 C.fdi",
+     "path": "LIPSTICK ADV3 C.fdi",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "LIPSTICK ADV3 D.fdi",
+     "path": "LIPSTICK ADV3 D.fdi",
+     "bytes": 1265664,
+     "label": "D",
+     "hdd": false
+    },
+    {
+     "file": "LIPSTICK ADV3 E.fdi",
+     "path": "LIPSTICK ADV3 E.fdi",
+     "bytes": 1265664,
+     "label": "E",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0019",
+   "name": "LOAD OF WARS",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "LOAD OF WARS.fdi",
+   "disks": [
+    {
+     "file": "LOAD OF WARS.fdi",
+     "path": "LOAD OF WARS.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0016",
+   "name": "Lemmings (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1261568,
+   "boot": "Lemmings (J).fdi",
+   "disks": [
+    {
+     "file": "Lemmings (J).fdi",
+     "path": "Lemmings (J).fdi",
+     "bytes": 1261568,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0020",
+   "name": "Lord Monarch (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1261568,
+   "boot": "Lord Monarch (J).fdi",
+   "disks": [
+    {
+     "file": "Lord Monarch (J).fdi",
+     "path": "Lord Monarch (J).fdi",
+     "bytes": 1261568,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0021",
+   "name": "Mahjong Gokuu Professional (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1261568,
+   "boot": "Mahjong Gokuu Professional (J).fdi",
+   "disks": [
+    {
+     "file": "Mahjong Gokuu Professional (J).fdi",
+     "path": "Mahjong Gokuu Professional (J).fdi",
+     "bytes": 1261568,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0022",
+   "name": "Mahjong Taikai (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "Mahjong Taikai (J) 1.FDI",
+   "disks": [
+    {
+     "file": "Mahjong Taikai (J) 1.FDI",
+     "path": "Mahjong Taikai (J) 1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "Mahjong Taikai (J) 2.fdi",
+     "path": "Mahjong Taikai (J) 2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0031",
+   "name": "New 3D Golf Simulation - Harukanaru Augusta (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2523136,
+   "boot": "New 3D Golf Simulation - Harukanaru Augusta (J) A.FDI",
+   "disks": [
+    {
+     "file": "New 3D Golf Simulation - Harukanaru Augusta (J) A.FDI",
+     "path": "New 3D Golf Simulation - Harukanaru Augusta (J) A.FDI",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "New 3D Golf Simulation - Harukanaru Augusta (J) B.FDI",
+     "path": "New 3D Golf Simulation - Harukanaru Augusta (J) B.FDI",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0032",
+   "name": "PC-9801 Game Pack Vol.1 (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1086448,
+   "boot": "PC-9801 Game Pack Vol.1 (J).D88",
+   "disks": [
+    {
+     "file": "PC-9801 Game Pack Vol.1 (J).D88",
+     "path": "PC-9801 Game Pack Vol.1 (J).D88",
+     "bytes": 1086448,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0033",
+   "name": "PC98_ブランディッシュ1.2.3詰め合わせ",
+   "kind": "game",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 20786176,
+   "boot": "PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+   "disks": [
+    {
+     "file": "PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+     "path": "PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+     "bytes": 20786176,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0034",
+   "name": "Popful Mail (1992)(Falcom)",
+   "kind": "game",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 10817536,
+   "boot": "Popful Mail (1992)(Falcom).hdi",
+   "disks": [
+    {
+     "file": "Popful Mail (1992)(Falcom).hdi",
+     "path": "Popful Mail (1992)(Falcom).hdi",
+     "bytes": 10817536,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0035",
+   "name": "Popl",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "Popl_pro.fdi",
+   "disks": [
+    {
+     "file": "Popl_dat.fdi",
+     "path": "Popl_dat.fdi",
+     "bytes": 1265664,
+     "label": "dat",
+     "hdd": false
+    },
+    {
+     "file": "Popl_ope.fdi",
+     "path": "Popl_ope.fdi",
+     "bytes": 1265664,
+     "label": "ope",
+     "hdd": false
+    },
+    {
+     "file": "Popl_pro.fdi",
+     "path": "Popl_pro.fdi",
+     "bytes": 1265664,
+     "label": "pro",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0037",
+   "name": "QUIZジパング",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "QUIZジパング A.fdi",
+   "disks": [
+    {
+     "file": "QUIZジパング A.fdi",
+     "path": "QUIZジパング A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "QUIZジパング B.fdi",
+     "path": "QUIZジパング B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "QUIZジパング C.fdi",
+     "path": "QUIZジパング C.fdi",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "QUIZジパング D.fdi",
+     "path": "QUIZジパング D.fdi",
+     "bytes": 1265664,
+     "label": "D",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0038",
+   "name": "Rance 3 (1991)(Alice Soft)",
+   "kind": "game",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 11145216,
+   "boot": "Rance 3 (1991)(Alice Soft).hdi",
+   "disks": [
+    {
+     "file": "Rance 3 (1991)(Alice Soft).hdi",
+     "path": "Rance 3 (HDI)/Rance 3 (1991)(Alice Soft).hdi",
+     "bytes": 11145216,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0039",
+   "name": "Rance 3 (19xx)(Alice Soft)",
+   "kind": "game",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 10817536,
+   "boot": "Rance 3 (19xx)(Alice Soft).hdi",
+   "disks": [
+    {
+     "file": "Rance 3 (19xx)(Alice Soft).hdi",
+     "path": "Rance 3 (HDI)/Rance 3 (19xx)(Alice Soft).hdi",
+     "bytes": 10817536,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0040",
+   "name": "Robo Crush 2 (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3784704,
+   "boot": "Robo Crush 2 (J) A.FDI",
+   "disks": [
+    {
+     "file": "Robo Crush 2 (J) A.FDI",
+     "path": "Robo Crush 2 (J) A.FDI",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "Robo Crush 2 (J) B.FDI",
+     "path": "Robo Crush 2 (J) B.FDI",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "Robo Crush 2 (J) C.FDI",
+     "path": "Robo Crush 2 (J) C.FDI",
+     "bytes": 1261568,
+     "label": "C",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0041",
+   "name": "RoyalBlood",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "RoyalBlood_A.fdi",
+   "disks": [
+    {
+     "file": "RoyalBlood_A.fdi",
+     "path": "RoyalBlood_A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "RoyalBlood_B.fdi",
+     "path": "RoyalBlood_B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "RoyalBlood_user.fdi",
+     "path": "RoyalBlood_user.fdi",
+     "bytes": 1265664,
+     "label": "user",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0043",
+   "name": "SIMCITY",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "SIM CITY.fdi",
+   "disks": [
+    {
+     "file": "SIM CITY.fdi",
+     "path": "SIM CITY.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    },
+    {
+     "file": "SIMCITY.FDI",
+     "path": "SIMCITY.FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0045",
+   "name": "SOLID LANCER",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "SOLID LANCER.fdi",
+   "disks": [
+    {
+     "file": "SOLID LANCER.fdi",
+     "path": "SOLID LANCER.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0046",
+   "name": "STAR WARS",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "STAR WARS.fdi",
+   "disks": [
+    {
+     "file": "STAR WARS.fdi",
+     "path": "STAR WARS.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0042",
+   "name": "Shanghai 1 (J)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "Shanghai 1 (J).FDI",
+   "disks": [
+    {
+     "file": "Shanghai 1 (J).FDI",
+     "path": "Shanghai 1 (J).FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0048",
+   "name": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 1469944,
+   "boot": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+   "disks": [
+    {
+     "file": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+     "path": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+     "bytes": 690684,
+     "label": "(Disk 1 of 2)(Program Disk)",
+     "hdd": false
+    },
+    {
+     "file": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)(Disk 2 of 2)(Scenario Disk).fdd",
+     "path": "Ys 2 - Ancient Ys Vanished the Final Chapter (19xx)(Falcom)(Disk 2 of 2)(Scenario Disk).fdd",
+     "bytes": 779260,
+     "label": "(Disk 2 of 2)(Scenario Disk)",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0049",
+   "name": "Ys 3 - Wanderers from Ys (19xx)(Falcom)",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2323448,
+   "boot": "Ys 3 - Wanderers from Ys (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+   "disks": [
+    {
+     "file": "Ys 3 - Wanderers from Ys (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+     "path": "Ys 3 - Wanderers from Ys (19xx)(Falcom)(Disk 1 of 2)(Program Disk).fdd",
+     "bytes": 1069052,
+     "label": "(Disk 1 of 2)(Program Disk)",
+     "hdd": false
+    },
+    {
+     "file": "Ys 3 - Wanderers from Ys (19xx)(Falcom)(Disk 2 of 2)(Data Disk).fdd",
+     "path": "Ys 3 - Wanderers from Ys (19xx)(Falcom)(Disk 2 of 2)(Data Disk).fdd",
+     "bytes": 1254396,
+     "label": "(Disk 2 of 2)(Data Disk)",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0001",
+   "name": "arkanoid",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 331776,
+   "boot": "arkanoid.fdi",
+   "disks": [
+    {
+     "file": "arkanoid.fdi",
+     "path": "arkanoid.fdi",
+     "bytes": 331776,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0050",
+   "name": "éáéõé¦é+éßé±ò¿îÛ",
+   "kind": "game",
+   "hdd": true,
+   "garbled": true,
+   "count": 1,
+   "bytes": 11145216,
+   "boot": "éáéõé¦é+éßé±ò¿îÛ.hdi",
+   "disks": [
+    {
+     "file": "éáéõé¦é+éßé±ò¿îÛ.hdi",
+     "path": "Ayumi Chan Monogatari (DCP-HDI)/éáéõé¦é+éßé±ò¿îÛ.hdi",
+     "bytes": 11145216,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0051",
+   "name": "きゃんきゃんバニー５エクストラ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 8,
+   "bytes": 10125312,
+   "boot": "きゃんきゃんバニー５エクストラ A.fdi",
+   "disks": [
+    {
+     "file": "きゃんきゃんバニー５エクストラ A.fdi",
+     "path": "きゃんきゃんバニー５エクストラ A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ B.fdi",
+     "path": "きゃんきゃんバニー５エクストラ B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ C.fdi",
+     "path": "きゃんきゃんバニー５エクストラ C.fdi",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ D.fdi",
+     "path": "きゃんきゃんバニー５エクストラ D.fdi",
+     "bytes": 1265664,
+     "label": "D",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ E.fdi",
+     "path": "きゃんきゃんバニー５エクストラ E.fdi",
+     "bytes": 1265664,
+     "label": "E",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ F.fdi",
+     "path": "きゃんきゃんバニー５エクストラ F.fdi",
+     "bytes": 1265664,
+     "label": "F",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ G.fdi",
+     "path": "きゃんきゃんバニー５エクストラ G.fdi",
+     "bytes": 1265664,
+     "label": "G",
+     "hdd": false
+    },
+    {
+     "file": "きゃんきゃんバニー５エクストラ H.fdi",
+     "path": "きゃんきゃんバニー５エクストラ H.fdi",
+     "bytes": 1265664,
+     "label": "H",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0052",
+   "name": "ぷよぷよ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "ぷよぷよ A.fdi",
+   "disks": [
+    {
+     "file": "ぷよぷよ A.fdi",
+     "path": "ぷよぷよ A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "ぷよぷよ B.fdi",
+     "path": "ぷよぷよ B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0054",
+   "name": "エメラルドドラゴン",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3784704,
+   "boot": "エメラルドドラゴン_System.fdi",
+   "disks": [
+    {
+     "file": "エメラルドドラゴン_Data.fdi",
+     "path": "エメラルドドラゴン_Data.fdi",
+     "bytes": 1261568,
+     "label": "Data",
+     "hdd": false
+    },
+    {
+     "file": "エメラルドドラゴン_Opening.fdi",
+     "path": "エメラルドドラゴン_Opening.fdi",
+     "bytes": 1261568,
+     "label": "Opening",
+     "hdd": false
+    },
+    {
+     "file": "エメラルドドラゴン_System.fdi",
+     "path": "エメラルドドラゴン_System.fdi",
+     "bytes": 1261568,
+     "label": "System",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0056",
+   "name": "ゲームコレクション３０",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "ゲームコレクション３０ 1.fdi",
+   "disks": [
+    {
+     "file": "ゲームコレクション３０ 1.fdi",
+     "path": "ゲームコレクション３０ 1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "ゲームコレクション３０ 2.fdi",
+     "path": "ゲームコレクション３０ 2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0058",
+   "name": "ハテナの大冒険",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "ハテナの大冒険.fdi",
+   "disks": [
+    {
+     "file": "ハテナの大冒険.fdi",
+     "path": "ハテナの大冒険.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0059",
+   "name": "パズルトピア",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "パズルトピア SYS.fdi",
+   "disks": [
+    {
+     "file": "パズルトピア SYS.fdi",
+     "path": "パズルトピア SYS.fdi",
+     "bytes": 1265664,
+     "label": "SYS",
+     "hdd": false
+    },
+    {
+     "file": "パズルトピア ﾕｰｻﾞｰ.fdi",
+     "path": "パズルトピア ﾕｰｻﾞｰ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0060",
+   "name": "ブランディッシュ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ1.fdi",
+   "disks": [
+    {
+     "file": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ1.fdi",
+     "path": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ1.fdi",
+     "bytes": 1265664,
+     "label": "ｹﾞｰﾑﾃﾞｨｽｸ1",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ2.fdi",
+     "path": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ2.fdi",
+     "bytes": 1265664,
+     "label": "ｹﾞｰﾑﾃﾞｨｽｸ2",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ3.fdi",
+     "path": "ブランディッシュ　ｹﾞｰﾑﾃﾞｨｽｸ3.fdi",
+     "bytes": 1265664,
+     "label": "ｹﾞｰﾑﾃﾞｨｽｸ3",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ　ﾕｰｻﾞｰﾃﾞｨｽｸ.fdi",
+     "path": "ブランディッシュ　ﾕｰｻﾞｰﾃﾞｨｽｸ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰﾃﾞｨｽｸ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0062",
+   "name": "ブランディッシュⅡ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 6,
+   "bytes": 7593984,
+   "boot": "ブランディッシュⅡ MasterProgram.FDI",
+   "disks": [
+    {
+     "file": "ブランディッシュⅡ DATA1.FDI",
+     "path": "ブランディッシュⅡ DATA1.FDI",
+     "bytes": 1265664,
+     "label": "DATA1",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅡ DATA2.FDI",
+     "path": "ブランディッシュⅡ DATA2.FDI",
+     "bytes": 1265664,
+     "label": "DATA2",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅡ DATA3.FDI",
+     "path": "ブランディッシュⅡ DATA3.FDI",
+     "bytes": 1265664,
+     "label": "DATA3",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅡ MasterProgram.FDI",
+     "path": "ブランディッシュⅡ MasterProgram.FDI",
+     "bytes": 1265664,
+     "label": "MasterProgram",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅡ Opening.FDI",
+     "path": "ブランディッシュⅡ Opening.FDI",
+     "bytes": 1265664,
+     "label": "Opening",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅡ Program.FDI",
+     "path": "ブランディッシュⅡ Program.FDI",
+     "bytes": 1265664,
+     "label": "Program",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0063",
+   "name": "ブランディッシュⅢ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 8,
+   "bytes": 10125312,
+   "boot": "ブランディッシュⅢ 1.FDI",
+   "disks": [
+    {
+     "file": "ブランディッシュⅢ 1.FDI",
+     "path": "ブランディッシュⅢ 1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 2.FDI",
+     "path": "ブランディッシュⅢ 2.FDI",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 3.FDI",
+     "path": "ブランディッシュⅢ 3.FDI",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 4.FDI",
+     "path": "ブランディッシュⅢ 4.FDI",
+     "bytes": 1265664,
+     "label": "4",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 5.FDI",
+     "path": "ブランディッシュⅢ 5.FDI",
+     "bytes": 1265664,
+     "label": "5",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 6.FDI",
+     "path": "ブランディッシュⅢ 6.FDI",
+     "bytes": 1265664,
+     "label": "6",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 7.FDI",
+     "path": "ブランディッシュⅢ 7.FDI",
+     "bytes": 1265664,
+     "label": "7",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュⅢ 8.FDI",
+     "path": "ブランディッシュⅢ 8.FDI",
+     "bytes": 1265664,
+     "label": "8",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0061",
+   "name": "ブランディッシュ２",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 6,
+   "bytes": 7593984,
+   "boot": "ブランディッシュ２　ﾏｽﾀｰﾌﾟﾛｸﾞﾗﾑ(ﾃﾞｨｽｸ0).fdi",
+   "disks": [
+    {
+     "file": "ブランディッシュ２　ﾏｽﾀｰﾌﾟﾛｸﾞﾗﾑ(ﾃﾞｨｽｸ0).fdi",
+     "path": "ブランディッシュ２　ﾏｽﾀｰﾌﾟﾛｸﾞﾗﾑ(ﾃﾞｨｽｸ0).fdi",
+     "bytes": 1265664,
+     "label": "0 ﾏｽﾀｰﾌﾟﾛｸﾞﾗﾑ",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ２　ﾌﾟﾛｸﾞﾗﾑﾃﾞｨｽｸ(ﾃﾞｨｽｸ1).fdi",
+     "path": "ブランディッシュ２　ﾌﾟﾛｸﾞﾗﾑﾃﾞｨｽｸ(ﾃﾞｨｽｸ1).fdi",
+     "bytes": 1265664,
+     "label": "1 ﾌﾟﾛｸﾞﾗﾑﾃﾞｨｽｸ",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ２　ﾃﾞｨｽｸ2.fdi",
+     "path": "ブランディッシュ２　ﾃﾞｨｽｸ2.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｨｽｸ2",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ２　ﾃﾞｨｽｸ3.fdi",
+     "path": "ブランディッシュ２　ﾃﾞｨｽｸ3.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｨｽｸ3",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ２　ﾃﾞｨｽｸ4.fdi",
+     "path": "ブランディッシュ２　ﾃﾞｨｽｸ4.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｨｽｸ4",
+     "hdd": false
+    },
+    {
+     "file": "ブランディッシュ２　ﾃﾞｨｽｸ5.fdi",
+     "path": "ブランディッシュ２　ﾃﾞｨｽｸ5.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｨｽｸ5",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0064",
+   "name": "プリンスオブペルシャ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2523136,
+   "boot": "プリンスオブペルシャ_A.fdi",
+   "disks": [
+    {
+     "file": "プリンスオブペルシャ_A.fdi",
+     "path": "プリンスオブペルシャ_A.fdi",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "プリンスオブペルシャ_B.fdi",
+     "path": "プリンスオブペルシャ_B.fdi",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0065",
+   "name": "リターンオブイシター",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "リターンオブイシター.fdi",
+   "disks": [
+    {
+     "file": "リターンオブイシター.fdi",
+     "path": "リターンオブイシター.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0066",
+   "name": "レミングス",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "レミングス.fdi",
+   "disks": [
+    {
+     "file": "レミングス.fdi",
+     "path": "レミングス.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0067",
+   "name": "ロードモナーク",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3813296,
+   "boot": "ロードモナーク ﾌﾟﾛｸﾞﾗﾑ.fdi",
+   "disks": [
+    {
+     "file": "ロードモナーク ﾌﾟﾛｸﾞﾗﾑ.fdi",
+     "path": "ロードモナーク ﾌﾟﾛｸﾞﾗﾑ.fdi",
+     "bytes": 1265664,
+     "label": "ﾌﾟﾛｸﾞﾗﾑ",
+     "hdd": false
+    },
+    {
+     "file": "ロードモナーク ﾕｰｻﾞｰ.fdi",
+     "path": "ロードモナーク ﾕｰｻﾞｰ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰ",
+     "hdd": false
+    },
+    {
+     "file": "ロードモナーク.d88",
+     "path": "ロードモナーク.d88",
+     "bytes": 1281968,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0068",
+   "name": "ワイアラエの奇蹟",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "ワイアラエの奇蹟.fdi",
+   "disks": [
+    {
+     "file": "ワイアラエの奇蹟.fdi",
+     "path": "ワイアラエの奇蹟.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0070",
+   "name": "三国志",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "三国志　A.fdi",
+   "disks": [
+    {
+     "file": "三国志　A.fdi",
+     "path": "三国志　A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三国志　B.fdi",
+     "path": "三国志　B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0074",
+   "name": "三国志Ⅱ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "三国志Ⅱ_A.FDI",
+   "disks": [
+    {
+     "file": "三国志Ⅱ_A.FDI",
+     "path": "三国志Ⅱ_A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅱ_B.FDI",
+     "path": "三国志Ⅱ_B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0075",
+   "name": "三国志Ⅲ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 5,
+   "bytes": 6328320,
+   "boot": "三国志Ⅲ_A.FDI",
+   "disks": [
+    {
+     "file": "三国志Ⅲ_A.FDI",
+     "path": "三国志Ⅲ_A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅲ_B.FDI",
+     "path": "三国志Ⅲ_B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅲ_C.FDI",
+     "path": "三国志Ⅲ_C.FDI",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅲ_Save.FDI",
+     "path": "三国志Ⅲ_Save.FDI",
+     "bytes": 1265664,
+     "label": "Save",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅲ_User.FDI",
+     "path": "三国志Ⅲ_User.FDI",
+     "bytes": 1265664,
+     "label": "User",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0076",
+   "name": "三国志Ⅳ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "三国志Ⅳ_SYSTEM.FDI",
+   "disks": [
+    {
+     "file": "三国志Ⅳ_DATA.FDI",
+     "path": "三国志Ⅳ_DATA.FDI",
+     "bytes": 1265664,
+     "label": "DATA",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅳ_ENDING.FDI",
+     "path": "三国志Ⅳ_ENDING.FDI",
+     "bytes": 1265664,
+     "label": "ENDING",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅳ_GAME.FDI",
+     "path": "三国志Ⅳ_GAME.FDI",
+     "bytes": 1265664,
+     "label": "GAME",
+     "hdd": false
+    },
+    {
+     "file": "三国志Ⅳ_SYSTEM.FDI",
+     "path": "三国志Ⅳ_SYSTEM.FDI",
+     "bytes": 1265664,
+     "label": "SYSTEM",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0077",
+   "name": "三国志　英傑伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 5,
+   "bytes": 6328320,
+   "boot": "三国志　英傑伝 1.fdi",
+   "disks": [
+    {
+     "file": "三国志　英傑伝 1.fdi",
+     "path": "三国志　英傑伝 1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "三国志　英傑伝 2.fdi",
+     "path": "三国志　英傑伝 2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "三国志　英傑伝 3.fdi",
+     "path": "三国志　英傑伝 3.fdi",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    },
+    {
+     "file": "三国志　英傑伝 4.fdi",
+     "path": "三国志　英傑伝 4.fdi",
+     "bytes": 1265664,
+     "label": "4",
+     "hdd": false
+    },
+    {
+     "file": "三国志　英傑伝 ﾕｰｻﾞｰ.fdi",
+     "path": "三国志　英傑伝 ﾕｰｻﾞｰ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0078",
+   "name": "三國志",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "三國志_A.FDI",
+   "disks": [
+    {
+     "file": "三國志_A.FDI",
+     "path": "三國志_A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三國志_B.FDI",
+     "path": "三國志_B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0079",
+   "name": "三國志2",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2523136,
+   "boot": "三國志2A.fdi",
+   "disks": [
+    {
+     "file": "三國志2A.fdi",
+     "path": "三國志2A.fdi",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三國志2B.fdi",
+     "path": "三國志2B.fdi",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0080",
+   "name": "三國志3",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3784704,
+   "boot": "三國志3A.fdi",
+   "disks": [
+    {
+     "file": "三國志3A.fdi",
+     "path": "三國志3A.fdi",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "三國志3B.fdi",
+     "path": "三國志3B.fdi",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "三國志3C.fdi",
+     "path": "三國志3C.fdi",
+     "bytes": 1261568,
+     "label": "C",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0081",
+   "name": "三國志5",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 7,
+   "bytes": 8859648,
+   "boot": "三國志5_1.FDI",
+   "disks": [
+    {
+     "file": "三國志5_1.FDI",
+     "path": "三國志5_1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_2.FDI",
+     "path": "三國志5_2.FDI",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_3.FDI",
+     "path": "三國志5_3.FDI",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_4.FDI",
+     "path": "三國志5_4.FDI",
+     "bytes": 1265664,
+     "label": "4",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_5.FDI",
+     "path": "三國志5_5.FDI",
+     "bytes": 1265664,
+     "label": "5",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_6.FDI",
+     "path": "三國志5_6.FDI",
+     "bytes": 1265664,
+     "label": "6",
+     "hdd": false
+    },
+    {
+     "file": "三國志5_7.FDI",
+     "path": "三國志5_7.FDI",
+     "bytes": 1265664,
+     "label": "7",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0082",
+   "name": "伊忍道",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "伊忍道 A.fdi",
+   "disks": [
+    {
+     "file": "伊忍道 A.fdi",
+     "path": "伊忍道 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "伊忍道 B.fdi",
+     "path": "伊忍道 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "伊忍道 C.fdi",
+     "path": "伊忍道 C.fdi",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0085",
+   "name": "信長の野望 武将風雲録",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "信長の野望 武将風雲録_A.fdi",
+   "disks": [
+    {
+     "file": "信長の野望 武将風雲録_A.fdi",
+     "path": "信長の野望 武将風雲録_A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　武将風雲録A.FDI",
+     "path": "信長の野望　武将風雲録A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望 武将風雲録_B.fdi",
+     "path": "信長の野望 武将風雲録_B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　武将風雲録B.FDI",
+     "path": "信長の野望　武将風雲録B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0086",
+   "name": "信長の野望 群雄伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2523136,
+   "boot": "信長の野望 群雄伝A.fdi",
+   "disks": [
+    {
+     "file": "信長の野望 群雄伝A.fdi",
+     "path": "信長の野望 群雄伝A.fdi",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望 群雄伝B.fdi",
+     "path": "信長の野望 群雄伝B.fdi",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0083",
+   "name": "信長の野望　全国版",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "信長の野望　全国版 A.fdi",
+   "disks": [
+    {
+     "file": "信長の野望　全国版 A.fdi",
+     "path": "信長の野望　全国版 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　全国版 B.fdi",
+     "path": "信長の野望　全国版 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0084",
+   "name": "信長の野望　戦国群雄伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "信長の野望　戦国群雄伝 A.fdi",
+   "disks": [
+    {
+     "file": "信長の野望　戦国群雄伝 A.fdi",
+     "path": "信長の野望　戦国群雄伝 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　戦国群雄伝 B.fdi",
+     "path": "信長の野望　戦国群雄伝 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　戦国群雄伝 ﾃﾞｰﾀﾃﾞｨｽｸ.fdi",
+     "path": "信長の野望　戦国群雄伝 ﾃﾞｰﾀﾃﾞｨｽｸ.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｰﾀﾃﾞｨｽｸ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0087",
+   "name": "信長の野望　覇王伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 5,
+   "bytes": 6328320,
+   "boot": "信長の野望　覇王伝　ｼｽﾃﾑ.fdi",
+   "disks": [
+    {
+     "file": "信長の野望　覇王伝　ｴﾝﾄﾞ.fdi",
+     "path": "信長の野望　覇王伝　ｴﾝﾄﾞ.fdi",
+     "bytes": 1265664,
+     "label": "ｴﾝﾄﾞ",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　覇王伝　ｼｽﾃﾑ.fdi",
+     "path": "信長の野望　覇王伝　ｼｽﾃﾑ.fdi",
+     "bytes": 1265664,
+     "label": "ｼｽﾃﾑ",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　覇王伝　ｼﾅﾘｵ.fdi",
+     "path": "信長の野望　覇王伝　ｼﾅﾘｵ.fdi",
+     "bytes": 1265664,
+     "label": "ｼﾅﾘｵ",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　覇王伝　ﾃﾞｰﾀ.fdi",
+     "path": "信長の野望　覇王伝　ﾃﾞｰﾀ.fdi",
+     "bytes": 1265664,
+     "label": "ﾃﾞｰﾀ",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　覇王伝　ﾕｰｻﾞｰ.fdi",
+     "path": "信長の野望　覇王伝　ﾕｰｻﾞｰ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0088",
+   "name": "信長の野望　覇王伝　パワーアップキット",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "信長の野望　覇王伝　パワーアップキット A.fdi",
+   "disks": [
+    {
+     "file": "信長の野望　覇王伝　パワーアップキット A.fdi",
+     "path": "信長の野望　覇王伝　パワーアップキット A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長の野望　覇王伝　パワーアップキット B.fdi",
+     "path": "信長の野望　覇王伝　パワーアップキット B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0089",
+   "name": "信長全国版",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "信長全国版A.FDI",
+   "disks": [
+    {
+     "file": "信長全国版A.FDI",
+     "path": "信長全国版A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長全国版B.FDI",
+     "path": "信長全国版B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0090",
+   "name": "信長群雄伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "信長群雄伝A.FDI",
+   "disks": [
+    {
+     "file": "信長群雄伝A.FDI",
+     "path": "信長群雄伝A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "信長群雄伝B.FDI",
+     "path": "信長群雄伝B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0091",
+   "name": "大航海時代",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "大航海時代 SYSTEM.FDI",
+   "disks": [
+    {
+     "file": "大航海時代 SYSTEM.FDI",
+     "path": "大航海時代 SYSTEM.FDI",
+     "bytes": 1265664,
+     "label": "SYSTEM",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0093",
+   "name": "大航海時代 海",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "大航海時代 海.FDI",
+   "disks": [
+    {
+     "file": "大航海時代 海.FDI",
+     "path": "大航海時代 海.FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0092",
+   "name": "大航海時代Ⅱ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "大航海時代Ⅱ_A.FDI",
+   "disks": [
+    {
+     "file": "大航海時代Ⅱ_A.FDI",
+     "path": "大航海時代Ⅱ_A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "大航海時代Ⅱ_B.FDI",
+     "path": "大航海時代Ⅱ_B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "大航海時代Ⅱ_C.FDI",
+     "path": "大航海時代Ⅱ_C.FDI",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "大航海時代Ⅱ_ﾕｰｻﾞｰﾃﾞｨｽｸ.fdi",
+     "path": "大航海時代Ⅱ_ﾕｰｻﾞｰﾃﾞｨｽｸ.fdi",
+     "bytes": 1265664,
+     "label": "ﾕｰｻﾞｰﾃﾞｨｽｸ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0094",
+   "name": "天下統一",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "天下統一A.FDI",
+   "disks": [
+    {
+     "file": "天下統一A.FDI",
+     "path": "【PC98】天下統一/天下統一A.FDI",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "天下統一B.FDI",
+     "path": "【PC98】天下統一/天下統一B.FDI",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0095",
+   "name": "天下統一2PK",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "天下統一2PK system.fdi",
+   "disks": [
+    {
+     "file": "天下統一2PK system.fdi",
+     "path": "【PC98】天下統一２パワーアップセット/天下統一2PK system.fdi",
+     "bytes": 1265664,
+     "label": "system",
+     "hdd": false
+    },
+    {
+     "file": "天下統一2PK シナリオ1.fdi",
+     "path": "【PC98】天下統一２パワーアップセット/天下統一2PK シナリオ1.fdi",
+     "bytes": 1265664,
+     "label": "シナリオ1",
+     "hdd": false
+    },
+    {
+     "file": "天下統一2PK シナリオ2.fdi",
+     "path": "【PC98】天下統一２パワーアップセット/天下統一2PK シナリオ2.fdi",
+     "bytes": 1265664,
+     "label": "シナリオ2",
+     "hdd": false
+    },
+    {
+     "file": "天下統一2PK シナリオ3.fdi",
+     "path": "【PC98】天下統一２パワーアップセット/天下統一2PK シナリオ3.fdi",
+     "bytes": 1265664,
+     "label": "シナリオ3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0096",
+   "name": "太閤立志伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "太閤立志伝 1.FDI",
+   "disks": [
+    {
+     "file": "太閤立志伝 1.FDI",
+     "path": "太閤立志伝 1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "太閤立志伝 2.FDI",
+     "path": "太閤立志伝 2.FDI",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "太閤立志伝 3.FDI",
+     "path": "太閤立志伝 3.FDI",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0097",
+   "name": "実践ビリヤード",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "実践ビリヤード.fdi",
+   "disks": [
+    {
+     "file": "実践ビリヤード.fdi",
+     "path": "実践ビリヤード.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0098",
+   "name": "提督の決断1",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "提督の決断1.FDI",
+   "disks": [
+    {
+     "file": "提督の決断1.FDI",
+     "path": "提督の決断1.FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0099",
+   "name": "提督の決断2",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "提督の決断2.FDI",
+   "disks": [
+    {
+     "file": "提督の決断2.FDI",
+     "path": "提督の決断2.FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0100",
+   "name": "校内写生",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "校内写生 A.fdi",
+   "disks": [
+    {
+     "file": "校内写生 A.fdi",
+     "path": "校内写生 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "校内写生 B.fdi",
+     "path": "校内写生 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0102",
+   "name": "校内写生3",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "校内写生3 A.fdi",
+   "disks": [
+    {
+     "file": "校内写生3 A.fdi",
+     "path": "校内写生3 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "校内写生3 B.fdi",
+     "path": "校内写生3 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0101",
+   "name": "校内写生２",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "校内写生２ A.fdi",
+   "disks": [
+    {
+     "file": "校内写生２ A.fdi",
+     "path": "校内写生２ A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "校内写生２ B.fdi",
+     "path": "校内写生２ B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0103",
+   "name": "森田将棋２",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "森田将棋２.fdi",
+   "disks": [
+    {
+     "file": "森田将棋２.fdi",
+     "path": "森田将棋２.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0104",
+   "name": "水滸伝",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5054464,
+   "boot": "水滸伝 1.FDI",
+   "disks": [
+    {
+     "file": "水滸伝 1.FDI",
+     "path": "水滸伝 1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "水滸伝A.fdi",
+     "path": "水滸伝A.fdi",
+     "bytes": 1261568,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "水滸伝 2.FDI",
+     "path": "水滸伝 2.FDI",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "水滸伝B.fdi",
+     "path": "水滸伝B.fdi",
+     "bytes": 1261568,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0105",
+   "name": "水滸伝A改良版",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1261568,
+   "boot": "水滸伝A改良版.fdi",
+   "disks": [
+    {
+     "file": "水滸伝A改良版.fdi",
+     "path": "水滸伝A改良版.fdi",
+     "bytes": 1261568,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0106",
+   "name": "維新の嵐",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "維新の嵐 1.FDI",
+   "disks": [
+    {
+     "file": "維新の嵐 1.FDI",
+     "path": "維新の嵐 1.FDI",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "維新の嵐 2.FDI",
+     "path": "維新の嵐 2.FDI",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0107",
+   "name": "群雄三国志",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "群雄三国志.FDI",
+   "disks": [
+    {
+     "file": "群雄三国志.FDI",
+     "path": "群雄三国志.FDI",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0108",
+   "name": "蒼き狼と白き牝鹿 元朝秘史",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "蒼き狼と白き牝鹿 元朝秘史_1.fdi",
+   "disks": [
+    {
+     "file": "蒼き狼と白き牝鹿 元朝秘史_1.fdi",
+     "path": "蒼き狼と白き牝鹿 元朝秘史_1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "蒼き狼と白き牝鹿 元朝秘史_2.fdi",
+     "path": "蒼き狼と白き牝鹿 元朝秘史_2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "蒼き狼と白き牝鹿 元朝秘史_3.fdi",
+     "path": "蒼き狼と白き牝鹿 元朝秘史_3.fdi",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0109",
+   "name": "超高速天文シミュレーション",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "超高速天文シミュレーション.fdi",
+   "disks": [
+    {
+     "file": "超高速天文シミュレーション.fdi",
+     "path": "超高速天文シミュレーション.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0110",
+   "name": "遙かなるオーガスタ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "遙かなるオーガスタ　ｺｰｽﾃﾞｨｽｸ.fdi",
+   "disks": [
+    {
+     "file": "遙かなるオーガスタ　ｺｰｽﾃﾞｨｽｸ.fdi",
+     "path": "遙かなるオーガスタ　ｺｰｽﾃﾞｨｽｸ.fdi",
+     "bytes": 1265664,
+     "label": "ｺｰｽﾃﾞｨｽｸ",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0111",
+   "name": "項劉記",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "項劉記 A.fdi",
+   "disks": [
+    {
+     "file": "項劉記 A.fdi",
+     "path": "項劉記 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "項劉記 B.fdi",
+     "path": "項劉記 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    },
+    {
+     "file": "項劉記 C.fdi",
+     "path": "項劉記 C.fdi",
+     "bytes": 1265664,
+     "label": "C",
+     "hdd": false
+    },
+    {
+     "file": "項劉記 D.fdi",
+     "path": "項劉記 D.fdi",
+     "bytes": 1265664,
+     "label": "D",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0112",
+   "name": "麻雀大会",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 2,
+   "bytes": 2531328,
+   "boot": "麻雀大会 A.fdi",
+   "disks": [
+    {
+     "file": "麻雀大会 A.fdi",
+     "path": "麻雀大会 A.fdi",
+     "bytes": 1265664,
+     "label": "A",
+     "hdd": false
+    },
+    {
+     "file": "麻雀大会 B.fdi",
+     "path": "麻雀大会 B.fdi",
+     "bytes": 1265664,
+     "label": "B",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0055",
+   "name": "ｸｫｰｽ",
+   "kind": "game",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "ｸｫｰｽ.fdi",
+   "disks": [
+    {
+     "file": "ｸｫｰｽ.fdi",
+     "path": "ｸｫｰｽ.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0002",
+   "name": "ATOK7 SYS+DIC",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "ATOK7 SYS+DIC.fdi",
+   "disks": [
+    {
+     "file": "ATOK7 SYS+DIC.fdi",
+     "path": "ATOK7 SYS+DIC.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0003",
+   "name": "ATOK7 V1",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "ATOK7 V1_2.fdi",
+   "disks": [
+    {
+     "file": "ATOK7 V1_2.fdi",
+     "path": "ATOK7 V1_2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0007",
+   "name": "BLANK SysDisc",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "BLANK SysDisc.fdi",
+   "disks": [
+    {
+     "file": "BLANK SysDisc.fdi",
+     "path": "BLANK SysDisc.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0006",
+   "name": "BLANKDISK",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "BLANKDISK.fdi",
+   "disks": [
+    {
+     "file": "BLANKDISK.fdi",
+     "path": "BLANKDISK.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0009",
+   "name": "Dat",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1314816,
+   "boot": "Dat.FDI",
+   "disks": [
+    {
+     "file": "Dat.FDI",
+     "path": "Dat.FDI",
+     "bytes": 1314816,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0010",
+   "name": "FD+LHA",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "FD+LHA.fdi",
+   "disks": [
+    {
+     "file": "FD+LHA.fdi",
+     "path": "FD+LHA.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0011",
+   "name": "FD232",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "FD232.fdi",
+   "disks": [
+    {
+     "file": "FD232.fdi",
+     "path": "FD232.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0012",
+   "name": "HD ",
+   "kind": "tool",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 11145216,
+   "boot": "HD .hdi",
+   "disks": [
+    {
+     "file": "HD .hdi",
+     "path": "HD .hdi",
+     "bytes": 11145216,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0013",
+   "name": "HDD DOS BR123 Installed",
+   "kind": "tool",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 85651456,
+   "boot": "HDD DOS BR123 Installed.hdi",
+   "disks": [
+    {
+     "file": "HDD DOS BR123 Installed.hdi",
+     "path": "HDD DOS BR123 Installed.hdi",
+     "bytes": 85651456,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0014",
+   "name": "HDD DOS Installed",
+   "kind": "tool",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 85651456,
+   "boot": "HDD DOS Installed.hdi",
+   "disks": [
+    {
+     "file": "HDD DOS Installed.hdi",
+     "path": "HDD DOS Installed.hdi",
+     "bytes": 85651456,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0024",
+   "name": "MS-DOS 5_0A",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "MS-DOS 5_0A-H 保存用 1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS 5_0A-H 保存用 1.fdi",
+     "path": "MS-DOS 5_0A-H 保存用 1.fdi",
+     "bytes": 1265664,
+     "label": "8 保存用 1",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 5_0A-H 保存用 2.fdi",
+     "path": "MS-DOS 5_0A-H 保存用 2.fdi",
+     "bytes": 1265664,
+     "label": "8 保存用 2",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 5_0A-H 保存用 3.fdi",
+     "path": "MS-DOS 5_0A-H 保存用 3.fdi",
+     "bytes": 1265664,
+     "label": "8 保存用 3",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 5_0A-H 保存用 4.fdi",
+     "path": "MS-DOS 5_0A-H 保存用 4.fdi",
+     "bytes": 1265664,
+     "label": "8 保存用 4",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0025",
+   "name": "MS-DOS 62 disk",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 8,
+   "bytes": 10125312,
+   "boot": "MS-DOS 62 disk_1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS 62 disk_1.fdi",
+     "path": "MS-DOS 62 disk_1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_2.fdi",
+     "path": "MS-DOS 62 disk_2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_3.fdi",
+     "path": "MS-DOS 62 disk_3.fdi",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_4.fdi",
+     "path": "MS-DOS 62 disk_4.fdi",
+     "bytes": 1265664,
+     "label": "4",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_5.fdi",
+     "path": "MS-DOS 62 disk_5.fdi",
+     "bytes": 1265664,
+     "label": "5",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_6.fdi",
+     "path": "MS-DOS 62 disk_6.fdi",
+     "bytes": 1265664,
+     "label": "6",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_7.fdi",
+     "path": "MS-DOS 62 disk_7.fdi",
+     "bytes": 1265664,
+     "label": "7",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS 62 disk_8.fdi",
+     "path": "MS-DOS 62 disk_8.fdi",
+     "bytes": 1265664,
+     "label": "8",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0026",
+   "name": "MS-DOS VER2",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "MS-DOS VER2_11.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS VER2_11.fdi",
+     "path": "MS-DOS VER2_11.fdi",
+     "bytes": 1265664,
+     "label": "11",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0027",
+   "name": "MS-DOS VER3",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "MS-DOS VER3_1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS VER3_1.fdi",
+     "path": "MS-DOS VER3_1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0029",
+   "name": "MS-DOS VER5",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "MS-DOS VER5 1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS VER5 1.fdi",
+     "path": "MS-DOS VER5 1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS VER5 2.fdi",
+     "path": "MS-DOS VER5 2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS VER5 3.fdi",
+     "path": "MS-DOS VER5 3.fdi",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0028",
+   "name": "MS-DOS Ver3_30c",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "MS-DOS Ver3_30c #1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS Ver3_30c #1.fdi",
+     "path": "MS-DOS Ver3_30c #1.fdi",
+     "bytes": 1265664,
+     "label": "#1",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS Ver3_30c #2.fdi",
+     "path": "MS-DOS Ver3_30c #2.fdi",
+     "bytes": 1265664,
+     "label": "#2",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS Ver3_30c #3.fdi",
+     "path": "MS-DOS Ver3_30c #3.fdi",
+     "bytes": 1265664,
+     "label": "#3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0023",
+   "name": "MS-DOS3_30D",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 3,
+   "bytes": 3796992,
+   "boot": "MS-DOS3_30D 1.fdi",
+   "disks": [
+    {
+     "file": "MS-DOS3_30D 1.fdi",
+     "path": "MS-DOS3_30D 1.fdi",
+     "bytes": 1265664,
+     "label": "1",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS3_30D 2.fdi",
+     "path": "MS-DOS3_30D 2.fdi",
+     "bytes": 1265664,
+     "label": "2",
+     "hdd": false
+    },
+    {
+     "file": "MS-DOS3_30D 3.fdi",
+     "path": "MS-DOS3_30D 3.fdi",
+     "bytes": 1265664,
+     "label": "3",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0030",
+   "name": "N88BASIC",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "N88BASIC.fdi",
+   "disks": [
+    {
+     "file": "N88BASIC.fdi",
+     "path": "N88BASIC.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0036",
+   "name": "Prg",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1314816,
+   "boot": "Prg.FDI",
+   "disks": [
+    {
+     "file": "Prg.FDI",
+     "path": "Prg.FDI",
+     "bytes": 1314816,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0044",
+   "name": "SIM CITY DATA+N88EDITER",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "SIM CITY DATA+N88EDITER.fdi",
+   "disks": [
+    {
+     "file": "SIM CITY DATA+N88EDITER.fdi",
+     "path": "SIM CITY DATA+N88EDITER.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0047",
+   "name": "TADL",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "TADL.fdi",
+   "disks": [
+    {
+     "file": "TADL.fdi",
+     "path": "TADL.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0053",
+   "name": "まいとーくＶ２",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "まいとーくＶ２.fdi",
+   "disks": [
+    {
+     "file": "まいとーくＶ２.fdi",
+     "path": "まいとーくＶ２.fdi",
+     "bytes": 1265664,
+     "label": null,
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0057",
+   "name": "セーブ　PC98_ブランディッシュ1.2.3詰め合わせ",
+   "kind": "save",
+   "hdd": true,
+   "garbled": false,
+   "count": 1,
+   "bytes": 20786176,
+   "boot": "セーブ　PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+   "disks": [
+    {
+     "file": "セーブ　PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+     "path": "セーブ　PC98_ブランディッシュ1.2.3詰め合わせ.hdi",
+     "bytes": 20786176,
+     "label": null,
+     "hdd": true
+    }
+   ]
+  },
+  {
+   "id": "PC98-0069",
+   "name": "一太郎4",
+   "kind": "tool",
+   "hdd": false,
+   "garbled": false,
+   "count": 4,
+   "bytes": 5062656,
+   "boot": "一太郎4_3　起動.fdi",
+   "disks": [
+    {
+     "file": "一太郎4_3 ﾌｫﾝﾄ.fdi",
+     "path": "一太郎4_3 ﾌｫﾝﾄ.fdi",
+     "bytes": 1265664,
+     "label": "3 ﾌｫﾝﾄ",
+     "hdd": false
+    },
+    {
+     "file": "一太郎4_3　起動.fdi",
+     "path": "一太郎4_3　起動.fdi",
+     "bytes": 1265664,
+     "label": "3 起動",
+     "hdd": false
+    },
+    {
+     "file": "一太郎4_3　辞書L_S ﾕｰﾃｨﾘﾃｨｰ.fdi",
+     "path": "一太郎4_3　辞書L_S ﾕｰﾃｨﾘﾃｨｰ.fdi",
+     "bytes": 1265664,
+     "label": "3 辞書L_S ﾕｰﾃｨﾘﾃｨｰ",
+     "hdd": false
+    },
+    {
+     "file": "一太郎4_3　辞書標準 ｼｽﾃﾑ2.fdi",
+     "path": "一太郎4_3　辞書標準 ｼｽﾃﾑ2.fdi",
+     "bytes": 1265664,
+     "label": "3 辞書標準 ｼｽﾃﾑ2",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0071",
+   "name": "三国志2（セーブディスク）",
+   "kind": "save",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "三国志2セーブディスク.fdi",
+   "disks": [
+    {
+     "file": "三国志2セーブディスク.fdi",
+     "path": "三国志2セーブディスク.fdi",
+     "bytes": 1265664,
+     "label": "セーブディスク",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0072",
+   "name": "三国志3（セーブディスク）",
+   "kind": "save",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "三国志3_User.FDI",
+   "disks": [
+    {
+     "file": "三国志3_User.FDI",
+     "path": "三国志3_User.FDI",
+     "bytes": 1265664,
+     "label": "User",
+     "hdd": false
+    }
+   ]
+  },
+  {
+   "id": "PC98-0073",
+   "name": "三国志5（セーブディスク）",
+   "kind": "save",
+   "hdd": false,
+   "garbled": false,
+   "count": 1,
+   "bytes": 1265664,
+   "boot": "三国志5Save.fdi",
+   "disks": [
+    {
+     "file": "三国志5Save.fdi",
+     "path": "三国志5Save.fdi",
+     "bytes": 1265664,
+     "label": "Save",
+     "hdd": false
+    }
+   ]
+  }
+ ]
+}
