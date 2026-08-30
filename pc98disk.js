@@ -1,6 +1,6 @@
 'use strict';
 /* PC-98 のディスクイメージを、ブラウザの中で読む・作る。
-   昔の EditDisk / DiskExplorer にあたるもの。心臓（NP2kai）には一切触らない。
+   昔の EditDisk / DiskExplorer にあたるもの。コア（NP2kai）には一切触らない。
 
    .fdi は「4096バイトの頭 ＋ セクタを並べただけの中身」。
    中身は MS-DOS の FAT12 なので、見出し（BPB）を読めば中を辿れる。

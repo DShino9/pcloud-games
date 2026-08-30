@@ -67,7 +67,7 @@ function jitter() {
            long: LONG, rough: +(a.filter(x => x > mid * 2).length / a.length * 100).toFixed(1) };
 }
 /* 遊ぶ画面。棚とは別の文書にしてある。
-   EmulatorJS は同じ文書の中で作り直すのが難しく、前の心臓が残ると音だけ鳴り続ける。
+   EmulatorJS は同じ文書の中で作り直すのが難しく、前のコアが残ると音だけ鳴り続ける。
    1本につき1文書にすれば、閉じた時点（iframe を about:blank にした時点）で確実に止まる。 */
 
 const P   = window.PCloud;
@@ -124,7 +124,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
     await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
   }
 
-  say('心臓を起こしています…');
+  say('コアを起こしています…');
   bar(100);
 
   window.EJS_player      = '#game';
@@ -144,7 +144,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
 
   const s = document.createElement('script');
   s.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-  s.onerror = () => fail('心臓を取ってこられません（cdn.emulatorjs.org につながらない）');
+  s.onerror = () => fail('コアを取ってこられません（cdn.emulatorjs.org につながらない）');
   document.body.appendChild(s);
   /* 起動の合図が来ないことがある。少し待って画面が出ていれば覆いを外す。 */
   setTimeout(() => { if (document.querySelector('#game canvas')) $('#load').classList.add('hide'); }, 8000);

@@ -82,7 +82,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "d47b9db7a9884a9595ce3edb7018f2aa",
-   "cover": null
+   "cover": "covers/FC-56.jpg"
   },
   {
    "id": "FC-57",
@@ -150,7 +150,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "66cc69b3ca5918eb83382c4c59df5a8e",
-   "cover": null
+   "cover": "covers/FC-71.jpg"
   },
   {
    "id": "FC-72",
@@ -167,7 +167,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "51699f1839ecbb540d38710dde52d0bb",
-   "cover": null
+   "cover": "covers/FC-72.jpg"
   },
   {
    "id": "FC-73",
@@ -337,7 +337,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "3944f6fe69d78fdbc51c8c09b65daa99",
-   "cover": null
+   "cover": "covers/FC-46.jpg"
   },
   {
    "id": "FC-47",
@@ -456,7 +456,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "a7c49bf9c9a44da6384ece32bde8afe1",
-   "cover": null
+   "cover": "covers/FC-245.jpg"
   },
   {
    "id": "FC-246",
@@ -558,7 +558,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "2490b7b99d19a85f27962fdb0f303ae4",
-   "cover": null
+   "cover": "covers/FC-58.jpg"
   },
   {
    "id": "FC-61",
@@ -677,7 +677,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "f49133d4e0b22fe9c8325f5d023c4cc3",
-   "cover": null
+   "cover": "covers/FC-64.jpg"
   },
   {
    "id": "FC-66",
@@ -711,7 +711,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "7afa04bded7806bae4dd1ef120f1ee72",
-   "cover": null
+   "cover": "covers/FC-67.jpg"
   },
   {
    "id": "FC-69",
@@ -745,7 +745,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "3a079637b8babb01ce27700d3f0b2ba3",
-   "cover": null
+   "cover": "covers/FC-70.jpg"
   },
   {
    "id": "FC-85",
@@ -830,7 +830,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "f0771dfbdb1518a266059927c9be60aa",
-   "cover": null
+   "cover": "covers/FC-88.jpg"
   },
   {
    "id": "FC-89",
@@ -898,7 +898,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "011d4b508824264fa9e30acdad18c628",
-   "cover": null
+   "cover": "covers/FC-92.jpg"
   },
   {
    "id": "FC-94",
@@ -915,7 +915,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "8471e6fc8816b0c0455913e1b8fb9b29",
-   "cover": null
+   "cover": "covers/FC-94.jpg"
   },
   {
    "id": "FC-95",
@@ -932,7 +932,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "f6e68093b7f92afae1273d77e9bc3786",
-   "cover": null
+   "cover": "covers/FC-95.jpg"
   },
   {
    "id": "FC-93",
@@ -1085,7 +1085,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "a16ca8616cbf958123cda92b152463f0",
-   "cover": null
+   "cover": "covers/FC-82.jpg"
   },
   {
    "id": "FC-83",
@@ -1102,7 +1102,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "b4025b64630bb0ceb1e2b73cabd1cfd7",
-   "cover": null
+   "cover": "covers/FC-83.jpg"
   },
   {
    "id": "FC-84",
@@ -1272,7 +1272,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "1946bd604df0e05501c78d5dcbc0901b",
-   "cover": null
+   "cover": "covers/FC-105.jpg"
   },
   {
    "id": "FC-106",
@@ -1323,7 +1323,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "5112a52c5a40791fc15407b3c4dd3d45",
-   "cover": null
+   "cover": "covers/FC-104.jpg"
   },
   {
    "id": "FC-108",
@@ -1340,7 +1340,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "45a352156209155dfea3d41a5a9dd80c",
-   "cover": null
+   "cover": "covers/FC-108.jpg"
   },
   {
    "id": "FC-109",
@@ -1442,7 +1442,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "4654676da334bc84275c5741ef3e49ba",
-   "cover": null
+   "cover": "covers/FC-115.jpg"
   },
   {
    "id": "FC-114",
@@ -1816,7 +1816,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "30f9974041f42899abf9d7748355644f",
-   "cover": null
+   "cover": "covers/FC-130.jpg"
   },
   {
    "id": "FC-135",
@@ -1884,7 +1884,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "311e8a90ba3182294987101b534d1d6e",
-   "cover": null
+   "cover": "covers/FC-150.jpg"
   },
   {
    "id": "FC-138",
@@ -1952,7 +1952,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "300356fc994c37b998898bb0061ea6ee",
-   "cover": null
+   "cover": "covers/FC-141.jpg"
   },
   {
    "id": "FC-142",
@@ -1969,7 +1969,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "dc41c4d08317418cb52f723f9b0ddee1",
-   "cover": null
+   "cover": "covers/FC-142.jpg"
   },
   {
    "id": "FC-143",
@@ -2071,7 +2071,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "97010b1a2fe9ecadde2c12505a79faba",
-   "cover": null
+   "cover": "covers/FC-148.jpg"
   },
   {
    "id": "FC-149",
@@ -2105,7 +2105,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "10dd53c7f32f7950569ce5789426dd02",
-   "cover": null
+   "cover": "covers/FC-152.jpg"
   },
   {
    "id": "FC-153",
@@ -2394,7 +2394,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "91b290772caffdef938008c6f5e955d8",
-   "cover": null
+   "cover": "covers/FC-170.jpg"
   },
   {
    "id": "FC-226",
@@ -2547,7 +2547,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "b6d1bdb0722473235d2360f38c74517c",
-   "cover": null
+   "cover": "covers/FC-171.jpg"
   },
   {
    "id": "FC-241",
@@ -2564,7 +2564,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "076be5cce3341f5ed0ccb1b3645a6a9f",
-   "cover": null
+   "cover": "covers/FC-241.jpg"
   },
   {
    "id": "FC-11",
@@ -2683,7 +2683,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "2916f06c1a4a8861c5f4e1daeb199090",
-   "cover": null
+   "cover": "covers/FC-174.jpg"
   },
   {
    "id": "FC-173",
@@ -2700,7 +2700,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "c2240aaebe0911c1684b656b7b5b8b0c",
-   "cover": null
+   "cover": "covers/FC-173.jpg"
   },
   {
    "id": "FC-175",
@@ -2734,7 +2734,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "75d4e11afc450a47ebbfe4c164bdc762",
-   "cover": null
+   "cover": "covers/FC-39.jpg"
   },
   {
    "id": "FC-181",
@@ -2751,7 +2751,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "3b751b4cee8180aee3b97da6168299f4",
-   "cover": null
+   "cover": "covers/FC-181.jpg"
   },
   {
    "id": "FC-180",
@@ -2819,7 +2819,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "0e57816451c558f4da5c6fc1e95463f6",
-   "cover": null
+   "cover": "covers/FC-15.jpg"
   },
   {
    "id": "FC-27",
@@ -2887,7 +2887,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "e49a883a846f1217e97d3c13ac459f13",
-   "cover": null
+   "cover": "covers/FC-30.jpg"
   },
   {
    "id": "FC-14",
@@ -3057,7 +3057,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "b053f953cc8cafa0d697cd44d5eb2b6b",
-   "cover": null
+   "cover": "covers/FC-16.jpg"
   },
   {
    "id": "FC-31",
@@ -3125,7 +3125,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "2444509194ff84daa8355aa12b175603",
-   "cover": null
+   "cover": "covers/FC-38.jpg"
   },
   {
    "id": "FC-37",
@@ -3142,7 +3142,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "b95381bb82d3fd57cbeb9b72c7b8eff6",
-   "cover": null
+   "cover": "covers/FC-37.jpg"
   },
   {
    "id": "FC-25",
@@ -3176,7 +3176,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "dfd689fd03201c8a8aaf2abe69ec2f93",
-   "cover": null
+   "cover": "covers/FC-26.jpg"
   },
   {
    "id": "FC-18",
@@ -3193,7 +3193,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "8c44073ae5dcbc5f92b700480365f5b8",
-   "cover": null
+   "cover": "covers/FC-18.jpg"
   },
   {
    "id": "FC-17",
@@ -3329,7 +3329,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "66db457b130d31a286a23d6e4dd9726e",
-   "cover": null
+   "cover": "covers/N64-231.jpg"
   },
   {
    "id": "N64-233",
@@ -3380,7 +3380,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "b6db34d0f3181759a1b54c0ca9d51589",
-   "cover": null
+   "cover": "covers/N64-230.jpg"
   },
   {
    "id": "DS-269",
@@ -3907,7 +3907,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "58abd5e23567e1a6beb931d6d97f0d80",
-   "cover": null
+   "cover": "covers/SFC-184.jpg"
   },
   {
    "id": "SFC-185",
@@ -3958,7 +3958,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "db74df2711c492e6ffc6513c81e12d12",
-   "cover": null
+   "cover": "covers/SFC-186.jpg"
   },
   {
    "id": "SFC-187",
@@ -4026,7 +4026,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "4daa700a0b7230dc9ec50e50b5f980e7",
-   "cover": null
+   "cover": "covers/SFC-188.jpg"
   },
   {
    "id": "SFC-189",
@@ -4162,7 +4162,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "c1008db81315057be63c2901a39eb1fb",
-   "cover": null
+   "cover": "covers/SFC-195.jpg"
   },
   {
    "id": "SFC-196",
@@ -4179,7 +4179,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "a09d2a932518693e47edd02f78ec2caa",
-   "cover": null
+   "cover": "covers/SFC-196.jpg"
   },
   {
    "id": "SFC-197",
@@ -4213,7 +4213,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "bb4b3c8feb39355efecc20ad87556d91",
-   "cover": null
+   "cover": "covers/SFC-198.jpg"
   },
   {
    "id": "SFC-199",
@@ -4247,7 +4247,7 @@
    "plays": 2,
    "rating": 0,
    "md5": "46ea685931f60c99cc09937f866e39a6",
-   "cover": null
+   "cover": "covers/SFC-200.jpg"
   },
   {
    "id": "SFC-201",
@@ -4366,7 +4366,7 @@
    "plays": 1,
    "rating": 0,
    "md5": "4dd6a42319e48802c734ece964dd1e06",
-   "cover": null
+   "cover": "covers/SFC-207.jpg"
   },
   {
    "id": "SFC-208",
@@ -4383,7 +4383,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "675617e4e70704c058184231ecf3fffb",
-   "cover": null
+   "cover": "covers/SFC-208.jpg"
   },
   {
    "id": "SFC-209",
@@ -4485,7 +4485,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "8248ab7389d3d1d002cdfc9961c8d923",
-   "cover": null
+   "cover": "covers/SFC-214.jpg"
   },
   {
    "id": "SFC-215",
@@ -4553,7 +4553,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "7b84c3af48291bc6662885bccf170aa4",
-   "cover": null
+   "cover": "covers/SFC-219.jpg"
   },
   {
    "id": "SFC-220",
@@ -4638,7 +4638,7 @@
    "plays": 0,
    "rating": 0,
    "md5": "9aee91aed519fa3efdde3e75a14c2df9",
-   "cover": null
+   "cover": "covers/SFC-223.jpg"
   }
  ]
 }
