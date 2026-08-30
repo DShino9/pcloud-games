@@ -25,13 +25,20 @@ function toast(msg, ms) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms || 2200);
 }
 
+/* 入口（ds9）の下では、中継所は入口の中に同居している。
+   だから設定させない。住所が同じなので /relay で届く。
+   github.io で直に開いたときだけ、これまで通り端末の設定を見る。
+   （端末ごとに中継所を入れ直させるのが、そもそもの間違いだった） */
+const UNDER_GATE = !/(^|\.)github\.io$/.test(location.hostname);
+const RELAY_HERE = location.origin + '/relay';
+
 const S = {
   host:     LS.get('host', P.HOSTS[0]),
   auth:     LS.get('auth', ''),
   email:    LS.get('email', ''),
   rootId:   LS.get('rootId', null),
   rootName: LS.get('rootName', ''),
-  relay:    LS.get('relay', ''),      // 中継所。中身を流すにはこれが要る
+  relay:    UNDER_GATE ? RELAY_HERE : LS.get('relay', ''),   // 入口の下なら同居しているものを使う
   pub:      LS.get('pub', false),
   files:    LS.get('files', {}),      // NFCにした名前 → fileid
   plays:    LS.get('plays', {}),      // id → {n, last}
