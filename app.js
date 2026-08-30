@@ -383,14 +383,17 @@ function play(id) {
   $('#pname').textContent = g.name;
   /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
-    ? './play98.html?id=' + encodeURIComponent(id) + '&v=25'
+    ? './play98.html?id=' + encodeURIComponent(id) + '&v=26'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=6';
+      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=8';
   $('#play').classList.remove('hide');
-  /* 遊んでいるあいだ、棚は畳んでおく。
-     箱絵を数百枚抱えたままエミュレータを動かすと、iPhone では途中から重くなる
-     （出だしだけ速い、という出方をする）。畳めば絵の分の重さを手放せる。 */
+  /* 遊んでいるあいだ、棚を**空にする**。
+     display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
+     中身ごと捨てれば絵の分の重さが本当に減る（閉じたら描き直す）。
+     見出しの帯も消す。ぼかしが掛かっていて、隠れていても描画の費用がかかる。 */
+  main().innerHTML = '';
   main().style.display = 'none';
+  document.querySelector('header').style.display = 'none';
   /* 遊ぶ画面は iframe の中にある。そこへ焦点を移さないと、キーが棚側に吸われて
      コアまで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
   const fr = $('#pframe');
@@ -443,6 +446,7 @@ $('#pclose').onclick = async () => {
   $('#pframe').src = 'about:blank';       // 中のコアを確実に止める
   $('#play').classList.add('hide');
   main().style.display = '';
+  document.querySelector('header').style.display = '';
   await refreshHere();
   render();
 };
@@ -460,7 +464,7 @@ function screenSet() {
       <div class="row"><span class="nm">棚のフォルダ</span><span class="sub">${esc(S.rootName || '未選択')}</span></div>
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が棚にある</span></div>
       <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
-      <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（これが無いと遊べません）'}</span></button>
+      <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">選んで上げる・下げる</span></button>
       <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
@@ -509,7 +513,8 @@ function screenRelay() {
   main().innerHTML = `
   <div class="card" style="max-width:520px">
     <h2>中継所</h2>
-    <p>これが無いと遊べません。ゲーム棚用に1台立てて、その URL をここに入れます。</p>
+    <p><b>無くても遊べます。</b>あると取り寄せが速くなります。<br>
+       1台立てて、その URL をここに入れてください。</p>
     <div class="field"><label>URL</label>
       <input id="rl" placeholder="https://ongakudana.○○○.workers.dev"
         value="${esc(S.relay)}" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -521,13 +526,17 @@ function screenRelay() {
       1. Cloudflare の Workers &amp; Pages を開き、Worker を新しく作る（名前は <code>gamedana</code> など）<br>
       2. 「Edit code」に、置き場の <code>core/relay.js</code> を丸ごと貼る<br>
       3. Deploy して、出てきた <code>…workers.dev</code> の URL を上に入れる<br><br>
-      <b>なぜ要るのか</b>（実測）<br>
+      <b>何のためにあるのか</b>（実測）<br>
       pCloud の配信元（<code>ptok2.pcloud.com</code> など）は
       <code>Access-Control-Allow-Origin</code> を返さない。リンク自体は
       <code>getfilelink</code> でも公開リンクの符号でも取れるが、どちらの配信元も
       CORS が無いので、ブラウザの JavaScript は中身を掴めない。
-      <code>file_open</code> は CORS が開いているが <code>2003</code> で使えなかった。
-      あいだに一枚はさむしかない。<br><br>
+      あいだに一枚はさむと、そこが解ける。<br><br>
+      <b>無いとどうなるか</b><br>
+      <code>file_open</code> / <code>file_read</code> は CORS が開いているので、
+      中継所が無くても・落ちていても中身は読めます。ただし丸ごと読むぶん遅い。
+      中継所の設定を消しても、返事が来なくなっても、棚は勝手にこちらへ降ります
+      （<b>遊べなくなることはありません</b>）。<br><br>
       中継所は fileid を選ばないので、<b>棚もの全部で1台を使い回せる</b>。
     </div>
     <button class="hbtn" id="back" style="margin-top:16px">← 設定へ</button>

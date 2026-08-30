@@ -37,6 +37,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 gamed
 # 守らないと 429（叩きすぎ）で全部断られる（実際に踏んだ）。
 WIKI_UA = "gamedana/1.0 (personal game shelf; d_shino@hotmail.com)"
 WIKI_WAIT = 1.5          # 秒。これより速く叩かない
+SEARCH_WAIT = 8.0        # 画像検索の間隔。速いと相手が壊れて無関係な結果を返す
 
 
 def vg_md5(p: Path):
@@ -74,6 +75,75 @@ def shrink(src: Path, dst: Path):
     subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", "78",
                     "--resampleWidth", str(COVER_W), str(src), "--out", str(dst)],
                    check=True, capture_output=True)
+
+
+def img_search(query, want=12):
+    """画像検索から「絵の直リンク」と「その絵に付いている題名」を拾う。**最後の手段。**
+       まとめ場（libretro）に無いもの——PC-98 の光栄ものなど——はここしかない。
+
+       **絵だけ見て選んではいけない。** 大きさと縦横比だけで通すと、
+       ルンバの写真やF1の車やカタカナ表が箱絵として入る（実際に63枚入れて全部捨てた）。
+       検索結果には題名が付いているので、そこと本の名前を突き合わせる。"""
+    from urllib.parse import quote
+    import html as _h
+    url = "https://www.bing.com/images/search?q=" + quote(query) + "&form=HDRSC2"
+    try:
+        req = Request(url, headers={"User-Agent": UA})
+        with urlopen(req, timeout=30) as r:
+            s2 = r.read().decode("utf-8", "replace")
+    except Exception:
+        return []
+    out, seen = [], set()
+    for b in re.findall(r'm="(\{[^"]*?\})"', s2):
+        try:
+            j = json.loads(_h.unescape(b))
+        except Exception:
+            continue
+        u, t = j.get("murl"), j.get("t") or ""
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        out.append((u.replace("\\u0026", "&"), t))
+        if len(out) >= want:
+            break
+    return out
+
+
+def tight(s2):
+    """突き合わせ用に詰める。ローマ数字は算用数字に、記号と空白は落とす。"""
+    s2 = unicodedata.normalize("NFKC", s2 or "").lower()
+    for a, b in [("viii", "8"), ("vii", "7"), ("iii", "3"), ("ii", "2"),
+                 ("iv", "4"), ("ix", "9"), ("vi", "6"), ("v", "5")]:
+        s2 = re.sub(r"(?<![a-z])" + a + r"(?![a-z])", b, s2)
+    return re.sub(r"[^0-9a-z぀-ヿ一-鿿]", "", s2)
+
+
+def title_ok(name, t):
+    """その絵の題名に、本の名前が入っているか。
+       入っていなければ別物。**ここを省くと何でも通る。**"""
+    n, tt = tight(name), tight(t)
+    if len(n) >= 3 and n in tt:
+        return True
+    # 末尾の数字はこちらが付けた通し番号のことがある（提督の決断1 など）
+    base = re.sub(r"\d+$", "", n)
+    if len(base) >= 3 and base in tt and ("9801" in tt or "pc98" in tt):
+        return True
+    return False
+
+
+def looks_like_box(path):
+    """箱らしいか。小さすぎるもの、横に長すぎるもの（画面写真や帯）は外す。"""
+    try:
+        r = subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(path)],
+                           capture_output=True, text=True, check=True).stdout
+        w = int(re.search(r"pixelWidth:\s*(\d+)", r).group(1))
+        h = int(re.search(r"pixelHeight:\s*(\d+)", r).group(1))
+    except Exception:
+        return False
+    if min(w, h) < 240:
+        return False
+    ar = w / h
+    return 0.55 <= ar <= 1.6
 
 
 def load_alias():
@@ -299,6 +369,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true", help="箱絵があるものも引き直す")
     ap.add_argument("--pc98", action="store_true", help="PC-98（pc98.json）を引く")
+    ap.add_argument("--search", action="store_true",
+                    help="まとめ場に無いものを画像検索で埋める（最後の手段）")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -324,7 +396,36 @@ def main():
                 continue
             name, sc = pc98_match(t["name"], tree)
             if not name:
-                print(f"  無い: {t['name']}")
+                if not a.search:
+                    print(f"  無い: {t['name']}")
+                    continue
+                # まとめ場に無い。画像検索で埋める。
+                q = f"{t['name']} PC-9801 パッケージ 箱"
+                hit = False
+                for u, wt in img_search(q):
+                    if not title_ok(t["name"], wt):
+                        continue
+                    if a.dry_run:
+                        print(f"  [検索] {t['name']}  ← {wt[:50]}"); hit = True; break
+                    try:
+                        tmp.write_bytes(fetch(u))
+                    except Exception:
+                        continue
+                    if not looks_like_box(tmp):
+                        continue
+                    try:
+                        shrink(tmp, COVERS / f"{t['id']}.jpg")
+                    except Exception:
+                        continue
+                    t["cover"] = f"covers/{t['id']}.jpg"; n["wiki"] += 1; hit = True
+                    print(f"  [検索] {t['name']}  ← {wt[:52]}")
+                    break
+                if not hit:
+                    n["ng"] += 1
+                    print(f"  見つからない: {t['name']}")
+                # 続けて叩くと検索側が壊れ、無関係な結果を返し始める（実測）。
+                # 76回で 水滸伝→Minecraft、三國志2→類語辞典 になった。大きく空ける。
+                time.sleep(SEARCH_WAIT)
                 continue
             if a.dry_run:
                 print(f"  [{sc:.2f}] {t['name']}  ← {name}")
