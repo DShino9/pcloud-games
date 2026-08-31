@@ -356,9 +356,15 @@ function screenLogin(keep) {
 /* ============ フォルダを選ぶ ============ */
 async function screenPick(folderid) {
   $('#title').textContent = '倉庫のフォルダを選ぶ';
-  main().innerHTML = '<div class="card"><p>見ています…</p></div>';
+  const t0 = Date.now();
+  main().innerHTML = `<div class="card" style="max-width:560px">
+    <p id="wait">見ています…</p></div>`;
+  const tick = setInterval(() => {
+    const w = $('#wait');
+    if (w) w.textContent = `見ています… ${Math.round((Date.now() - t0) / 1000)} 秒`;
+  }, 1000);
   let r;
-  try { r = await call('listfolder', { folderid }); }
+  try { r = await call('listfolder', { folderid }, 60000); }
   catch (e) {
     main().innerHTML = `<div class="card"><h2>開けません</h2><div class="msg err">${esc(e.message)}</div>
       <button class="primary" id="out" style="margin-top:14px">つなぎ直す</button></div>`;
@@ -1549,7 +1555,7 @@ async function screenGather(browse) {
    整理してある置き場を崩すのは筋が悪い。**その場所も見に行けば済む。**
    遊ぶときに使うのは fileid なので、どこに置いてあっても関係ない。 */
 async function screenPlaces(folderid) {
-  $('#title').textContent = '見に行く場所';
+  $('#title').textContent = '倉庫の場所';
   const browsing = folderid != null;
 
   if (!browsing) {
@@ -1612,16 +1618,30 @@ async function screenPlaces(folderid) {
     return;
   }
 
-  /* 足す場所を選ぶ。1階ずつ降りる（棚のフォルダ選びと同じ呼び方）。 */
-  main().innerHTML = '<div class="card"><p>見ています…</p></div>';
+  /* 足す場所を選ぶ。1階ずつ降りる（倉庫のフォルダ選びと同じ呼び方）。
+     **待たせるときは秒を出す。** 黙って「見ています…」のまま止まると、
+     動いているのか死んだのかが分からない（実際に固まって見えた）。 */
+  const t0 = Date.now();
+  main().innerHTML = `<div class="card" style="max-width:560px">
+    <p id="wait">見ています…</p></div>`;
+  const tick = setInterval(() => {
+    const w = $('#wait');
+    if (w) w.textContent = `見ています… ${Math.round((Date.now() - t0) / 1000)} 秒`;
+  }, 1000);
   let r;
-  try { r = await call('listfolder', { folderid }); }
+  try { r = await call('listfolder', { folderid }, 60000); }
   catch (e) {
-    main().innerHTML = `<div class="card"><div class="msg err">${esc(e.message)}</div>
-      <button class="hbtn" id="back">← 戻る</button></div>`;
+    clearInterval(tick);
+    main().innerHTML = `<div class="card" style="max-width:560px">
+      <div class="msg err">開けません: ${esc(e.message)}</div>
+      <div class="sub">つながりが細いか、pCloud が混んでいるのかもしれません。</div>
+      <button class="hbtn" id="again" style="margin-top:10px">もう一度</button>
+      <button class="hbtn" id="back" style="margin-left:6px">← 戻る</button></div>`;
+    $('#again').onclick = () => screenPlaces(folderid);
     $('#back').onclick = () => go('#/places');
     return;
   }
+  clearInterval(tick);
   const md = r.metadata;
   const dirs = (md.contents || []).filter(c => c.isfolder)
     .sort((a, b) => collator.compare(a.name, b.name));
@@ -1672,15 +1692,24 @@ function keepGather(G) {
 
 /* 「棚に上げる」で探す場所を選ぶ。1階ずつ降りる（棚のフォルダ選びと同じ呼び方）。 */
 async function gatherPick(folderid, G) {
-  main().innerHTML = '<div class="card"><p>見ています…</p></div>';
+  const t0 = Date.now();
+  main().innerHTML = `<div class="card" style="max-width:560px">
+    <p id="wait">見ています…</p></div>`;
+  const tick = setInterval(() => {
+    const w = $('#wait');
+    if (w) w.textContent = `見ています… ${Math.round((Date.now() - t0) / 1000)} 秒`;
+  }, 1000);
   let r;
-  try { r = await call('listfolder', { folderid }); }
+  try { r = await call('listfolder', { folderid }, 60000); }
   catch (e) {
-    main().innerHTML = `<div class="card"><div class="msg err">${esc(e.message)}</div>
+    clearInterval(tick);
+    main().innerHTML = `<div class="card" style="max-width:560px">
+      <div class="msg err">開けません: ${esc(e.message)}</div>
       <button class="hbtn" id="back">← 戻る</button></div>`;
     $('#back').onclick = () => go('#/gather');
     return;
   }
+  clearInterval(tick);
   const md = r.metadata;
   const dirs = (md.contents || []).filter(c => c.isfolder)
     .sort((a, b) => collator.compare(a.name, b.name));
@@ -1843,11 +1872,14 @@ async function dupesPick(folderid) {
   let r;
   try { r = await call('listfolder', { folderid }); }
   catch (e) {
-    main().innerHTML = `<div class="card"><div class="msg err">${esc(e.message)}</div>
+    clearInterval(tick);
+    main().innerHTML = `<div class="card" style="max-width:560px">
+      <div class="msg err">開けません: ${esc(e.message)}</div>
       <button class="hbtn" id="back">← 戻る</button></div>`;
     $('#back').onclick = () => go('#/dupes');
     return;
   }
+  clearInterval(tick);
   const md = r.metadata;
   const dirs = (md.contents || []).filter(c => c.isfolder)
     .sort((a, b) => collator.compare(a.name, b.name));
