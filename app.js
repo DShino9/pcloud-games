@@ -520,6 +520,11 @@ function screenLib(sys) {
   const missing = nNone;
   main().innerHTML = `
   <div class="bar"><div class="row1">
+    <div class="seg">
+      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
+      <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>ぜんぶ (${nAll})</button>
+      <button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>
+    </div>
     <input class="search" id="q" placeholder="題名で探す" value="${esc(S.q)}"
       autocapitalize="off" autocorrect="off" spellcheck="false">
     <select id="sys">
@@ -537,11 +542,6 @@ function screenLib(sys) {
       <option value="last"${S.sort === 'last' ? ' selected' : ''}>最近遊んだ順</option>
       <option value="size"${S.sort === 'size' ? ' selected' : ''}>大きい順</option>
     </select>
-    <div class="seg">
-      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
-      <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>ぜんぶ (${nAll})</button>
-      <button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>
-    </div>
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
