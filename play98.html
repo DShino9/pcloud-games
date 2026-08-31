@@ -943,8 +943,29 @@ function askDisks() {
   try { cat = await (await fetch('./pc98.json?v=1', { cache: 'no-cache' })).json(); }
   catch (e) { return fail('PC-98 の台帳が読めません'); }
   title = (cat.titles || []).find(t => t.id === id);
-  if (!title) return fail('台帳にありません');
   files = LS.get('files', {});
+  /* **台帳に無い本は、棚が走査で見つけた分から作る。**
+     台帳（`pc98.json`）は Mac にあった42本しか載っていない。
+     倉庫から見つけた何百本はここに来ないので、`台帳にありません` で
+     起動もディスク選びもできなかった。
+     見つけた本は在処つきの fileid を持っているので、名前ではなくそれで取る。 */
+  if (!title) {
+    try {
+      const e = JSON.parse(localStorage.getItem('pg.extra') || '[]').find(x => x.id === id);
+      if (e) {
+        title = {
+          id: e.id, name: e.name, kind: 'game', boot: e.files[0],
+          disks: e.files.map(f => ({
+            file: f, label: f.replace(/\.[^.]+$/, ''),
+            hdd: /\.(hdi|thd|nhd|vhd|hdd|slh)$/i.test(f), bytes: 0,
+          })),
+        };
+        /* 名前ではなく**その本の fileid** を使う（同じ名前が別の本に山ほどある）。 */
+        (e.fids || []).forEach((fid, i) => { if (e.files[i]) files[P.nfc(e.files[i])] = fid; });
+      }
+    } catch (err) {}
+  }
+  if (!title) return fail('台帳にありません');
   ALL = buildAll(cat);
   DISKS = title.disks.map(d => ({ ...d, from: title.name, kind: title.kind }));
   $('#nm').textContent = title.name;
