@@ -22,6 +22,11 @@ const size = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'MB' : Math.max(1, Math.roun
 
 const LS  = P.store('pg');
 const log = P.logger(LS);
+/* いま動いている版。**画面に出す。** 「直したのに変わらない」を
+   毎回やり取りしないで済むように、見れば分かる所に置く。 */
+const VERSION = (document.querySelector('script[src*="app.js"]') || {})
+  .getAttribute?.('src')?.match(/v=(\d+)/)?.[1] || '?';
+
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
 /* 手で入れた箱絵。**置き場に入れずに端末の中に置く。**
    探しても出てこない本（`Aya3` など3本）と、切り出しを外した本を、
@@ -131,18 +136,22 @@ async function scanFolder(folderid, say = () => {}) {
    同じ名前があれば**棚のフォルダを優先**（そちらが本来の置き場）。 */
 async function scanAll(say = () => {}) {
   const map = {};
+  const seen = [];
   let count = 0;
   const report = [];
   const places = [...S.roots, ...(S.rootId ? [{ id: S.rootId, name: S.rootName }] : [])];
   for (const pl of places) {
     say(`${pl.name} を見ています…`);
     try {
-      const r = await P.indexFolder(pl.id, { host: S.host, auth: S.auth,
+      const r = await P.scanFolder(pl.id, { host: S.host, auth: S.auth,
         onStep: (n, left) => say(`${pl.name} を歩いています… ${n} ファイル・残り ${left} 部屋`) });
-      Object.assign(map, r.map);            // 後に来る棚のフォルダが勝つ
-      count += r.count;
-      report.push(`${pl.name}: ${r.count}`);
-      log.note(`走査: ${pl.name} ${r.count} ファイル`);
+      for (const f of r.files) map[f.name] = f.fileid;   // 後に来る倉庫のフォルダが勝つ
+      /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
+         もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
+      seen.push(...r.files.filter(f => sysOf(f.name).length));
+      count += r.files.length;
+      report.push(`${pl.name}: ${r.files.length}`);
+      log.note(`走査: ${pl.name} ${r.files.length} ファイル`);
     } catch (e) {
       /* **黙って落とさない。** 1か所が駄目でも他は続けるが、
          どこが駄目だったかは必ず出す（棚が空の理由が分からなくなる）。 */
@@ -151,6 +160,11 @@ async function scanAll(say = () => {}) {
     }
   }
   S.files = map; LS.set('files', map);
+  /* 「棚に上げる」がそのまま使えるように、在処つきの一覧を渡しておく。 */
+  S.gather = Object.assign(S.gather || { pick: {}, busy: false },
+    { files: seen, where: { id: places[0] && places[0].id, name: '見に行く場所ぜんぶ' },
+      at: new Date().toISOString().slice(0, 16).replace('T', ' ') });
+  keepGather(S.gather);
   const added = learnFrom(map);
   return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
@@ -733,6 +747,7 @@ function screenSet() {
   <div class="card" style="max-width:520px">
     <h2>設定</h2>
     <div class="rowlist" style="margin-bottom:14px">
+      <div class="row"><span class="nm">版</span><span class="sub">v${esc(VERSION)}</span></div>
       <div class="row"><span class="nm">pCloud</span><span class="sub">${S.auth ? esc(S.email) : '未接続'}</span></div>
 
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が倉庫にある</span></div>
@@ -1396,9 +1411,14 @@ async function screenGather(browse) {
        置いたまま棚に出ます（整理を崩さずに済みます）。<br>
        ここは<b>倉庫の中で1か所に寄せたいとき</b>だけ使ってください。すでに pCloud にあるので
        <b>上げ直しません</b>（向こう側で動かすだけ。一瞬で終わります）。</p>
-    <div class="msg" style="margin:6px 0">探す場所: <b>${esc(G.where ? G.where.name : '未指定')}</b></div>
-    <button class="hbtn" id="pickwhere">探す場所を選ぶ</button>
-    <button class="hbtn" id="scan"${G.busy || !G.where ? ' disabled' : ''}>ここを探す</button>
+    <div class="msg" style="margin:6px 0">${G.files
+      ? `<b>${esc(G.where ? G.where.name : '')}</b> の分をそのまま出しています${
+          G.at ? '（' + esc(G.at) + ' に調べた分）' : ''}。<b>探し直す必要はありません。</b>`
+      : '「見に行く場所」を見直すと、その結果をここでそのまま使えます。'}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="hbtn" id="scan"${G.busy || !G.where ? ' disabled' : ''}>調べ直す</button>
+      <button class="hbtn" id="pickwhere">ほかの場所を調べる</button>
+    </div>
     ${G.files ? `<span class="sub" style="margin-left:8px">ROM ${G.files.length} 件${
       G.at ? '・' + esc(G.at) + ' に調べた分' : ''}</span>` : ''}
     <div class="msg" id="gm"></div>
