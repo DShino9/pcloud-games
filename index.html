@@ -15,6 +15,35 @@
 <!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
 <link rel="stylesheet" href="./core/shelf.css?v=2">
 <style>
+/* 入口の機種札。**箱絵を敷いて、その上にロゴ。**
+   字だけの一覧では「どの機種に何があるか」が伝わらない。 */
+.sysgrid{display:grid;gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.sysc{position:relative;padding:0;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--card);cursor:pointer;text-align:left;
+  display:flex;flex-direction:column;min-height:118px}
+.sysc:hover{border-color:var(--accent)}
+.syscov{position:absolute;inset:0}
+.syscov img{width:100%;height:100%;object-fit:cover;opacity:.30;filter:saturate(.85)}
+.syscov i{position:absolute;inset:0;
+  background:linear-gradient(rgba(10,11,14,.30),rgba(10,11,14,.88))}
+.syshead{position:relative;padding:12px 13px 0;display:flex;align-items:center;gap:8px;
+  min-height:44px}
+.syslogo{height:26px;max-width:120px;object-fit:contain;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,1))}
+.systag{font-size:15px;font-weight:700;letter-spacing:.05em;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,1)}
+.sysname{margin-left:auto;font-size:11px;color:var(--dim2)}
+.syscnt{position:relative;margin-top:auto;padding:0 13px 12px;font-size:13px;color:var(--fg)}
+/* 機種の色を左端に細く敷く。一覧の中で拾いやすくなる。 */
+.sysc::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--sys,var(--line))}
+.sysc[data-s="FC"] {--sys:#c8392b} .sysc[data-s="SFC"]{--sys:#5b5f9e}
+.sysc[data-s="N64"]{--sys:#1f8a63} .sysc[data-s="DS"] {--sys:#6b7280}
+.sysc[data-s="PSP"]{--sys:#4b3a72} .sysc[data-s="98"] {--sys:#1d5c8f}
+.sysc[data-s="MD"] {--sys:#1f6fb0} .sysc[data-s="PCE"]{--sys:#c07a1f}
+.sysc[data-s="GB"] {--sys:#5a7a3a} .sysc[data-s="GBA"]{--sys:#4a3f8f}
+@media (max-width:520px){.sysgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
 /* 束の見出し。押すと畳む。数が増えると一覧が長くなるので、
    ふだん見ない機種は畳んだままにしておける（耳読の書棚と同じ作法）。 */
 h2.fold{display:flex;align-items:center;gap:8px;margin:18px 0 10px;cursor:pointer;
@@ -113,6 +142,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=3"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=41"></script>
+<script src="./app.js?v=43"></script>
 </body>
 </html>
