@@ -189,18 +189,14 @@ async function relayAlive(relay) {
 /* ---- 棚の走査 ----
    1回の recursive listfolder で丸ごと取る。folderid を鍵にするので NFD/NFC を踏まない。
    返すのは「NFCにした名前 → fileid」。同名が複数あれば後勝ち（棚では起きない前提）。 */
+/* 名前→fileid の対を作る。**走査の仕方は scanFolder に任せる。**
+   ここで直に `recursive:1` を頼んでいたせいで、その頼み方を断る口では
+   丸ごと失敗していた（棚が空のままになる）。入口を1つにまとめる。 */
 async function indexFolder(folderid, opt = {}) {
-  const r = await api('listfolder', { folderid, recursive: 1 },
-    { host: opt.host, auth: opt.auth, ms: opt.ms || 60000 });
+  const r = await scanFolder(folderid, opt);
   const map = {};
-  let n = 0;
-  (function walk(node) {
-    for (const c of (node.contents || [])) {
-      if (c.isfolder) walk(c);
-      else { map[nfc(c.name)] = c.fileid; n++; }
-    }
-  })(r.metadata);
-  return { map, count: n, name: r.metadata.name || '/' };
+  for (const f of r.files) map[f.name] = f.fileid;
+  return { map, count: r.files.length, name: r.name };
 }
 
 /* 走査。`indexFolder` は名前→fileid の対だけを返すので、
