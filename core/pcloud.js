@@ -89,7 +89,9 @@ async function api(method, params = {}, opt = {}) {
   } finally { clearTimeout(timer); }
   if (!r.ok) throw new PCloudError(-1, 'HTTP ' + r.status);
   const j = await r.json();
-  if (j.result !== 0) throw new PCloudError(j.result, j.error);
+  /* 断り文句には**番号を添える**。`Invalid request.` だけでは、
+     どこが悪いのか調べようがない（実際に調べ直す羽目になった）。 */
+  if (j.result !== 0) throw new PCloudError(j.result, (j.error || '断られました') + '（' + j.result + '）');
   return j;
 }
 
@@ -205,17 +207,48 @@ async function indexFolder(folderid, opt = {}) {
    **同じ名前が別の場所にもあると潰れる。** 棚の外にある分を拾うときは
    どこにあるかまで要るので、こちらは1件ずつ在処を付けて返す。 */
 async function scanFolder(folderid, opt = {}) {
-  const r = await api('listfolder', { folderid, recursive: 1 },
-    { host: opt.host, auth: opt.auth, ms: opt.ms || 90000 });
-  const out = [];
-  (function walk(node, path) {
-    for (const c of (node.contents || [])) {
-      if (c.isfolder) walk(c, path + '/' + nfc(c.name));
-      else out.push({ name: nfc(c.name), fileid: c.fileid, size: c.size || 0,
-                      folderid: c.parentfolderid, path });
+  /* **根っこの頼み方は1通りではない。** `folderid=0` を断る口があるので
+     （`Invalid request.` が返った）、番号 → `path:"/"` の順に試す。
+     どちらも通らなければ、断り文句に番号を付けて返す（何が悪いか分かるように）。 */
+  const ways = [{ folderid }, ...(folderid === 0 ? [{ path: '/' }] : [])];
+  let last = null;
+  for (const w of ways) {
+    try {
+      const r = await api('listfolder', { ...w, recursive: 1 },
+        { host: opt.host, auth: opt.auth, ms: opt.ms || 120000 });
+      const out = [];
+      (function walk(node, path) {
+        for (const c of (node.contents || [])) {
+          if (c.isfolder) walk(c, path + '/' + nfc(c.name));
+          else out.push({ name: nfc(c.name), fileid: c.fileid, size: c.size || 0,
+                          folderid: c.parentfolderid, path });
+        }
+      })(r.metadata, '');
+      return { files: out, name: r.metadata.name || '/' };
+    } catch (e) { last = e; }
+  }
+  /* 再帰の頼みが通らないときは**自分で歩く。**
+     1階ずつの `listfolder` は棚のフォルダ選びで通っているので、これなら確実。
+     頼む回数は増えるが、通らないより良い。 */
+  try {
+    const out = [];
+    const q = [{ id: folderid, path: '' }];
+    let guard = 0;
+    while (q.length && guard++ < 4000) {
+      const { id, path } = q.shift();
+      const r = await api('listfolder', { folderid: id },
+        { host: opt.host, auth: opt.auth, ms: opt.ms || 30000 });
+      for (const c of (r.metadata.contents || [])) {
+        if (c.isfolder) q.push({ id: c.folderid, path: path + '/' + nfc(c.name) });
+        else out.push({ name: nfc(c.name), fileid: c.fileid, size: c.size || 0,
+                        folderid: id, path });
+      }
+      if (opt.onStep) opt.onStep(out.length, q.length);
     }
-  })(r.metadata, '');
-  return { files: out, name: r.metadata.name || '/' };
+    return { files: out, name: '/' };
+  } catch (e) {
+    throw last || e;
+  }
 }
 
 /* ---- 手元に置いた分（Cache Storage）----

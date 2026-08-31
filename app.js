@@ -1202,7 +1202,8 @@ async function screenGather() {
   $('#scan').onclick = async () => {
     G.busy = true; $('#gm').textContent = 'pCloud の中を探しています…（本数が多いと少しかかります）';
     try {
-      const r = await P.scanFolder(0, { host: S.host, auth: S.auth });
+      const r = await P.scanFolder(0, { host: S.host, auth: S.auth,
+        onStep: (n, left) => { $('#gm').textContent = `歩いて探しています… ${n} ファイル・残り ${left} 部屋`; } });
       G.files = r.files.filter(f => /\.(nes|fds|smc|sfc|fig|swc|n64|v64|z64|nds|iso|cso|fdi|hdi|d88|hdm|xdf|nfd)$/i.test(f.name));
       G.busy = false; screenGather();
     } catch (e) {
