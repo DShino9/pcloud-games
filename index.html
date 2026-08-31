@@ -15,6 +15,29 @@
 <!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
 <link rel="stylesheet" href="./core/shelf.css?v=1">
 <style>
+/* 機種の見分け。**小さい灰色の札では、並べたときに読めない。**
+   機種ごとに色を決め、字も大きくする。色は「その機械の顔」に寄せた:
+   ファミコンは赤白、スーファミは灰に四色、64 は青緑、DS は銀青、
+   PSP は黒紫、PC-98 は NEC の青。 */
+.cov .tag{font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  padding:3px 7px;color:#fff;background:rgba(0,0,0,.72);
+  border:1px solid rgba(255,255,255,.28);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.cov .tag[data-s="FC"] {background:#c8392b;border-color:#e8695c}
+.cov .tag[data-s="SFC"]{background:#5b5f9e;border-color:#8b8fd0}
+.cov .tag[data-s="N64"]{background:#1f8a63;border-color:#4fc493}
+.cov .tag[data-s="DS"] {background:#6b7280;border-color:#9ca3af}
+.cov .tag[data-s="PSP"]{background:#4b3a72;border-color:#7d68ad}
+.cov .tag[data-s="98"] {background:#1d5c8f;border-color:#4d92c9}
+/* 絵の下辺にも同じ色を薄く敷く。札が絵に紛れても、並びの中で機種が拾える。 */
+.cov{position:relative}
+.cov::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--sys,transparent)}
+.item[data-s="FC"]  .cov{--sys:#c8392b}
+.item[data-s="SFC"] .cov{--sys:#5b5f9e}
+.item[data-s="N64"] .cov{--sys:#1f8a63}
+.item[data-s="DS"]  .cov{--sys:#6b7280}
+.item[data-s="PSP"] .cov{--sys:#4b3a72}
+.item[data-s="98"]  .cov{--sys:#1d5c8f}
 /* ここはゲーム棚だけの飾り。共通に効かせたいものは shelf-core/shelf.css へ。 */
 
 /* 箱絵は縦長。正方形に切ると題字が落ちるので、比率のまま収める。 */
@@ -67,6 +90,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=2"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=24"></script>
+<script src="./app.js?v=25"></script>
 </body>
 </html>

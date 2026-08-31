@@ -340,9 +340,9 @@ function cellHtml(g) {
   const sub = g.garbled ? g.files[0] : (g.sub || '');
   const cov = g.cover ? `<img loading="lazy" src="${esc(g.cover)}" alt="">`
                       : `<div class="ph">${esc(nm)}</div>`;
-  return `<button class="item" data-id="${esc(g.id)}"${has ? '' : ' data-no="1"'}>
+  return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${has ? '' : ' data-no="1"'}>
     <div class="cov">${cov}
-      <span class="tag">${esc(g.short)}${g.kind === 'tool' ? ' 道具' : g.kind === 'save' ? ' セーブ' : ''}</span>
+      <span class="tag" data-s="${esc(g.short)}">${esc(g.short)}${g.kind === 'tool' ? ' 道具' : g.kind === 'save' ? ' セーブ' : ''}</span>
       ${S.here[g.id] ? '<span class="off">●</span>' : ''}
       ${has ? '' : '<span class="no">未アップ</span>'}
     </div>

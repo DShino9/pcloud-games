@@ -79,6 +79,39 @@ def shrink(src: Path, dst: Path):
 
 _VQD = {}
 
+PC98_ALIAS = {}
+
+def load_pc98_alias():
+    """棚の名前は**ディスクのファイル名から起こしている**ので、
+       略されていたり（`信長全国版`）、セーブ用の足し（`水滸伝A改良版`）が
+       付いていたりして、そのままでは検索に当たらない。手で表を持つ。"""
+    f = HERE / "pc98-alias.txt"
+    if not f.exists():
+        return
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.split("#")[0].strip()
+        if "\t" in line:
+            k, v = line.split("\t", 1)
+            PC98_ALIAS[k.strip()] = v.strip()
+
+
+def search_name(name):
+    """検索に使う題名に直す。
+
+       ①表にあればそれ ②末尾の括弧を落とす（`Lemmings (J)`
+       `Rance 3 (1991)(Alice Soft)` が当たらない原因）
+       ③半角カナを全角に（`ﾄﾞﾗｺﾞﾝﾎﾞｰﾙ`）。"""
+    if name in PC98_ALIAS:
+        return PC98_ALIAS[name]
+    n = re.sub(r"\s*\([^()]*\)\s*$", "", name)
+    if n in PC98_ALIAS:                       # 括弧を落とした形でも引く
+        return PC98_ALIAS[n]
+    for _ in range(2):                       # 括弧が2つ続くもの (19xx)(Falcom)
+        n = re.sub(r"\s*\([^()]*\)\s*$", "", n)
+    n = unicodedata.normalize("NFKC", n)
+    return n.strip() or name
+
+
 def img_search(query, want=30):
     """画像検索。**題名と大きさが JSON で返る口を使う。**
 
@@ -394,6 +427,7 @@ def main():
         # PC-98 は openvgdb に無い。libretro の置き場にはあるが、**名前がローマ字**。
         # 日本語の題名とは直につながらないので、シリーズ名の読みを表で与えて突き合わせる。
         # 別物を付けないよう、点数が足りないものは付けない。
+        load_pc98_alias()
         tree = pc98_tree()
         if not tree:
             print("libretro の一覧が取れませんでした"); return
@@ -401,6 +435,9 @@ def main():
         items = [t for t in cat["titles"] if t["kind"] == "game"]
         for t in items:
             if (t.get("cover") and not a.all) or t.get("garbled"):
+                continue
+            # セーブディスクと詰め合わせに箱絵は無い。数にも入れない。
+            if re.search(r"セーブ|詰め合わせ", t["name"]):
                 continue
             name, sc = pc98_match(t["name"], tree)
             if not name:
@@ -410,18 +447,29 @@ def main():
                 # まとめ場に無い。画像検索で埋める。
                 # 言い方を変えて当て直す。一つ目で当たれば残りは叩かない。
                 # 「箱」を足すと箱の写真に寄るが、そもそも出ない本もあるので順に緩める。
+                sn = search_name(t["name"])
                 cands = []
-                for q in (f"{t['name']} PC-9801 パッケージ 箱",
-                          f"{t['name']} PC98 パッケージ",
-                          f"{t['name']} PC-9801"):
+                for q in (f"{sn} PC-9801 パッケージ 箱",
+                          f"{sn} PC98 パッケージ",
+                          f"{sn} PC-9801",
+                          # 昔の箱の写真が無くても、いま売られている版の絵はある。
+                          # プロジェクトEGG・Steam は当時の絵を使い回していることが多い。
+                          f"{sn} プロジェクトEGG",
+                          f"{sn} Steam PC-98"):
                     cands = img_search(q)
-                    if any(title_ok(t["name"], c[1]) for c in cands):
+                    if any(title_ok(sn, c[1]) for c in cands):
                         break
                     time.sleep(SEARCH_WAIT)
+                # **並びの通りに採らない。** 検索は関係する絵を上位に出すが、
+                # 「その本の絵」であって「PC-98 版の箱の絵」とは限らない。
+                # Popful Mail でメガCD版の箱を掴んだのがそれ。
+                # 題名に 9801/PC98 が入っているものを先に見る。
+                def pref(c):
+                    tt = tight(c[1])
+                    return -(("9801" in tt) * 2 + ("pc98" in tt))
+                cands = sorted([c for c in cands if title_ok(sn, c[1])], key=pref)
                 hit = False
                 for u, wt, w, h in cands:
-                    if not title_ok(t["name"], wt):
-                        continue
                     if min(w, h) < 300 or not (0.55 <= w / max(h, 1) <= 1.6):
                         continue
                     if a.dry_run:
@@ -436,7 +484,8 @@ def main():
                         shrink(tmp, COVERS / f"{t['id']}.jpg")
                     except Exception:
                         continue
-                    t["cover"] = f"covers/{t['id']}.jpg"; n["wiki"] += 1; hit = True
+                    t["cover"] = f"covers/{t['id']}.jpg"; t["csrc"] = "検索"
+                    n["wiki"] += 1; hit = True
                     print(f"  [検索] {t['name']}  ← {wt[:52]}")
                     break
                 if not hit:
@@ -544,6 +593,39 @@ def main():
                         g["cover"] = f"covers/{g['id']}.jpg"; n["wiki"] += 1
                         print(f"  [一覧 {sc2:.2f}] {g['name']}  ← {name2}")
                         done = True
+        if not done and a.search and not re.search(r"BIOS|ＢＩＯＳ", g["name"]):
+            # まとめ場にも無い。画像検索で埋める（PC-98 と同じ作法）。
+            # 半角カナは全角に直さないと当たらない（`ﾄﾞﾗｺﾞﾝﾎﾞｰﾙ`）。
+            sn = search_name(g["name"])
+            kind = {"Famicom": "ファミコン", "Super Famicom": "スーパーファミコン"}.get(
+                g["system"], g["system"])
+            cands = []
+            for q in (f"{sn} {kind} パッケージ 箱", f"{sn} {kind} ソフト", f"{sn} {kind}"):
+                cands = img_search(q)
+                if any(title_ok(sn, c[1]) for c in cands):
+                    break
+                time.sleep(SEARCH_WAIT)
+            hint = tight(kind)
+            cands = sorted([c for c in cands if title_ok(sn, c[1])],
+                           key=lambda c: -(hint in tight(c[1])))
+            for u, wt, w, h in cands:
+                if min(w, h) < 300 or not (0.55 <= w / max(h, 1) <= 1.6):
+                    continue
+                try:
+                    tmp.write_bytes(fetch(u))
+                except Exception:
+                    continue
+                if not looks_like_box(tmp):
+                    continue
+                try:
+                    shrink(tmp, COVERS / f"{g['id']}.jpg")
+                except Exception:
+                    continue
+                g["cover"] = f"covers/{g['id']}.jpg"; g["csrc"] = "検索"
+                n["wiki"] += 1; done = True
+                print(f"  [検索] {g['name']}  ← {wt[:52]}")
+                break
+            time.sleep(SEARCH_WAIT)
         if not done:
             n["ng"] += 1
 
