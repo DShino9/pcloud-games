@@ -58,6 +58,17 @@ h2.fold:hover .tri{color:var(--accent)}
 /* 畳む見出しは一覧の中でも使う。行の束は `.rowlist`。 */
 .rowlist[hidden]{display:none}
 .card h2.fold{margin:14px 0 8px;font-size:14px}
+/* フォルダの木。倉庫の整理をそのまま出す。 */
+.tree{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tnode{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+.trow{flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:none;border:0;color:var(--fg);font-size:13.5px;cursor:pointer;text-align:left}
+.trow:hover{background:rgba(255,255,255,.04)}
+.trow .tri{color:var(--dim2);font-size:11px;width:11px;flex:0 0 11px}
+.trow .tname{font-weight:600}
+.trow .cnt{margin-left:auto;font-size:12px;font-weight:400;color:var(--dim2)}
+.tsel{flex:0 0 auto;margin-right:8px;font-size:11px}
+.tree .row{border-bottom:1px solid var(--line)}
 /* 機種の見分け。**小さい灰色の札では、並べたときに読めない。**
    機種ごとに色を決め、字も大きくする。色は「その機械の顔」に寄せた:
    ファミコンは赤白、スーファミは灰に四色、64 は青緑、DS は銀青、
@@ -145,6 +156,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=4"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=50"></script>
+<script src="./app.js?v=51"></script>
 </body>
 </html>
