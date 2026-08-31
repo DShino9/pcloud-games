@@ -127,7 +127,8 @@ function mergeCatalogs() {
                fids: e.fids || null,
                pic: (PIC[(e.paths && e.paths[0]) || e.path] || {}).id || null,
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
-               pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
+               pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files,
+               arc: !!e.arc, extra: true });
   }
   for (const t of ((S.cat98 && S.cat98.titles) || [])) {
     out.push({
@@ -201,7 +202,8 @@ async function scanAll(say = () => {}) {
       for (const f of r.files) map[f.name] = f.fileid;   // 後に来る倉庫のフォルダが勝つ
       /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
-      seen.push(...r.files.filter(f => sysOf(f.name).length));
+      seen.push(...r.files.filter(f => sysOf(f.name).length
+        || /\.(rar|zip|lzh)$/i.test(f.name)));   // 圧縮のままの本も拾う（PC-98）
       /* **倉庫の中の絵を拾う。** 本と同じフォルダに箱絵が置いてある。
          外を探し回る前に、まずこれを使う（本人「絵も教えたのに」）。 */
       for (const f of r.files) {
@@ -280,6 +282,18 @@ function learnFrom(map, seen = []) {
     const name = f.name;
     const full = (f.path || '') + '/' + name;
     if (known.has(name) || have.has(full)) continue;
+    /* **圧縮のままの本。** PC-98 のメーカー別フォルダ（PC98 Disk/<メーカー>/）は
+       1本＝1 rar/zip/lzh が数千本ある。素のディスクしか拾わないと丸ごと見えない
+       （PC-98 が 595 本しか無かったもう一つの正体）。
+       まず一覧に出す。遊ぶには「起こす」が要るので、印（arc）を付けて分ける。 */
+    if (/\.(rar|zip|lzh)$/i.test(name)) {
+      if (!/PC-?98/i.test(f.path || '')) continue;   // まずは PC-98 の区画だけ
+      const akey = (f.path || '') + '|' + name;
+      group.set(akey, { system: 'PC-98', short: '98', core: null,
+                        files: [name], paths: [f.path || ''], fids: [f.fileid],
+                        base: name.replace(/\.[^.]+$/, ''), arc: true });
+      continue;
+    }
     const sys = sysOf(name);
     if (!sys.length) continue;
     if (/\b(bios|BIOS|font|sound)\b/i.test(name)) continue;
@@ -311,11 +325,17 @@ function learnFrom(map, seen = []) {
     const alone = (dirCount[dir0] || 0) === g.files.length && g.files.length <= 12;
     const name0 = (alone && nice && !/^(PC98|PC-98|disk|rom|games?)$/i.test(nice))
       ? nice : key.split('|').pop();
-    extra.push({ id: 'X-' + key, name: name0, system: g.system, short: g.short,
+    /* 圧縮のままの本は、ファイル名の末尾の形式書き（(FDI-HDI) など）を落として題名に。 */
+    const nm2 = g.arc
+      ? (g.base.replace(/\s*[([]\s*(FDI|FDD|HDM|HDI|DCP|DCU|DIP|D88|2HD|NFD|XDF|TFD|VHD|SLH|HDD|THD|NHD|88D|D98|FILES?)[^)\]]*[)\]]\s*$/i, '').trim() || g.base)
+      : name0;
+    extra.push({ id: 'X-' + key, name: nm2, system: g.system, short: g.short,
                  core: g.core, bytes: 0, files: g.files,
                  paths: g.paths, fids: g.fids,
                  path: g.paths[0] || '',
-                 sub: g.files.length > 1 ? g.files.length + '枚' : '見つけた分' });
+                 arc: !!g.arc,
+                 sub: g.arc ? '圧縮のまま'
+                    : g.files.length > 1 ? g.files.length + '枚' : '見つけた分' });
     n++;
   }
   if (n) { LS.set('extra', extra); S.items = mergeCatalogs(); }
@@ -1124,6 +1144,7 @@ function play(id) {
   const g = S.items.find(x => x.id === id);
   if (!g) return;
   if (!hasAll(g)) return toast('この本は倉庫にありません');
+  if (g.arc) return toast('この本は圧縮のまま（rar/zip/lzh）。起こす仕組みは準備中です');
   const p = S.plays[id] || { n: 0, last: 0 };
   p.n++; p.last = Date.now(); S.plays[id] = p; LS.set('plays', S.plays);
   log.note('遊ぶ: ' + g.short + ' ' + g.name);
