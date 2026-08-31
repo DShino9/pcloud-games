@@ -1216,6 +1216,15 @@ function screenSet() {
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
       <button class="row" id="places"><span class="nm">棚と倉庫</span><span class="sub">棚の置き先と、見に行く場所 ${S.roots.length} か所</span></button>
       <button class="row" id="store"><span class="nm">書庫</span><span class="sub">下ろした本を見る・棚へ戻す</span></button>
+      <div class="row"><span class="nm">台帳の同期</span><span class="sub">${(() => {
+        const at = LS.get('syncAt', '');
+        return at ? '倉庫と同期済み（' + esc(String(at).slice(0, 16).replace('T', ' ')) + '）'
+                  : 'まだ（この端末の分は変更時に上がります）';
+      })()}</span></div>
+      <div class="row"><span class="nm">箱絵の索引</span><span class="sub">${(() => {
+        const n = Object.keys(LS.get('artmap', {})).length;
+        return n ? n + ' 枚（大捜索の成果）' : 'まだ（Mac 側の捜索が終わると入ります）';
+      })()}</span></div>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
