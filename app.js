@@ -140,6 +140,9 @@ function mergeCatalogs() {
       garbled: !!t.garbled,
     });
   }
+  /* 手で付けたジャンル（選ぶ画面の「＋ ジャンルを付ける」）。台帳より本人が正。 */
+  const G2 = LS.get('genre2', {});
+  for (const o of out) if (G2[o.id]) o.genre = G2[o.id];
   return out;
 }
 
@@ -332,7 +335,7 @@ const UP = {
   '#/all': '#/lib',
 };
 function upOf(h) {
-  if (h.startsWith('#/t/')) return S.sys ? '#/sys/' + encodeURIComponent(S.sys) : '#/lib';
+  if (h.startsWith('#/t/')) return '#/lib';
   if (h.startsWith('#/sys/')) return '#/lib';
   if (h.startsWith('#/places/')) return '#/places';
   if (h.startsWith('#/gather/')) return '#/gather';
@@ -374,11 +377,15 @@ function render() {
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
-  /* 入口は**機種から**。本数が増えて（350本超）平らに並べても選べなくなった。 */
   if (h.startsWith('#/t/'))   return screenTitle(decodeURIComponent(h.slice(4)));
-  if (h.startsWith('#/sys/')) return screenLib(decodeURIComponent(h.slice(6)));
-  if (h === '#/all')          return screenLib('');
-  return screenHome();
+  /* 選ぶ画面（#74）。左＝機種→メーカー/ジャンル、中央＝一覧、右＝選んだ本の札。
+     昔の道（#/sys/… #/all）もここへ流す。 */
+  if (h.startsWith('#/sys/')) {
+    L.sys = decodeURIComponent(h.slice(6)); L.maker = ''; L.genre = ''; l2save();
+    return screenLibrary();
+  }
+  if (h === '#/all') { L.sys = ''; L.maker = ''; L.genre = ''; l2save(); return screenLibrary(); }
+  return screenLibrary();
 }
 
 /* ============ 入口（機種を選ぶ） ============ */
