@@ -66,6 +66,9 @@ def main():
     ok_img = {"libretro", "openvgdb"} if "--all" not in sys.argv \
         else {"libretro", "openvgdb", "search", "倉庫"}
     led = json.loads((FOUND / "found.json").read_text(encoding="utf-8"))
+    arc = FOUND / "found-arc.json"
+    if arc.exists():                     # 圧縮の本の台帳（別ファイル）も併せる
+        led.update(json.loads(arc.read_text(encoding="utf-8")))
 
     # /ゲーム棚 → _絵 （path 指定は NFD 名で外れるので、名前を比べて降りる）
     root = api("listfolder", folderid=0)

@@ -179,12 +179,13 @@ function l2detail() {
     <div class="l2m">${esc(maker)}${maker ? ' ／ ' : ''}${esc(g.system)}</div>
     <div class="l2state">
       ${onShelf ? '<span class="chip shelf">● 棚にある（すぐ遊べる）</span>'
+        : g.arc ? '<span class="chip">圧縮のまま（起こすと遊べる・準備中）</span>'
         : inWare ? '<span class="chip">倉庫にある</span>'
         : '<span class="chip away">倉庫に無い</span>'}
       ${g.genre ? `<span class="chip">${esc(g.genre)}</span>`
         : `<button class="chip dashed" id="dgenre">＋ ジャンルを付ける</button>`}
     </div>
-    <button class="primary l2play" id="dplay"${inWare ? '' : ' disabled'}>▶ 遊ぶ</button>
+    <button class="primary l2play" id="dplay"${inWare && !g.arc ? '' : ' disabled'}>▶ 遊ぶ</button>
     <div class="l2acts">
       ${onShelf ? '<button class="hbtn" id="ddown">書庫へ下ろす</button>'
         : inWare ? '<button class="hbtn" id="dstock">棚に取り寄せる</button>' : ''}

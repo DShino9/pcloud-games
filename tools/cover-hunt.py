@@ -311,6 +311,51 @@ def stage_pics(limit):
     print(f"倉庫の絵 終わり: 当たり {hit} / {len(todo)}", flush=True)
 
 
+def stage_arc(limit):
+    """圧縮のままの本（PC98 Disk/<メーカー>/*.rar など 5,700本）。
+       ファイル名がローマ字の題名なので、libretro の PC-98 箱絵置き場と
+       名前で突き合わせる。鍵は (PC-98|圧縮ファイル名) —— アプリ側と同じ。"""
+    # 通しの --hash などと**台帳を取り合わない**よう、別のファイルに書く
+    # （同じ found.json に2本が書くと、後から保存したほうが相手の分を消す）。
+    _, emu, _, _ = load()
+    led2path = OUT / "found-arc.json"
+    led = json.loads(led2path.read_text(encoding="utf-8")) if led2path.exists() else {}
+    save2 = lambda: led2path.write_text(json.dumps(led, ensure_ascii=False, indent=1))
+    tree = fc.pc98_tree()
+    print(f"libretro PC-98 の絵: {len(tree)} 枚", flush=True)
+    arcs = [f for f in emu if "/PC98 Disk/" in f["path"]
+            and re.search(r"\.(rar|zip|lzh)$", f["name"], re.I)]
+    todo = [f for f in arcs
+            if ("ARC|" + f["path"] + "|" + f["name"]) not in led]
+    if limit:
+        todo = todo[:limit]
+    print(f"圧縮の本: {len(todo)} / {len(arcs)}", flush=True)
+    hit = 0
+    for i, f in enumerate(todo):
+        gid = "ARC|" + f["path"] + "|" + f["name"]
+        title = re.sub(r"\.[^.]+$", "", f["name"])
+        title = re.sub(r"\s*[([]\s*(FDI|FDD|HDM|HDI|DCP|DCU|DIP|D88|2HD|NFD|XDF|TFD|VHD|SLH|HDD|THD|NHD|88D|D98|FILES?)[^)\]]*[)\]]\s*$",
+                       "", title, flags=re.I).strip() or title
+        # 「Gorakuin - ごらくいん」のような二重書きは前半（ローマ字）で引く
+        q = title.split(" - ")[0].strip()
+        m, _score = fc.lr_match(q, tree)
+        got = False
+        if m:
+            raw = lr_cover("PC-98", m)
+            if raw and put_cover(gid, raw):
+                got = True
+                hit += 1
+        led[gid] = {"name": title, "sys": "PC-98", "file": f["name"],
+                    "method": "arc" if got else "arc-miss",
+                    "lr": m or "", "img": "libretro" if got else ""}
+        if (i + 1) % 50 == 0:
+            save2()
+            print(f"  {i+1}/{len(todo)}  当たり {hit}", flush=True)
+        time.sleep(0.1)
+    save2()
+    print(f"圧縮の本 終わり: 当たり {hit} / {len(todo)}", flush=True)
+
+
 def stage_fiximg(limit):
     """当たったのに絵が付かなかったもの（題名で libretro を引いていた頃の分）を、
        No-Intro のファイル名で引き直す。"""
@@ -361,7 +406,9 @@ def report():
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     limit = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 0
-    if "--fiximg" in sys.argv:
+    if "--arc" in sys.argv:
+        stage_arc(limit)
+    elif "--fiximg" in sys.argv:
         stage_fiximg(limit)
     elif "--hash" in sys.argv:
         stage_hash(only, limit)
