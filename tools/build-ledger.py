@@ -200,7 +200,7 @@ def main():
     import uuid
     boundary = uuid.uuid4().hex
     data = (f"--{boundary}\r\nContent-Disposition: form-data; "
-            f'name="file"; filename="台帳.json"\r\n'
+            f'name="file"; filename="走査.json"\r\n'
             "Content-Type: application/json\r\n\r\n").encode() \
         + body.encode() + f"\r\n--{boundary}--\r\n".encode()
     t = json.load(open(TOKEN))
@@ -212,7 +212,7 @@ def main():
         j = json.loads(r.read().decode())
     if j.get("result") != 0:
         raise RuntimeError(f"uploadfile: {j}")
-    print("上げた: /ゲーム棚/_台帳/台帳.json")
+    print("上げた: /ゲーム棚/_台帳/走査.json")
 
 
 if __name__ == "__main__":
