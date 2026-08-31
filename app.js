@@ -73,7 +73,7 @@ const S = {
   sys:      LS.get('sys', ''),
   sort:     LS.get('sort', 'name'),
   lastPath: LS.get('lastPath', ''),
-  fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
+  fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）。本数が多い機種では自動で「掘る」に寄せる
   cell:     LS.get('cell', 'm'),
   /* **鍵の名前を変えてある。** `view` の意味を途中で変えた（遊べる＝倉庫にある →
      遊べる＝取り寄せ済み）ので、前の選択が残っていると 0 本の札に留まってしまう。
@@ -81,6 +81,7 @@ const S = {
   view:     LS.get('view2', 'all'),   // 遊べる / ぜんぶ / 倉庫に無い
   more:     {},                       // 束ごとに、いくつまで出したか
   ver:      LS.get('ver', {}),        // 束 → 選んだ版の id
+  dig:      LS.get('dig', {}),        // 機種 → いま掘っている場所
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
   cat:      null,                     // games.json
@@ -611,7 +612,14 @@ function shelfList() {
 }
 
 function screenLib(sys) {
-  if (sys !== undefined) { S.sys = sys; LS.set('sys', sys); }
+  if (sys !== undefined) {
+    S.sys = sys; LS.set('sys', sys);
+    /* **本数が多い機種は、はじめから掘る形で開く。**
+       3000本を平らに並べても選べない。在処が分かっている本が多いときだけ。 */
+    const n = S.items.filter(i => i.system === sys);
+    if (n.length > 300 && n.filter(i => i.path).length > n.length * 0.6
+        && !LS.get('foldPicked', false)) S.fold = 'path';
+  }
   const list = shelfList();
   const systems = [...new Set(S.items.map(i => i.system))].sort();
   /* ジャンルは多い順に。数が少ないものは末尾に沈むので探しやすい。 */
@@ -658,7 +666,7 @@ function screenLib(sys) {
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
-      <option value="path"${S.fold === 'path' ? ' selected' : ''}>倉庫のフォルダで畳む</option>
+      <option value="path"${S.fold === 'path' ? ' selected' : ''}>フォルダを掘る</option>
       <option value=""${S.fold ? '' : ' selected'}>畳まない</option>
     </select>
     <button class="hbtn${S.tools ? ' on' : ''}" id="tools">道具ディスク</button>
@@ -672,7 +680,9 @@ function screenLib(sys) {
   $('#sys').onchange  = e => go(e.target.value ? '#/sys/' + encodeURIComponent(e.target.value) : '#/all');
   $('#gen').onchange  = e => { S.genre = e.target.value; LS.set('genre', S.genre); screenLib(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
-  $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold); screenLib(); };
+  $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold);
+    LS.set('foldPicked', true);   // 本人が選んだら、こちらで勝手に変えない
+    screenLib(); };
   for (const b of main().querySelectorAll('[data-view]'))
     b.onclick = () => { S.view = b.dataset.view; LS.set('view2', S.view); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
@@ -681,6 +691,7 @@ function screenLib(sys) {
   bindCells();
   bindFold();
   bindMore();
+  bindDig();
   huntCovers(shelfList().slice(0, 200));   // 裏で箱絵を探す
   huntLine();
 }
@@ -692,6 +703,7 @@ function redrawGrid() {
   bindCells();
   bindFold();
   bindMore();
+  bindDig();
   huntCovers(shelfList().slice(0, 200));   // 裏で箱絵を探す
 }
 
@@ -711,6 +723,10 @@ function gridHtml(list) {
      3000枚の札を一度に組み立てると、iPhone は固まる。
      区切って出し、「もっと見る」で伸ばす。 */
   if (!S.fold || S.q.trim()) return capped(list, 'flat');
+  /* **掘っていく。** 倉庫はメーカー別に分けてある
+     （`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。畳んで並べるのではなく、
+     1階ずつ降りるほうが、その整理をそのまま辿れる。 */
+  if (S.fold === 'path') return digHtml(list);
 
   /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
      その場合はジャンルで畳む。 */
@@ -742,6 +758,57 @@ function gridHtml(list) {
   }).join('');
 }
 
+/* いま掘っている場所。機種ごとに覚える。 */
+const digAt = () => (S.dig || {})[S.sys || '*'] || '';
+
+function digHtml(list) {
+  let at = digAt();
+  /* **1本道は飛ばす。** `ROM › パソコン › PC-98 › PC98` のように
+     枝が1つしかない階を、押させる意味がない。分かれる所まで降りる。 */
+  for (let i = 0; i < 12; i++) {
+    const kids = new Set();
+    let hereN = 0;
+    for (const it of list) {
+      const path = it.path || '';
+      if (at && !(path === at || path.startsWith(at + '/'))) continue;
+      const rest = at ? path.slice(at.length).replace(/^\//, '') : path.replace(/^\//, '');
+      if (!rest) { hereN++; continue; }
+      kids.add(rest.split('/')[0]);
+    }
+    if (kids.size === 1 && hereN === 0) at = (at || '') + '/' + [...kids][0];
+    else break;
+  }
+  const dirs = new Map();
+  const here = [];
+  for (const i of list) {
+    const path = i.path || '';
+    if (at && !(path === at || path.startsWith(at + '/'))) continue;
+    if (!at && !path) { here.push(i); continue; }
+    const rest = at ? path.slice(at.length).replace(/^\//, '') : path.replace(/^\//, '');
+    if (!rest) { here.push(i); continue; }
+    const seg = rest.split('/')[0];
+    if (!dirs.has(seg)) dirs.set(seg, 0);
+    dirs.set(seg, dirs.get(seg) + 1);
+  }
+  const crumbs = at ? at.split('/').filter(Boolean) : [];
+  const bar = `<div class="crumb">
+    <button data-dig="">${esc(S.sys || 'ぜんぶ')}</button>
+    ${crumbs.map((c, n) => `<span>›</span><button data-dig="${
+      esc('/' + crumbs.slice(0, n + 1).join('/'))}">${esc(c)}</button>`).join('')}
+  </div>`;
+  const rows = [...dirs.entries()].sort((a, b) => b[1] - a[1] || collator.compare(a[0], b[0]));
+  return bar
+    + (rows.length ? `<div class="tree" style="margin-bottom:12px">${rows.map(([nm, n]) => `
+        <div class="tnode">
+          <button class="trow" data-dig="${esc((at || '') + '/' + nm)}">
+            <span class="tri">📁</span><span class="tname">${esc(nm)}</span>
+            <span class="cnt">${n}</span>
+          </button>
+        </div>`).join('')}</div>` : '')
+    + (here.length ? capped(here, 'dig:' + at)
+       : (rows.length ? '' : '<div class="empty">この下に本がありません</div>'));
+}
+
 /* 区切って出す。いくつまで出したかは束ごとに覚える。 */
 const STEP = 120;
 function capped(list, key) {
@@ -751,6 +818,15 @@ function capped(list, key) {
       ? `<button class="hbtn" data-more="${esc(key)}" style="margin:10px 0">
            もっと見る（あと ${list.length - n} 本）</button>`
       : '');
+}
+
+function bindDig() {
+  for (const b of main().querySelectorAll('[data-dig]')) b.onclick = () => {
+    S.dig = S.dig || {};
+    S.dig[S.sys || '*'] = b.dataset.dig;
+    LS.set('dig', S.dig);
+    redrawGrid();
+  };
 }
 
 function bindMore() {
