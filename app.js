@@ -703,7 +703,7 @@ function screenLib(sys) {
       ${genres.map(([g, n]) => `<option value="${esc(g)}"${S.genre === g ? ' selected' : ''}>${esc(g)}（${n}）</option>`).join('')}
     </select>
     <select id="sort">
-      <option value="name"${S.sort === 'name' ? ' selected' : ''}>五十音</option>
+      <option value="name"${S.sort === 'name' ? ' selected' : ''}>題名順</option>
       <option value="sys"${S.sort === 'sys' ? ' selected' : ''}>機種順</option>
       <option value="plays"${S.sort === 'plays' ? ' selected' : ''}>よく遊んだ順</option>
       <option value="last"${S.sort === 'last' ? ' selected' : ''}>最近遊んだ順</option>
@@ -759,7 +759,10 @@ function redrawGrid() {
    分けていなかったので、「ぜんぶ」の画面で畳んだ `PC-98` が、
    機種の中の同じ名前の束まで隠していた（中身が丸ごと消えて見えた）。
    古い形（`/` を含まない）は捨てる。 */
-const shut = () => new Set(LS.get('shut', []).filter(k => String(k).includes('/')));
+/* **既定は畳んだ状態。** 束が何十とあるのに全部開いていたら、
+   結局ずっと下へ流すことになる。開いたものだけ覚える。
+   （前は「閉じたものを覚える」だったので、既定が開きっぱなしだった。） */
+const opened = () => new Set(LS.get('open', []));
 
 /* 一覧を組む。**探している最中は畳まない**（探した意味がなくなる）。 */
 function gridHtml(list) {
@@ -803,17 +806,21 @@ function gridHtml(list) {
       ? box.get(b).length - box.get(a).length || collator.compare(a, b)
       : collator.compare(a, b);
   });
-  const cl = shut();
+  const op = opened();
   return names.map(nm => {
     const fkey = by + '/' + nm;
-    const open = !cl.has(fkey);
+    /* 束が1つ2つしかないときは開いておく（畳む意味がない）。 */
+    const open = names.length <= 2 || op.has(fkey);
     /* 倉庫の道は深い（`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。
        見出しでは末尾だけ見せ、全体は当てれば出る。 */
     const label = nm;
     return `<h2 class="fold" data-fold="${esc(fkey)}" title="${esc(nm)}">
         <span class="tri">${open ? '▾' : '▸'}</span>${esc(label)}
         <span class="cnt">${box.get(nm).length}</span></h2>
-      <div data-body="${esc(fkey)}"${open ? '' : ' hidden'}>${capped(box.get(nm), fkey)}</div>`;
+      <div data-body="${esc(fkey)}"${open ? '' : ' hidden'}>${
+        /* **閉じている束は組み立てない。** 3380本ぶんの札を隠して持っていても
+           重いだけ。開いたときに組む。 */
+        open ? capped(box.get(nm), fkey) : ''}</div>`;
   }).join('');
 }
 
@@ -913,14 +920,13 @@ function bindMore() {
 }
 
 function bindFold() {
-  for (const h of main().querySelectorAll('h2.fold')) h.onclick = () => {
-    const nm = h.dataset.fold, cl = shut();
-    cl.has(nm) ? cl.delete(nm) : cl.add(nm);
-    LS.set('shut', [...cl]);
-    const body = main().querySelector(`.grid[data-body="${CSS.escape(nm)}"]`);
-    const open = !cl.has(nm);
-    if (body) body.hidden = !open;
-    h.querySelector('.tri').textContent = open ? '▾' : '▸';
+  for (const h of main().querySelectorAll('h2.fold[data-fold]')) h.onclick = () => {
+    const nm = h.dataset.fold, op = opened();
+    op.has(nm) ? op.delete(nm) : op.add(nm);
+    LS.set('open', [...op]);
+    const open = op.has(nm);
+    /* 中身は開いたときに組む（閉じたら捨てる）。数が多いので持ち歩かない。 */
+    redrawGrid();
   };
 }
 
