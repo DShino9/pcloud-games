@@ -1,0 +1,313 @@
+<title>ゲーム棚 ライブラリ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F3EF; --panel:#FFFFFF; --sunk:#EDEAE4;
+  --line:#DCD7CE; --line2:#C9C2B6;
+  --ink:#15191F; --dim:#5C6470; --dim2:#8B93A0;
+  --nec:#2C6FB5;            /* PC-9800 の青 */
+  --nec-soft:#E2ECF7;
+  --shelf:#B08843;          /* 棚＝紙・木の色 */
+  --shelf-soft:#F3E9D6;
+  --ok:#3E8E63; --warn:#B8791F; --bad:#B04A44;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1117; --panel:#151A21; --sunk:#10151B;
+    --line:#242C36; --line2:#333D४9; --line2:#333D49;
+    --ink:#E8EBEF; --dim:#98A2B0; --dim2:#6B7480;
+    --nec:#5AA0E0; --nec-soft:#16304B;
+    --shelf:#D9C7A3; --shelf-soft:#2C2519;
+    --ok:#5FBE86; --warn:#E0A33E; --bad:#E0736B;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1117; --panel:#151A21; --sunk:#10151B;
+  --line:#242C36; --line2:#333D49;
+  --ink:#E8EBEF; --dim:#98A2B0; --dim2:#6B7480;
+  --nec:#5AA0E0; --nec-soft:#16304B;
+  --shelf:#D9C7A3; --shelf-soft:#2C2519;
+  --ok:#5FBE86; --warn:#E0A33E; --bad:#E0736B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Zen Kaku Gothic New",-apple-system,"Hiragino Sans",sans-serif;
+  font-size:14px;line-height:1.6}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* ── 見出し ── */
+.top{display:flex;align-items:center;gap:14px;padding:12px 18px;
+  border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+.brand{font-weight:900;font-size:16px;letter-spacing:.04em;white-space:nowrap}
+.brand small{display:block;font-size:10px;font-weight:500;color:var(--dim2);letter-spacing:.12em}
+.find{flex:1;max-width:520px;position:relative}
+.find input{width:100%;padding:9px 12px 9px 34px;border-radius:8px;border:1px solid var(--line2);
+  background:var(--sunk);color:var(--ink);font:inherit}
+.find input:focus{outline:2px solid var(--nec);outline-offset:1px}
+.find::before{content:"⌕";position:absolute;left:11px;top:7px;color:var(--dim2);font-size:16px}
+.tot{margin-left:auto;font-size:11.5px;color:var(--dim);text-align:right;white-space:nowrap}
+
+/* ── 三分割 ── */
+.wrap{display:grid;grid-template-columns:236px minmax(0,1fr);height:calc(100vh - 58px)}
+.rail{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:10px 0 30px}
+.main{overflow:auto;padding:14px 18px 40px}
+
+/* ── 棚柱（機種→メーカー）── */
+.railhead{font-size:10.5px;letter-spacing:.14em;color:var(--dim2);padding:10px 16px 6px;font-weight:700}
+.sys{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;
+  padding:8px 14px;cursor:pointer;color:var(--ink);font:inherit;text-align:left;border-left:3px solid transparent}
+.sys:hover{background:var(--sunk)}
+.sys[aria-current="true"]{background:var(--nec-soft);border-left-color:var(--nec);font-weight:700}
+.sys .k{flex:0 0 34px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#fff;
+  background:var(--dim2);border-radius:4px;text-align:center;padding:2px 0}
+.sys .k[data-k="98"]{background:#1D5C8F}.sys .k[data-k="FC"]{background:#C8392B}
+.sys .k[data-k="SFC"]{background:#5B5F9E}.sys .k[data-k="MD"]{background:#1F6FB0}
+.sys .k[data-k="PCE"]{background:#C07A1F}.sys .k[data-k="DS"]{background:#6B7280}
+.sys .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sys .c{font-size:11px;color:var(--dim2)}
+.makers{padding:2px 0 8px}
+.mk{display:flex;gap:8px;width:100%;border:0;background:none;padding:5px 14px 5px 30px;
+  cursor:pointer;color:var(--dim);font:inherit;text-align:left;font-size:13px}
+.mk:hover{color:var(--ink);background:var(--sunk)}
+.mk[aria-current="true"]{color:var(--ink);font-weight:700}
+.mk .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk .c{font-size:10.5px;color:var(--dim2)}
+
+/* ── 絞り込みの帯 ── */
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.chips{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.chips button{border:0;background:none;font:inherit;font-size:12.5px;padding:6px 13px;cursor:pointer;
+  color:var(--dim);border-right:1px solid var(--line)}
+.chips button:last-child{border-right:0}
+.chips button[aria-pressed="true"]{background:var(--nec);color:#fff;font-weight:700}
+.sel{padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--panel);
+  color:var(--ink);font:inherit;font-size:12.5px}
+.crumb{font-size:12.5px;color:var(--dim);margin:0 0 10px}
+.crumb b{color:var(--ink)}
+
+/* ── 一覧（札）── */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+.card{border:0;background:none;padding:0;cursor:pointer;text-align:left;color:inherit;display:block}
+.art{position:relative;aspect-ratio:3/4;border-radius:var(--r);overflow:hidden;
+  border:1px solid var(--line);background:var(--sunk);display:grid;place-items:center}
+.art .txt{padding:10px;text-align:center;font-size:11.5px;color:var(--dim);line-height:1.4}
+.card:hover .art{border-color:var(--nec)}
+.card:focus-visible .art{outline:2px solid var(--nec);outline-offset:2px}
+.state{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--line2)}
+.card[data-st="shelf"] .state{background:var(--shelf)}
+.card[data-st="ware"] .state{background:var(--nec)}
+.card[data-st="none"] .state{background:transparent}
+.pill{position:absolute;top:7px;left:7px;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px;
+  background:var(--shelf);color:#1a1408;letter-spacing:.04em}
+.disks{position:absolute;top:7px;right:7px;font-size:9.5px;padding:2px 6px;border-radius:5px;
+  background:rgba(0,0,0,.62);color:#fff}
+.cname{margin-top:7px;font-size:12.5px;font-weight:500;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cmk{font-size:11px;color:var(--dim2)}
+
+/* ── 一覧（行）── */
+.rows{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.rw{display:grid;grid-template-columns:26px 1fr 130px 84px 62px;gap:10px;align-items:center;
+  padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;
+  border-right:0;border-top:0;width:100%;text-align:left;color:inherit;font:inherit}
+.rw:last-child{border-bottom:0}
+.rw:hover{background:var(--sunk)}
+.rw .dot{width:9px;height:9px;border-radius:50%;background:var(--line2);justify-self:center}
+.rw[data-st="shelf"] .dot{background:var(--shelf)}
+.rw[data-st="ware"] .dot{background:var(--nec)}
+.rw .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rw .m,.rw .d,.rw .s{font-size:11.5px;color:var(--dim2)}
+
+/* ── 右の札 ── */
+.panel{position:fixed;right:0;top:58px;bottom:0;width:352px;max-width:100%;background:var(--panel);
+  border-left:1px solid var(--line);padding:18px;overflow:auto;transform:translateX(100%);
+  transition:transform .18s ease;z-index:6}
+.panel[data-open="true"]{transform:none}
+@media (prefers-reduced-motion:reduce){.panel{transition:none}}
+.panel h2{margin:6px 0 4px;font-size:19px;line-height:1.35;text-wrap:balance}
+.pmeta{font-size:12px;color:var(--dim);display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.part{aspect-ratio:3/4;max-height:230px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--sunk);display:grid;place-items:center;margin-bottom:12px}
+.pstate{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.pstate[data-st="shelf"]{background:var(--shelf-soft);color:var(--shelf)}
+.pstate[data-st="ware"]{background:var(--nec-soft);color:var(--nec)}
+.pstate[data-st="none"]{background:var(--sunk);color:var(--dim)}
+.go{width:100%;padding:11px;border-radius:9px;border:0;background:var(--nec);color:#fff;
+  font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.go:disabled{background:var(--line2);color:var(--dim2);cursor:not-allowed}
+.subacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sb{padding:6px 11px;border-radius:7px;border:1px solid var(--line2);background:none;
+  color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.sb:hover{border-color:var(--nec);color:var(--nec)}
+.phead{font-size:10.5px;letter-spacing:.14em;color:var(--dim2);font-weight:700;margin:18px 0 6px}
+.flist{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.flist div{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;
+  border-bottom:1px solid var(--line);font-size:11.5px}
+.flist div:last-child{border-bottom:0}
+.close{position:absolute;top:12px;right:12px;border:0;background:var(--sunk);color:var(--dim);
+  width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1}
+.note{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;
+  font-size:12.5px;color:var(--dim);margin-bottom:14px}
+.note b{color:var(--ink)}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;height:auto}
+  .rail{border-right:0;border-bottom:1px solid var(--line);max-height:210px}
+  .panel{top:0;width:100%;border-left:0}
+}
+</style>
+
+<div class="top">
+  <div class="brand">ゲーム棚<small>LIBRARY</small></div>
+  <div class="find"><input id="q" placeholder="題名で探す（機種をまたいで）" aria-label="題名で探す"></div>
+  <div class="tot mono" id="tot"></div>
+</div>
+
+<div class="wrap">
+  <nav class="rail" id="rail" aria-label="機種とメーカー"></nav>
+  <main class="main">
+    <div class="note">
+      <b>これは案です。</b>左で機種→メーカーを絞り、中央で本を選び、右の札で遊ぶ・棚に入れる。
+      画面を移らずに済むのが今との違いです。
+    </div>
+    <div class="bar">
+      <div class="chips" id="chips">
+        <button data-v="all" aria-pressed="true">ぜんぶ</button>
+        <button data-v="shelf" aria-pressed="false">棚</button>
+        <button data-v="ware" aria-pressed="false">倉庫</button>
+      </div>
+      <select class="sel" id="sort">
+        <option value="name">題名順</option>
+        <option value="maker">メーカー順</option>
+        <option value="disks">枚数順</option>
+      </select>
+      <div class="chips" id="view">
+        <button data-w="grid" aria-pressed="true">札</button>
+        <button data-w="rows" aria-pressed="false">行</button>
+      </div>
+    </div>
+    <div class="crumb" id="crumb"></div>
+    <div id="list"></div>
+  </main>
+</div>
+
+<aside class="panel" id="panel" data-open="false" aria-label="選んだ本"></aside>
+
+<script>
+/* 見本の中身。実際の倉庫にある本から採った。 */
+const SYS = [
+  { k:'98',  n:'PC-9800シリーズ', c:595 },
+  { k:'FC',  n:'ファミコン',       c:3380 },
+  { k:'SFC', n:'スーパーファミコン', c:671 },
+  { k:'PCE', n:'PCエンジン',       c:1163 },
+  { k:'MD',  n:'メガドライブ',     c:407 },
+  { k:'DS',  n:'ニンテンドーDS',   c:593 },
+];
+const T = [
+  ['98','光栄','三國志Ⅱ',2,'shelf'], ['98','光栄','三國志Ⅲ',5,'ware'],
+  ['98','光栄','信長の野望 武将風雲録',4,'ware'], ['98','光栄','大航海時代Ⅱ',4,'shelf'],
+  ['98','光栄','水滸伝 天命の誓い',4,'ware'], ['98','光栄','維新の嵐',2,'ware'],
+  ['98','日本ファルコム','ブランディッシュ',4,'shelf'], ['98','日本ファルコム','ブランディッシュ2',6,'ware'],
+  ['98','日本ファルコム','イースⅡ',3,'ware'], ['98','日本ファルコム','ソーサリアン',5,'ware'],
+  ['98','アリスソフト','ランスⅢ',3,'ware'], ['98','アリスソフト','闘神都市',2,'ware'],
+  ['98','システムソフト','天下統一',3,'ware'], ['98','システムソフト','大戦略Ⅲ',2,'none'],
+  ['98','エルフ','同級生',5,'ware'],
+  ['FC','任天堂','スーパーマリオブラザーズ',1,'shelf'], ['FC','任天堂','アイスクライマー',1,'ware'],
+  ['FC','コナミ','グラディウス',1,'ware'], ['FC','コナミ','がんばれゴエモン からくり道中',1,'ware'],
+  ['FC','カプコン','ロックマン2',1,'ware'], ['FC','ナムコ','ゼビウス',1,'ware'],
+  ['FC','ハドソン','ボンバーマン',1,'none'],
+  ['SFC','任天堂','スーパーマリオワールド',1,'shelf'], ['SFC','カプコン','ロックマンX',1,'ware'],
+  ['SFC','スクウェア','半熟英雄',1,'ware'],
+  ['PCE','ハドソン','天外魔境Ⅱ',1,'ware'], ['MD','セガ','ソニック・ザ・ヘッジホッグ',1,'ware'],
+  ['DS','任天堂','マリオカートDS',1,'ware'],
+].map(([k,mk,n,d,st],i)=>({id:'g'+i,k,mk,n,d,st}));
+
+const ST = { shelf:['棚にある','すぐ遊べます'], ware:['倉庫にある','遊ぶと棚に入ります'], none:['倉庫に無い','遊べません'] };
+let cur = { sys:'98', mk:null, view:'all', sort:'name', wide:'grid', sel:null };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function makersOf(k){
+  const m = {};
+  for (const t of T) if (t.k===k) m[t.mk]=(m[t.mk]||0)+1;
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function shown(){
+  const q = $('#q').value.trim();
+  let l = T.filter(t => q ? t.n.includes(q) : (t.k===cur.sys && (!cur.mk || t.mk===cur.mk)));
+  if (cur.view!=='all') l = l.filter(t => cur.view==='shelf' ? t.st==='shelf' : t.st!=='none');
+  const by = { name:(a,b)=>a.n.localeCompare(b.n,'ja'), maker:(a,b)=>a.mk.localeCompare(b.mk,'ja')||a.n.localeCompare(b.n,'ja'), disks:(a,b)=>b.d-a.d };
+  return l.sort(by[cur.sort]);
+}
+function drawRail(){
+  $('#rail').innerHTML = '<div class="railhead">機種</div>' + SYS.map(s=>{
+    const on = s.k===cur.sys;
+    return `<button class="sys" data-sys="${s.k}" aria-current="${on}">
+        <span class="k mono" data-k="${s.k}">${s.k}</span>
+        <span class="n">${esc(s.n)}</span><span class="c mono">${s.c}</span></button>`
+      + (on ? `<div class="makers">${makersOf(s.k).map(([m,c])=>
+          `<button class="mk" data-mk="${esc(m)}" aria-current="${cur.mk===m}">
+             <span class="n">${esc(m)}</span><span class="c mono">${c}</span></button>`).join('')}</div>` : '');
+  }).join('');
+  $('#rail').querySelectorAll('[data-sys]').forEach(b=>b.onclick=()=>{cur.sys=b.dataset.sys;cur.mk=null;draw();});
+  $('#rail').querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{cur.mk=cur.mk===b.dataset.mk?null:b.dataset.mk;draw();});
+}
+function art(t){
+  const hue = [...t.mk].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
+  return `<div class="art" style="background:linear-gradient(155deg,hsl(${hue} 34% 46%/.30),hsl(${(hue+40)%360} 30% 26%/.42))">
+      <span class="txt">${esc(t.n)}</span>
+      ${t.st==='shelf'?'<span class="pill">棚</span>':''}
+      ${t.d>1?`<span class="disks mono">${t.d}枚</span>`:''}
+      <span class="state"></span></div>`;
+}
+function draw(){
+  drawRail();
+  const l = shown();
+  const sysName = (SYS.find(s=>s.k===cur.sys)||{}).n;
+  $('#crumb').innerHTML = $('#q').value.trim()
+    ? `「<b>${esc($('#q').value.trim())}</b>」で機種をまたいで ${l.length} 件`
+    : `<b>${esc(sysName)}</b>${cur.mk?` › <b>${esc(cur.mk)}</b>`:''} ・ ${l.length} 本`;
+  $('#tot').innerHTML = `棚 12 ／ 倉庫 7,171<br>10 機種`;
+  $('#list').innerHTML = cur.wide==='grid'
+    ? `<div class="grid">${l.map(t=>`<button class="card" data-id="${t.id}" data-st="${t.st}">
+        ${art(t)}<div class="cname">${esc(t.n)}</div><div class="cmk">${esc(t.mk)}</div></button>`).join('')}</div>`
+    : `<div class="rows">${l.map(t=>`<button class="rw" data-id="${t.id}" data-st="${t.st}">
+        <span class="dot"></span><span class="t">${esc(t.n)}</span>
+        <span class="m">${esc(t.mk)}</span><span class="d mono">${t.d>1?t.d+'枚':''}</span>
+        <span class="s">${ST[t.st][0]}</span></button>`).join('')}</div>`;
+  $('#list').querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>open(b.dataset.id));
+}
+function open(id){
+  const t = T.find(x=>x.id===id); cur.sel=id;
+  const sysName = (SYS.find(s=>s.k===t.k)||{}).n;
+  $('#panel').dataset.open='true';
+  $('#panel').innerHTML = `
+    <button class="close" id="x" aria-label="閉じる">✕</button>
+    ${art(t).replace('class="art"','class="art part"')}
+    <h2>${esc(t.n)}</h2>
+    <div class="pmeta"><span>${esc(sysName)}</span><span>・${esc(t.mk)}</span>${t.d>1?`<span>・${t.d}枚組</span>`:''}</div>
+    <div class="pstate" data-st="${t.st}">${ST[t.st][0]}<span style="font-weight:400">・${ST[t.st][1]}</span></div>
+    <button class="go" ${t.st==='none'?'disabled':''}>▶ 遊ぶ</button>
+    <div class="subacts">
+      ${t.st==='shelf'?'<button class="sb">書庫へ下ろす</button>':'<button class="sb">棚に入れる</button>'}
+      ${t.d>1?'<button class="sb">ディスクの組み合わせ</button>':''}
+      <button class="sb">箱絵を差し替える</button>
+      <button class="sb">版を選ぶ</button>
+    </div>
+    <div class="phead">中身</div>
+    <div class="flist">${Array.from({length:t.d},(_,i)=>
+      `<div><span class="mono">${esc(t.n)}_${String.fromCharCode(65+i)}.fdi</span><span style="color:var(--dim2)">倉庫</span></div>`).join('')}</div>
+    <div class="phead">置き場</div>
+    <div style="font-size:11.5px;color:var(--dim)" class="mono">/EMU/ROM/パソコン/PC-98/PC98 Disk/${esc(t.mk)}/</div>`;
+  $('#x').onclick=()=>{$('#panel').dataset.open='false';};
+}
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  cur.view=b.dataset.v;[...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed',c===b));draw();};
+$('#view').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  cur.wide=b.dataset.w;[...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed',c===b));draw();};
+$('#sort').onchange=e=>{cur.sort=e.target.value;draw();};
+$('#q').oninput=draw;
+draw();
+</script>
