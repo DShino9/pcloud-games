@@ -520,6 +520,7 @@ def main():
         print(f"いま箱絵がある {have} / {len(items)}（PC-98）")
         return
 
+    load_pc98_alias()
     cat = json.loads(CAT.read_text(encoding="utf-8"))
     con = sqlite3.connect(f"file:{VG}?mode=ro", uri=True)
     SYSMAP = {"Famicom": "%NES%", "Super Famicom": "%Super Nintendo%",
