@@ -115,6 +115,13 @@
   .l2cov{max-width:110px}
 }
 @media (prefers-reduced-motion:reduce){.l2side{transition:none}}
+.l2count{color:var(--dim);font-size:12.5px;margin:0 0 10px}
+.l2pager{display:flex;gap:6px;justify-content:center;align-items:center;margin:22px 0 8px;flex-wrap:wrap}
+.l2pg{min-width:42px;padding:10px 13px;font-size:14.5px;border:1px solid var(--line);
+  border-radius:9px;background:none;color:var(--fg);cursor:pointer}
+.l2pg:hover{border-color:var(--accent)}
+.l2pg.on{background:var(--accent);color:#0b0c10;font-weight:700;border-color:var(--accent)}
+.l2dots{color:var(--dim2);padding:0 3px}
 /* 掘っている場所の道しるべ。 */
 .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font-size:13px}
 .crumb button{background:none;border:0;color:var(--accent);cursor:pointer;padding:2px 0;font-size:13px}
@@ -287,8 +294,8 @@ body{--ratio:3/4; --fit:contain}
 <script src="./pc98disk.js?v=3"></script>
 <script src="./title.js?v=1"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=116"></script>
-<script src="./lib2.js?v=8"></script>
+<script src="./app.js?v=117"></script>
+<script src="./lib2.js?v=9"></script>
 <script src="./state2.js?v=5"></script>
 </body>
 </html>

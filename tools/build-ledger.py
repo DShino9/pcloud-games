@@ -127,7 +127,7 @@ def main():
             dir_count[f["path"]] = dir_count.get(f["path"], 0) + 1
 
     group = {}
-    DUMPDIR = re.compile(r"/(PC-?98/Collection|PC98 Collection)/", re.I)
+    DUMPDIR = re.compile(r"/(PC-?98/Collection|PC98 Collection|整理隔離|削除待ち)/", re.I)
     for f in seen:
         name, dirp = f["name"], f["path"]
         if NFC(name) in known:
