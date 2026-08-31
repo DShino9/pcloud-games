@@ -65,6 +65,7 @@ h2.fold:hover .tri{color:var(--accent)}
 /* **`hidden` だけでは畳めない。** `.grid{display:grid}` のほうが強くて
    ブラウザ既定の `display:none` を押し返す。ここで明示的に消す。 */
 .grid[hidden]{display:none}
+[data-body][hidden]{display:none}
 /* 畳む見出しは一覧の中でも使う。行の束は `.rowlist`。 */
 .rowlist[hidden]{display:none}
 .card h2.fold{margin:14px 0 8px;font-size:14px}
@@ -169,6 +170,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=4"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=60"></script>
+<script src="./app.js?v=61"></script>
 </body>
 </html>
