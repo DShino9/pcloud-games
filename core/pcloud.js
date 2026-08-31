@@ -201,6 +201,23 @@ async function indexFolder(folderid, opt = {}) {
   return { map, count: n, name: r.metadata.name || '/' };
 }
 
+/* 走査。`indexFolder` は名前→fileid の対だけを返すので、
+   **同じ名前が別の場所にもあると潰れる。** 棚の外にある分を拾うときは
+   どこにあるかまで要るので、こちらは1件ずつ在処を付けて返す。 */
+async function scanFolder(folderid, opt = {}) {
+  const r = await api('listfolder', { folderid, recursive: 1 },
+    { host: opt.host, auth: opt.auth, ms: opt.ms || 90000 });
+  const out = [];
+  (function walk(node, path) {
+    for (const c of (node.contents || [])) {
+      if (c.isfolder) walk(c, path + '/' + nfc(c.name));
+      else out.push({ name: nfc(c.name), fileid: c.fileid, size: c.size || 0,
+                      folderid: c.parentfolderid, path });
+    }
+  })(r.metadata, '');
+  return { files: out, name: r.metadata.name || '/' };
+}
+
 /* ---- 手元に置いた分（Cache Storage）----
    置き場は棚ごとに分ける。鍵は「見かけのURL」にしておくと、後から中身を差し替えても効く。 */
 function shelfCache(cacheName, prefix) {
@@ -297,6 +314,16 @@ async function uploadFile(folderid, name, blob, opt = {}) {
   return (j.metadata && j.metadata[0] && j.metadata[0].fileid) || null;
 }
 
+/* 棚の中で動かす。**上げ直さない。**
+   すでに pCloud にあるものを棚のフォルダへ入れるとき、
+   一度落として上げ直すのは無駄（時間も通信も）。向こう側で動かせば一瞬で済む。
+   `copy` を立てると元を残して写す。 */
+async function moveFile(fileid, tofolderid, opt = {}) {
+  const j = await api(opt.copy ? 'copyfile' : 'renamefile',
+                      { fileid, tofolderid }, { host: opt.host, auth: opt.auth });
+  return (j.metadata && j.metadata.fileid) || fileid;
+}
+
 async function deleteFile(fileid, opt = {}) {
   await api('deletefile', { fileid }, { host: opt.host, auth: opt.auth });
   return true;
@@ -351,7 +378,7 @@ root.PCloud = {
   HOSTS, nfc, sha1hex, PCloudError,
   store, logger, api, login,
   relayUrl, relayAlive, indexFolder, shelfCache, download, fetchFile,
-  ensureFolder, uploadFile, deleteFile, readFile,
+  ensureFolder, uploadFile, deleteFile, moveFile, readFile, scanFolder,
 };
 
 })(window);
