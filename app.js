@@ -332,6 +332,7 @@ const UP = {
   '#/all': '#/lib',
 };
 function upOf(h) {
+  if (h.startsWith('#/t/')) return S.sys ? '#/sys/' + encodeURIComponent(S.sys) : '#/lib';
   if (h.startsWith('#/sys/')) return '#/lib';
   if (h.startsWith('#/places/')) return '#/places';
   if (h.startsWith('#/gather/')) return '#/gather';
@@ -374,6 +375,7 @@ function render() {
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
   /* 入口は**機種から**。本数が増えて（350本超）平らに並べても選べなくなった。 */
+  if (h.startsWith('#/t/'))   return screenTitle(decodeURIComponent(h.slice(4)));
   if (h.startsWith('#/sys/')) return screenLib(decodeURIComponent(h.slice(6)));
   if (h === '#/all')          return screenLib('');
   return screenHome();
@@ -1026,14 +1028,10 @@ function cellHtml(g) {
 
 function bindCells() {
   main().querySelectorAll('.item').forEach(b => b.onclick = () => {
-    /* 版がいくつもある本は、**遊ぶ前に選ばせる**（取り寄せるのも起動するのも
-       選んだ版）。一度選べば覚えるので、次からは黙って同じ版で始まる。 */
-    if (b.dataset.g && !b.dataset.no) {
-      const vs = (S.gmap || {})[b.dataset.g];
-      const settled = vs && vs.some(gotIt);
-      if (vs && vs.length > 1 && !settled && !S.ver[b.dataset.g])
-        return pickVer(b.dataset.g, vs);
-    }
+    /* **押したら本の頁へ。** すぐ遊ばせない。
+       遊ぶ・取り寄せる・下ろす・版を選ぶ・箱絵を直す、が全部そこにある
+       （Steam やプロジェクトEGG と同じ形）。 */
+    return go('#/t/' + encodeURIComponent(b.dataset.id));
     /* まだ上げていない本は遊べない。行き止まりにせず、上げる画面へ連れて行く。 */
     if (b.dataset.no) {
       const g = S.items.find(x => x.id === b.dataset.id);
