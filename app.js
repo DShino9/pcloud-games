@@ -2642,7 +2642,23 @@ async function runHunt() {
       t.add(g.id);
       HUNT.done++;
       let got = false;
-      /* **まず倉庫の絵。** 本と同じフォルダに置いてあるものが、いちばん確か。 */
+      /* **まず大捜索の成果**（`/ゲーム棚/_絵/`）。Mac 側でハッシュ照合や
+         題名照合つき検索で当てた「正しいパッケージ」なので、これが最優先。
+         鍵は (機種|先頭ファイル名) —— id は #75 で変わる予定のため名前で引く。 */
+      const am = (LS.get('artmap', {}) || {})[g.system + '|' + P.nfc((g.files || [])[0] || '')];
+      if (am) {
+        try {
+          const blob = await P.fetchFile(S.relay, { fileid: am, name: 'cover.jpg' });
+          if (blob && blob.size > 1000) {
+            await MYCOV.put(g.id, blob);
+            S.covurl[g.id] = URL.createObjectURL(blob);
+            got = true; HUNT.found++; huntLine();
+            const cell = main().querySelector(`.item[data-id="${CSS.escape(g.id)}"] .cov`);
+            if (cell) cell.innerHTML = `<img src="${S.covurl[g.id]}" alt="">`;
+          }
+        } catch (e) { /* 取れなければ次の道 */ }
+      }
+      if (got) { await new Promise(r => setTimeout(r, 60)); continue; }
       if (g.pic) {
         try {
           const blob = await P.fetchFile(S.relay, { fileid: g.pic, name: 'cover' });

@@ -89,6 +89,24 @@ async function s2pull() {
   }
 }
 
+/* ---- 箱絵の索引（`/ゲーム棚/_絵/絵.json`。Mac 側の大捜索が書く）---- */
+async function s2art() {
+  if (!S.auth || !S.rootId) return;
+  try {
+    const r = await call('listfolder', { folderid: S.rootId });
+    const d = (r.metadata.contents || []).find(c => c.isfolder && P.nfc(c.name) === '_絵');
+    if (!d) return;
+    const r2 = await call('listfolder', { folderid: d.folderid });
+    const f = (r2.metadata.contents || []).find(c => P.nfc(c.name) === '絵.json');
+    if (!f || (f.modified || '') === LS.get('artAt', '')) return;
+    const blob = await P.readFile(f.fileid, { host: S.host, auth: S.auth });
+    const j = JSON.parse(await blob.text());
+    LS.set('artmap', j.map || {});
+    LS.set('artAt', f.modified || '');
+    log.note(`箱絵の索引を取り込んだ: ${j.枚数 || 0} 枚`);
+  } catch (e) { log.note('箱絵の索引を読めない: ' + e.message); }
+}
+
 /* ---- 配線 ---- */
 /* 書き込みに割り込む。同じ LS を app.js も見ているので、ここで1回だけ包む。 */
 (() => {
@@ -105,6 +123,7 @@ addEventListener('load', async () => {
   if (await s2pull()) render();
   /* 倉庫にまだ台帳が無い初回は、この端末の分を種として上げる。 */
   else if (S.auth && S.rootId && !LS.get('syncAt', '')) s2schedule();
+  s2art();
 });
 /* 画面に戻ってきたときも見る（別の端末で進めた分を拾う）。 */
 addEventListener('visibilitychange', () => { if (!document.hidden) s2pull().then(ch => ch && render()); });
