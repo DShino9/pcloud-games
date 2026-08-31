@@ -80,6 +80,15 @@ def main():
             for c in api("listfolder", folderid=efid)["metadata"].get("contents", [])
             if not c.get("isfolder")}
 
+    # 一括展開の後は、圧縮の本の鍵（PC-98|xxx.rar）を**先頭のディスク名**に読み替える
+    # （起こした本の files[0] はディスク名になるため）。
+    unp = {}
+    upf = FOUND / "unpacked.json"
+    if upf.exists():
+        for v in json.loads(upf.read_text(encoding="utf-8")).values():
+            if v.get("status") == "ok" and v.get("disks"):
+                unp[NFC(v["name"])] = v["disks"][0]
+
     amap, gmap, todo = {}, {}, []
     # ジャンルは絵の有無に関係なく、ハッシュで当たった全部に付く。
     # openvgdb は英語なので、よくあるものは日本語に直す（複数はいちばん前を採る）。
@@ -101,7 +110,8 @@ def main():
         f = FOUND / (safe(gid) + ".jpg")
         if not f.exists():
             continue
-        key = ent["sys"] + "|" + NFC(ent["file"])
+        fkey = unp.get(NFC(ent["file"]), ent["file"])
+        key = ent["sys"] + "|" + NFC(fkey)
         nm = safe(gid) + ".jpg"
         if NFC(nm) in have:
             amap[key] = have[NFC(nm)]
