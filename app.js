@@ -101,7 +101,10 @@ const S = {
 function mergeCatalogs() {
   const out = [];
   /* 走査で分かった在処（本 → 道）。掘り下げに要る。 */
-  const IP = LS.get('itempath', {});
+  /* **名前で在処を結び付けない。** 同じ名前が別の機種・別のフォルダに山ほどあるので、
+     名前を鍵にすると平気で他人の在処が付く（ファミコンの中に PC-98 のフォルダが
+     出ていた原因）。**本が自分で持っている在処だけ**を使う。
+     台帳から来た本は在処を持たないので、束ねでは「その他」に落ちる。それでよい。 */
   /* 倉庫の中の箱絵（フォルダ → 絵の fileid）。 */
   const PIC = LS.get('pics', {});
   /* 目録（コレクションの HTML）で拾い直した題名。 */
@@ -111,7 +114,7 @@ function mergeCatalogs() {
     out.push({
       id: g.id, name: RN[g.id] || g.name, sub: g.title || '', system: g.system, short: g.short,
       cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
-      files: [g.file], path: IP[g.id] || '', pic: (PIC[IP[g.id]] || {}).id || null,
+      files: [g.file], path: '', pic: null,
     });
   }
   /* 台帳に無い本。**pCloud には台帳より多く入っている。**
@@ -120,8 +123,9 @@ function mergeCatalogs() {
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
     out.push({ id: e.id, name: RN[e.id] || e.name, sub: e.sub || '', system: e.system, short: e.short,
-               core: e.core, path: IP[e.id] || e.path || '', fids: e.fids || null,
-               pic: (PIC[IP[e.id] || e.path] || {}).id || null,
+               core: e.core, path: (e.paths && e.paths[0]) || e.path || '',
+               fids: e.fids || null,
+               pic: (PIC[(e.paths && e.paths[0]) || e.path] || {}).id || null,
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -132,7 +136,7 @@ function mergeCatalogs() {
       system: 'PC-98', short: '98',
       cover: t.cover || null, bytes: t.bytes, kind: t.kind, pc98: true, genre: '',
       files: t.disks.map(d => d.file),
-      path: IP[t.id] || '', pic: (PIC[IP[t.id]] || {}).id || null,
+      path: '', pic: null,
       garbled: !!t.garbled,
     });
   }
@@ -226,17 +230,6 @@ async function scanAll(say = () => {}) {
       at: new Date().toISOString().slice(0, 16).replace('T', ' ') });
   keepGather(S.gather);
   const added = learnFrom(map, seen);
-  /* **在処は台帳の本にも要る。** 掘り下げは在処が無いと出せないのに、
-     台帳（`games.json`/`pc98.json`）から来た本は在処を持っていなかった。
-     走査で分かった道を、本ごとに覚えておく。 */
-  const byName = {};
-  for (const f of seen) byName[f.name] = f.path || '';
-  const ip = {};
-  for (const it of S.items) {
-    const p0 = byName[P.nfc(it.files[0])];
-    if (p0) ip[it.id] = p0;
-  }
-  LS.set('itempath', ip);
   pushCatalog();          // 絵の捜索の続きは Mac 側がやる。題名を渡しておく
   return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
@@ -267,6 +260,10 @@ function learnFrom(map, seen = []) {
   const have = new Set(extra.flatMap(e => (e.paths || []).map((pp, i) => pp + '/' + e.files[i])));
   /* PC-98 は1本＝複数枚。`X_A.fdi` `X_B.fdi` のように末尾が1文字違いなら
      同じ本と見て束ねる（外れることもあるが、バラバラに並ぶよりは読める）。 */
+  /* フォルダごとの ROM の数。題名にフォルダ名を使ってよいかの判断に要る。 */
+  const dirCount = {};
+  for (const f of seen) if (sysOf(f.name).length) dirCount[f.path || ''] = (dirCount[f.path || ''] || 0) + 1;
+
   const group = new Map();
   for (const f of seen) {
     const name = f.name;
@@ -293,11 +290,15 @@ function learnFrom(map, seen = []) {
   let n = 0;
   for (const [key, g] of group) {
     g.files.sort((a, b) => a.localeCompare(b, 'ja'));
-    /* 題名はフォルダの名前を使う（`【PC98】天下統一` → `天下統一`）。
-       ファイル名（`A_disk` `0` `ed`）より、そちらのほうがずっと本の名前らしい。 */
-    const dir = (g.paths[0] || '').split('/').pop() || '';
+    /* 題名はフォルダの名前を使う —— ただし**そのフォルダがこの本だけのもの**のとき。
+       ファミコンのように `…/コナミ/グラディウス.nes` と**メーカーの直下に置いてある**形では、
+       フォルダ名はメーカーであって題名ではない（`コナミ` という本が出来てしまった）。
+       フォルダの中の ROM がこの本の分で全部なら、そのフォルダは本のもの。 */
+    const dir0 = g.paths[0] || '';
+    const dir = dir0.split('/').pop() || '';
     const nice = dir.replace(/^【[^】]*】\s*/, '').trim();
-    const name0 = (nice && !/^(PC98|PC-98|disk|rom|games?)$/i.test(nice) && g.files.length > 0)
+    const alone = (dirCount[dir0] || 0) === g.files.length && g.files.length <= 12;
+    const name0 = (alone && nice && !/^(PC98|PC-98|disk|rom|games?)$/i.test(nice))
       ? nice : key.split('|').pop();
     extra.push({ id: 'X-' + key, name: name0, system: g.system, short: g.short,
                  core: g.core, bytes: 0, files: g.files,
@@ -1614,25 +1615,6 @@ function screenLog() {
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
-  /* **前の走査で在処は分かっている。** もう一度歩かせずに、そこから補う
-     （「棚に上げる」用に残した一覧が在処を持っている）。 */
-  if (!Object.keys(LS.get('itempath', {})).length) {
-    const g0 = LS.get('gather', {});
-    if (g0.files && g0.files.length) {
-      const byName = {};
-      for (const f of g0.files) byName[f.name] = f.path || '';
-      const ip = {};
-      for (const it of S.items) {
-        const p0 = byName[P.nfc(it.files[0])];
-        if (p0) ip[it.id] = p0;
-      }
-      if (Object.keys(ip).length) {
-        LS.set('itempath', ip);
-        S.items = mergeCatalogs();
-        log.note(`在処を補った: ${Object.keys(ip).length} 本`);
-      }
-    }
-  }
   await loadMyCovers();
   await refreshHere();
   render();
