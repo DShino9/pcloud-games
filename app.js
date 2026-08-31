@@ -70,8 +70,7 @@ const S = {
   lastPath: LS.get('lastPath', ''),
   fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
-  onlyHere: LS.get('onlyHere', false),
-  onlyHave: LS.get('onlyHave', true),   // 上げていないものを隠す。既定は隠す
+  view:     LS.get('view', 'play'),   // 遊べる / ぜんぶ / 倉庫に無い
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
   cat:      null,                     // games.json
@@ -477,11 +476,13 @@ async function screenPick(folderid) {
 /* ============ 棚 ============ */
 function shelfList() {
   let list = S.items.slice();
+  /* 3つの見方。遊べる＝倉庫にある。倉庫に無いものは遊べないので分けて置く。 */
+  if (S.view === 'play') list = list.filter(hasAll);
+  else if (S.view === 'none') list = list.filter(i => !hasAll(i));
   if (!S.tools) list = list.filter(g => g.kind === 'game');   // 道具ディスクは既定で伏せる
-  if (S.onlyHave) list = list.filter(hasAll);                 // 上げていないものは伏せる
   if (S.sys) list = list.filter(g => g.system === S.sys);
   if (S.genre) list = list.filter(g => g.genre === S.genre);
-  if (S.onlyHere) list = list.filter(gotIt);
+
   const q = S.q.trim().toLowerCase();
   if (q) list = list.filter(g =>
     (g.name || '').toLowerCase().includes(q) ||
@@ -510,7 +511,13 @@ function screenLib(sys) {
   $('#title').textContent = S.sys || 'ゲーム棚';
   /* 「棚にない」は絞り込みに関係なく棚全体の話。並べ直しでは書き換わらないので、
      いま出ている一覧の数ではなく、遊べるもの全体から数える。 */
-  const missing = S.items.filter(i => i.kind === 'game' && !hasAll(i)).length;
+  /* 札に出す数。**説明文の代わりに数で示す**（耳読の書棚と同じ作り）。
+     いま見ている機種の中で数える（機種を選んで入っているので）。 */
+  const inSys = S.items.filter(i => i.kind === 'game' && (!S.sys || i.system === S.sys));
+  const nAll = inSys.length;
+  const nPlay = inSys.filter(hasAll).length;
+  const nNone = nAll - nPlay;
+  const missing = nNone;
   main().innerHTML = `
   <div class="bar"><div class="row1">
     <input class="search" id="q" placeholder="題名で探す" value="${esc(S.q)}"
@@ -530,8 +537,11 @@ function screenLib(sys) {
       <option value="last"${S.sort === 'last' ? ' selected' : ''}>最近遊んだ順</option>
       <option value="size"${S.sort === 'size' ? ' selected' : ''}>大きい順</option>
     </select>
-    <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">倉庫にある分だけ</button>
-    <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">取り寄せた分</button>
+    <div class="seg">
+      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
+      <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>ぜんぶ (${nAll})</button>
+      <button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>
+    </div>
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
@@ -541,12 +551,6 @@ function screenLib(sys) {
     <button class="hbtn" id="home" style="margin-left:auto">← 機種へ</button>
     <button class="hbtn" id="addto">＋ 棚に上げる</button>
   </div></div>
-  <div class="sub" style="margin:0 0 8px">
-    <span style="color:var(--ok)">●</span> 取り寄せ済み（圏外でも遊べます）　
-    <span style="color:var(--danger)">倉庫に無い</span> は遊べません（押すと上げに行けます）　
-    印の無いものは倉庫にあります（押すと取り寄せて遊びます）</div>
-  ${missing ? `<div class="msg warn" style="margin:0 0 10px">
-    まだ倉庫に無い本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
   <div id="g">${gridHtml(list)}</div>`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
@@ -554,11 +558,11 @@ function screenLib(sys) {
   $('#gen').onchange  = e => { S.genre = e.target.value; LS.set('genre', S.genre); screenLib(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
   $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold); screenLib(); };
-  $('#here').onclick  = () => { S.onlyHere = !S.onlyHere; LS.set('onlyHere', S.onlyHere); screenLib(); };
+  for (const b of main().querySelectorAll('[data-view]'))
+    b.onclick = () => { S.view = b.dataset.view; LS.set('view', S.view); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
   $('#addto').onclick = () => go('#/gather');
   $('#home').onclick  = () => { S.q = ''; LS.set('q', ''); go('#/lib'); };
-  $('#have').onclick  = () => { S.onlyHave = !S.onlyHave; LS.set('onlyHave', S.onlyHave); screenLib(); };
   bindCells();
   bindFold();
 }
@@ -578,7 +582,7 @@ const shut = () => new Set(LS.get('shut', []));
 /* 一覧を組む。**探している最中は畳まない**（探した意味がなくなる）。 */
 function gridHtml(list) {
   if (!list.length) {
-    return `<div class="empty">${S.q || S.sys || S.genre || S.onlyHere ? '見つかりません' : '棚が空です'}</div>`;
+    return `<div class="empty">${S.q || S.genre || S.view !== 'all' ? '見つかりません' : '棚が空です'}</div>`;
   }
   if (!S.fold || S.q.trim()) return `<div class="grid">${list.map(cellHtml).join('')}</div>`;
 
