@@ -776,41 +776,66 @@ function gridHtml(list) {
 const digAt = () => (S.dig || {})[S.sys || '*'] || '';
 
 function digHtml(list) {
-  /* **勝手に階を飛ばさない。** 1本道を飛ばす細工を入れたら、
-     メーカーの階を通り過ぎてしまった。倉庫の形をそのまま見せる。 */
-  const at = digAt();
+  /* **倉庫のフォルダをそのまま見せない。**
+     `ROM › パソコン › PC-98` のような、その機種では**全部に共通する道**は
+     ただの飾りで、押させる意味がない。走査で分かった道から
+     **その機種の中で分かれる所＝メーカーの階**を組み直して見せる。
+
+     やり方: いま見ている機種の本の道の**共通の頭を取り除く**。
+     残りの最初の一節がメーカー（あるいはその機種なりの分け方）になる。
+     共通の頭を削るだけなので、**分かれている階は決して飛ばさない**。 */
+  const paths = list.map(i => i.path || '').filter(Boolean);
+  let head = '';
+  if (paths.length) {
+    const segs = paths[0].split('/').filter(Boolean);
+    const outer = [];
+    for (let i = 0; i < segs.length; i++) {
+      const cand = '/' + segs.slice(0, i + 1).join('/');
+      if (paths.every(pp => pp === cand || pp.startsWith(cand + '/'))) outer.push(segs[i]);
+      else break;
+    }
+    head = outer.length ? '/' + outer.join('/') : '';
+  }
+
+  /* いま掘っている場所は**共通の頭より下**で持つ。
+     機種を移ったとき、前の機種の道が残らないように必ず確かめる。 */
+  let rel = digAt();
+  const under = pp => !rel || pp === head + rel || pp.startsWith(head + rel + '/');
+  if (rel && !paths.some(under)) rel = '';
+
   const dirs = new Map();
   const here = [];
   for (const i of list) {
-    const path = i.path || '';
-    if (at && !(path === at || path.startsWith(at + '/'))) continue;
-    if (!at && !path) { here.push(i); continue; }
-    const rest = at ? path.slice(at.length).replace(/^\//, '') : path.replace(/^\//, '');
+    const pp = i.path || '';
+    if (!pp) { if (!rel) here.push(i); continue; }
+    if (!under(pp)) continue;
+    const rest = pp.slice((head + rel).length).replace(/^\//, '');
     if (!rest) { here.push(i); continue; }
     const seg = rest.split('/')[0];
-    if (!dirs.has(seg)) dirs.set(seg, 0);
-    dirs.set(seg, dirs.get(seg) + 1);
+    dirs.set(seg, (dirs.get(seg) || 0) + 1);
   }
-  const crumbs = at ? at.split('/').filter(Boolean) : [];
+
+  const crumbs = rel ? rel.split('/').filter(Boolean) : [];
   const bar = `<div class="crumb">
     <button data-dig="">${esc(S.sys || 'ぜんぶ')}</button>
     ${crumbs.map((c, n) => `<span>›</span><button data-dig="${
       esc('/' + crumbs.slice(0, n + 1).join('/'))}">${esc(c)}</button>`).join('')}
   </div>`;
-  const rows = [...dirs.entries()].sort((a, b) => collator.compare(a[0], b[0]));
+  const rows = [...dirs.entries()].sort((a2, b2) => collator.compare(a2[0], b2[0]));
   return bar
-    + (rows.length ? `<h2 class="fold" style="cursor:default">この中のフォルダ
+    + (rows.length ? `<h2 class="fold" style="cursor:default">${
+        crumbs.length ? 'この中' : 'メーカー・置き場'}
         <span class="cnt">${rows.length}</span></h2>
       <div class="tree" style="margin-bottom:14px;max-height:46vh;overflow:auto">${
         rows.map(([nm, n]) => `
         <div class="tnode">
-          <button class="trow" data-dig="${esc((at || '') + '/' + nm)}">
+          <button class="trow" data-dig="${esc(rel + '/' + nm)}">
             <span class="tri">📁</span><span class="tname">${esc(nm)}</span>
             <span class="cnt">${n}</span>
           </button>
         </div>`).join('')}</div>` : '')
     + (here.length ? `<h2 class="fold" style="cursor:default">ここに置いてある本
-        <span class="cnt">${here.length}</span></h2>` + capped(here, 'dig:' + at)
+        <span class="cnt">${here.length}</span></h2>` + capped(here, 'dig:' + rel)
        : (rows.length ? '' : '<div class="empty">この下に本がありません</div>'));
 }
 
