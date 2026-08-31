@@ -15,6 +15,11 @@
 <!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
 <link rel="stylesheet" href="./core/shelf.css?v=2">
 <style>
+/* 掘っている場所の道しるべ。 */
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font-size:13px}
+.crumb button{background:none;border:0;color:var(--accent);cursor:pointer;padding:2px 0;font-size:13px}
+.crumb button:hover{text-decoration:underline}
+.crumb span{color:var(--dim2)}
 /* 版の数。札の隅に小さく。 */
 .item .vers{display:inline-block;margin-left:6px;font-size:10px;padding:1px 5px;
   border-radius:5px;background:rgba(255,255,255,.10);color:var(--dim)}
@@ -178,6 +183,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=6"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=75"></script>
+<script src="./app.js?v=79"></script>
 </body>
 </html>
