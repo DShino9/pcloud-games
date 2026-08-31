@@ -34,7 +34,7 @@ async function s2read(fname) {
   /* **中継所ごしで読む。** file_open はこの倉庫では 2003 で断られる
      （ROM は通るのに、こちらで上げた JSON は駄目 —— 実測）。
      ROM と同じ、実績のある道を使う。 */
-  const blob = await P.fetchFile(S.relay, { fileid: f.fileid, name: fname });
+  const blob = await P.fetchFile(S.relay, { fileid: f.fileid, host: S.host, auth: S.auth });
   return JSON.parse(await blob.text());
 }
 
@@ -124,7 +124,7 @@ async function s2art() {
     const r2 = await call('listfolder', { folderid: d.folderid });
     const f = (r2.metadata.contents || []).find(c => P.nfc(c.name) === '絵.json');
     if (!f || (f.modified || '') === LS.get('artAt', '')) return;
-    const blob = await P.fetchFile(S.relay, { fileid: f.fileid, name: '絵.json' });
+    const blob = await P.fetchFile(S.relay, { fileid: f.fileid, host: S.host, auth: S.auth });
     const j = JSON.parse(await blob.text());
     LS.set('artmap', j.map || {});
     LS.set('genremap', j.ジャンル || {});
