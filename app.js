@@ -216,7 +216,68 @@ function render() {
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
-  return screenLib();
+  /* 入口は**機種から**。本数が増えて（350本超）平らに並べても選べなくなった。 */
+  if (h.startsWith('#/sys/')) return screenLib(decodeURIComponent(h.slice(6)));
+  if (h === '#/all')          return screenLib('');
+  return screenHome();
+}
+
+/* ============ 入口（機種を選ぶ） ============ */
+/* **平らに並べない。** 機種が14に増え、本数も350を超えた。
+   まず機種を選び、その中を見る。探すときだけ機種をまたぐ。 */
+function screenHome() {
+  $('#title').textContent = 'ゲーム棚';
+  const box = new Map();
+  for (const i of S.items) {
+    if (i.kind !== 'game') continue;
+    if (!box.has(i.system)) box.set(i.system, { all: 0, have: 0, short: i.short, cover: null });
+    const b = box.get(i.system);
+    b.all++;
+    if (hasAll(i)) b.have++;
+    /* 棚の顔にする絵は、その機種で**いちばん遊んだ本**の箱絵。
+       無ければ絵のある本から1枚借りる。 */
+    const cov = S.covurl[i.id] || i.cover;
+    if (cov && (!b.cover || (S.plays[i.id] || {}).n > (b.playn || 0))) {
+      b.cover = cov; b.playn = (S.plays[i.id] || {}).n || 0;
+    }
+  }
+  const order = [...box.entries()].sort((a, b) => b[1].all - a[1].all);
+  const total = [...box.values()].reduce((n, b) => n + b.all, 0);
+  const held  = [...box.values()].reduce((n, b) => n + b.have, 0);
+
+  main().innerHTML = `
+  <div class="bar"><div class="row1">
+    <input class="search" id="hq" placeholder="題名で探す（機種をまたいで）"
+      autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="hbtn" id="hall">ぜんぶ見る</button>
+    <button class="hbtn" id="haddto" style="margin-left:auto">＋ 棚に上げる</button>
+  </div></div>
+  <div class="sysgrid">
+    ${order.map(([name, b]) => `
+      <button class="sysc" data-sys="${esc(name)}" data-s="${esc(b.short)}">
+        <div class="syscov">${b.cover ? `<img src="${esc(b.cover)}" alt="">` : ''}<i></i></div>
+        <div class="syshead">
+          ${LOGOS[b.short] ? `<img class="syslogo" src="logos/${esc(b.short)}.png" alt="${esc(name)}">`
+                           : `<span class="systag">${esc(b.short)}</span>`}
+          <span class="sysname">${esc(name)}</span>
+        </div>
+        <div class="syscnt">${b.have} / ${b.all} 本</div>
+      </button>`).join('')}
+  </div>
+  <div class="sub" style="margin-top:14px">全部で ${total} 本、うち ${held} 本が棚にあります。</div>`;
+
+  for (const b of main().querySelectorAll('[data-sys]'))
+    b.onclick = () => go('#/sys/' + encodeURIComponent(b.dataset.sys));
+  $('#hall').onclick = () => go('#/all');
+  $('#haddto').onclick = () => go('#/gather');
+  /* 探すのは機種をまたぐ。打ち始めたら一覧へ移る。 */
+  $('#hq').oninput = e => {
+    const v = e.target.value;
+    if (!v.trim()) return;
+    S.q = v; LS.set('q', v);
+    go('#/all');
+    setTimeout(() => { const q = $('#q'); if (q) { q.focus(); q.setSelectionRange(v.length, v.length); } }, 30);
+  };
 }
 
 /* ============ ログイン ============ */
@@ -372,14 +433,15 @@ function shelfList() {
   return list.sort((a, b) => (hasAll(b) - hasAll(a)) || cmp(a, b));
 }
 
-function screenLib() {
+function screenLib(sys) {
+  if (sys !== undefined) { S.sys = sys; LS.set('sys', sys); }
   const list = shelfList();
   const systems = [...new Set(S.items.map(i => i.system))].sort();
   /* ジャンルは多い順に。数が少ないものは末尾に沈むので探しやすい。 */
   const gcount = {};
   for (const i of S.items) if (i.genre) gcount[i.genre] = (gcount[i.genre] || 0) + 1;
   const genres = Object.entries(gcount).sort((a, b) => b[1] - a[1]);
-  $('#title').textContent = 'ゲーム棚';
+  $('#title').textContent = S.sys || 'ゲーム棚';
   /* 「棚にない」は絞り込みに関係なく棚全体の話。並べ直しでは書き換わらないので、
      いま出ている一覧の数ではなく、遊べるもの全体から数える。 */
   const missing = S.items.filter(i => i.kind === 'game' && !hasAll(i)).length;
@@ -405,25 +467,27 @@ function screenLib() {
     <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">棚にある分だけ</button>
     <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">手元にある分</button>
     <select id="fold">
-      <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>機種で畳む</option>
+      <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
       <option value=""${S.fold ? '' : ' selected'}>畳まない</option>
     </select>
     <button class="hbtn${S.tools ? ' on' : ''}" id="tools">道具ディスク</button>
-    <button class="hbtn" id="addto" style="margin-left:auto">＋ 棚に上げる</button>
+    <button class="hbtn" id="home" style="margin-left:auto">← 機種へ</button>
+    <button class="hbtn" id="addto">＋ 棚に上げる</button>
   </div></div>
   ${missing ? `<div class="msg warn" style="margin:0 0 10px">
     まだ pCloud に上げていない本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
   <div id="g">${gridHtml(list)}</div>`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
-  $('#sys').onchange  = e => { S.sys = e.target.value; LS.set('sys', S.sys); screenLib(); };
+  $('#sys').onchange  = e => go(e.target.value ? '#/sys/' + encodeURIComponent(e.target.value) : '#/all');
   $('#gen').onchange  = e => { S.genre = e.target.value; LS.set('genre', S.genre); screenLib(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
   $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold); screenLib(); };
   $('#here').onclick  = () => { S.onlyHere = !S.onlyHere; LS.set('onlyHere', S.onlyHere); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
   $('#addto').onclick = () => go('#/gather');
+  $('#home').onclick  = () => { S.q = ''; LS.set('q', ''); go('#/lib'); };
   $('#have').onclick  = () => { S.onlyHave = !S.onlyHave; LS.set('onlyHave', S.onlyHave); screenLib(); };
   bindCells();
   bindFold();
@@ -448,14 +512,17 @@ function gridHtml(list) {
   }
   if (!S.fold || S.q.trim()) return `<div class="grid">${list.map(cellHtml).join('')}</div>`;
 
-  const key = i => S.fold === 'genre' ? (i.genre || 'ジャンル未設定') : i.system;
+  /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
+     その場合はジャンルで畳む。 */
+  const by = (S.sys && S.fold === 'sys') ? 'genre' : S.fold;
+  const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定') : i.system;
   const box = new Map();
   for (const i of list) {
     if (!box.has(key(i))) box.set(key(i), []);
     box.get(key(i)).push(i);
   }
   /* 機種は台帳の並び、ジャンルは多い順。どちらも「よく使う束が上」になる。 */
-  const names = [...box.keys()].sort((a, b) => S.fold === 'genre'
+  const names = [...box.keys()].sort((a, b) => by === 'genre'
     ? box.get(b).length - box.get(a).length || a.localeCompare(b, 'ja')
     : a.localeCompare(b, 'ja'));
   const cl = shut();
