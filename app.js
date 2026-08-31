@@ -118,7 +118,7 @@ function mergeCatalogs() {
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
     out.push({ id: e.id, name: RN[e.id] || e.name, sub: e.sub || '', system: e.system, short: e.short,
-               core: e.core, path: IP[e.id] || e.path || '',
+               core: e.core, path: IP[e.id] || e.path || '', fids: e.fids || null,
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -145,7 +145,9 @@ const gotIt = it => it.pc98
   ? it.files.length > 0 && it.files.every(f => S.here[String(S.files[P.nfc(f)])])
   : !!S.here[it.id];
 
-const hasAll = it => it.files.length > 0 && it.files.every(f => !!S.files[P.nfc(f)]);
+const hasAll = it => (it.fids && it.fids.length)
+  ? true                                   /* 走査で見つけた本。在処ごと覚えている */
+  : (it.files.length > 0 && it.files.every(f => !!S.files[P.nfc(f)]));
 
 const call = (m, p, ms) => P.api(m, p, { host: S.host, auth: S.auth, ms });
 const fileidOf = g => S.files[P.nfc(g.file)] || null;
@@ -239,29 +241,55 @@ function learnFrom(map, seen = []) {
   for (const t of ((S.cat98 && S.cat98.titles) || []))
     for (const d of t.disks) known.add(P.nfc(d.file));
 
-  const extra = LS.get('extra', []);
-  const have = new Set(extra.flatMap(e => e.files));
+  /* **古い作りで起こした本は捨てる。** 名前だけで束ねていた頃のものは、
+     別の本が1本に潰れている（49枚で1本、など）。在処を持たないものが目印。
+     残したまま足すと二重になるので、作り直す。 */
+  let extra = LS.get('extra', []);
+  const before = extra.length;
+  extra = extra.filter(e => Array.isArray(e.paths) && e.paths.length);
+  if (extra.length !== before) log.note(`古い作りの本を捨てた: ${before - extra.length} 本`);
+  /* **名前だけで覚えない。** 倉庫は1本＝1フォルダなので、
+     `A.fdi` `B.fdi` `1.fdi` が別々の本に山ほどある。名前で束ねると全部潰れる
+     （PC-98 が 595 本しか出なかったのはこれ）。**在処＋名前**で見分ける。 */
+  const have = new Set(extra.flatMap(e => (e.paths || []).map((pp, i) => pp + '/' + e.files[i])));
   /* PC-98 は1本＝複数枚。`X_A.fdi` `X_B.fdi` のように末尾が1文字違いなら
      同じ本と見て束ねる（外れることもあるが、バラバラに並ぶよりは読める）。 */
   const group = new Map();
-  for (const name of Object.keys(map)) {
-    if (known.has(name) || have.has(name)) continue;
+  for (const f of seen) {
+    const name = f.name;
+    const full = (f.path || '') + '/' + name;
+    if (known.has(name) || have.has(full)) continue;
     const sys = sysOf(name);
     if (!sys.length) continue;
     if (/\b(bios|BIOS|font|sound)\b/i.test(name)) continue;
     const base = name.replace(/\.[^.]+$/, '');
+    /* **フォルダをまたいで束ねない。** 末尾の1文字だけで束ねていたので、
+       別のフォルダにある `1.fdi` `2.fdi` `A.fdi` まで1本に潰れていた
+       （49枚で1本という札が出ていた）。
+       倉庫は `【PC98】天下統一/` のように**1本＝1フォルダ**なので、
+       同じフォルダの中だけで束ねる。 */
+    const dir = f.path || '';
     const key = sys[0] === 'PC-98'
-      ? base.replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
-      : base;
-    if (!group.has(key)) group.set(key, { system: sys[0], short: sys[1], core: sys[2], files: [], base });
-    group.get(key).files.push(name);
+      ? dir + '|' + base.replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
+      : dir + '|' + base;
+    if (!group.has(key)) group.set(key, { system: sys[0], short: sys[1], core: sys[2],
+                                          files: [], paths: [], fids: [], base });
+    const gg = group.get(key);
+    gg.files.push(name); gg.paths.push(f.path || ''); gg.fids.push(f.fileid);
   }
   let n = 0;
   for (const [key, g] of group) {
     g.files.sort((a, b) => a.localeCompare(b, 'ja'));
-    extra.push({ id: 'X-' + key, name: key, system: g.system, short: g.short,
+    /* 題名はフォルダの名前を使う（`【PC98】天下統一` → `天下統一`）。
+       ファイル名（`A_disk` `0` `ed`）より、そちらのほうがずっと本の名前らしい。 */
+    const dir = (g.paths[0] || '').split('/').pop() || '';
+    const nice = dir.replace(/^【[^】]*】\s*/, '').trim();
+    const name0 = (nice && !/^(PC98|PC-98|disk|rom|games?)$/i.test(nice) && g.files.length > 0)
+      ? nice : key.split('|').pop();
+    extra.push({ id: 'X-' + key, name: name0, system: g.system, short: g.short,
                  core: g.core, bytes: 0, files: g.files,
-                 path: where[g.files[0]] || '',
+                 paths: g.paths, fids: g.fids,
+                 path: g.paths[0] || '',
                  sub: g.files.length > 1 ? g.files.length + '枚' : '見つけた分' });
     n++;
   }
@@ -789,8 +817,34 @@ function gridHtml(list) {
      **メーカーで束ねる**（本人「フォルダの場所は選ぶ時はほとんどいらない」）。 */
   const by = (S.sys && S.fold === 'sys') ? 'maker' : S.fold;
   /* 在処で畳むときは、深い順ではなく道の順に並べたほうが辿りやすい。 */
+  /* **メーカーは倉庫のフォルダが正**。`…/PC98 Disk/Alice Soft/` のように
+     メーカー名でフォルダが切ってある（数百ある）。題名から当てる表は当てにならないので、
+     **その機種の本に共通する道を取り除いた、次の一節**をメーカーとして使う。
+     道が無い本だけ、表で当てる。 */
+  let head = '';
+  if (by === 'maker') {
+    const paths = list.map(i => i.path || '').filter(Boolean);
+    if (paths.length) {
+      const segs = paths[0].split('/').filter(Boolean);
+      const outer = [];
+      for (let n = 0; n < segs.length; n++) {
+        const cand = '/' + segs.slice(0, n + 1).join('/');
+        if (paths.every(pp => pp === cand || pp.startsWith(cand + '/'))) outer.push(segs[n]);
+        else break;
+      }
+      head = outer.length ? '/' + outer.join('/') : '';
+    }
+  }
+  const makerOf = i => {
+    const pp = i.path || '';
+    if (pp && pp.length > head.length) {
+      const seg = pp.slice(head.length).replace(/^\//, '').split('/')[0];
+      if (seg) return seg;
+    }
+    return (window.Makers ? Makers.makerOf(i.name, pp) : '') || 'その他';
+  };
   const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定')
-                  : by === 'maker' ? ((window.Makers ? Makers.makerOf(i.name, i.path) : '') || 'その他')
+                  : by === 'maker' ? makerOf(i)
                   : i.system;
   const box = new Map();
   for (const i of list) {
@@ -1050,7 +1104,7 @@ function play(id) {
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=27'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=11';
+      '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=11';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
