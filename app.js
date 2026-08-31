@@ -96,12 +96,14 @@ const S = {
    棚に並べるところだけ、同じ形に揃える。 */
 function mergeCatalogs() {
   const out = [];
+  /* 走査で分かった在処（本 → 道）。掘り下げに要る。 */
+  const IP = LS.get('itempath', {});
   for (const g of ((S.cat && S.cat.games) || [])) {
     if (!g.core) continue;                       // ブラウザで動かない機種は出さない
     out.push({
       id: g.id, name: g.name, sub: g.title || '', system: g.system, short: g.short,
       cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
-      files: [g.file],
+      files: [g.file], path: IP[g.id] || '',
     });
   }
   /* 台帳に無い本。**pCloud には台帳より多く入っている。**
@@ -110,7 +112,7 @@ function mergeCatalogs() {
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
     out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short,
-               core: e.core, path: e.path || '',
+               core: e.core, path: IP[e.id] || e.path || '',
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -121,6 +123,7 @@ function mergeCatalogs() {
       system: 'PC-98', short: '98',
       cover: t.cover || null, bytes: t.bytes, kind: t.kind, pc98: true, genre: '',
       files: t.disks.map(d => d.file),
+      path: IP[t.id] || '',
       garbled: !!t.garbled,
     });
   }
@@ -202,6 +205,17 @@ async function scanAll(say = () => {}) {
       at: new Date().toISOString().slice(0, 16).replace('T', ' ') });
   keepGather(S.gather);
   const added = learnFrom(map, seen);
+  /* **在処は台帳の本にも要る。** 掘り下げは在処が無いと出せないのに、
+     台帳（`games.json`/`pc98.json`）から来た本は在処を持っていなかった。
+     走査で分かった道を、本ごとに覚えておく。 */
+  const byName = {};
+  for (const f of seen) byName[f.name] = f.path || '';
+  const ip = {};
+  for (const it of S.items) {
+    const p0 = byName[P.nfc(it.files[0])];
+    if (p0) ip[it.id] = p0;
+  }
+  LS.set('itempath', ip);
   pushCatalog();          // 絵の捜索の続きは Mac 側がやる。題名を渡しておく
   return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
@@ -617,7 +631,7 @@ function screenLib(sys) {
     /* **本数が多い機種は、はじめから掘る形で開く。**
        3000本を平らに並べても選べない。在処が分かっている本が多いときだけ。 */
     const n = S.items.filter(i => i.system === sys);
-    if (n.length > 300 && n.filter(i => i.path).length > n.length * 0.6
+    if (n.length > 300 && n.filter(i => i.path).length > n.length * 0.3
         && !LS.get('foldPicked', false)) S.fold = 'path';
   }
   const list = shelfList();
@@ -1466,6 +1480,25 @@ function screenLog() {
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
+  /* **前の走査で在処は分かっている。** もう一度歩かせずに、そこから補う
+     （「棚に上げる」用に残した一覧が在処を持っている）。 */
+  if (!Object.keys(LS.get('itempath', {})).length) {
+    const g0 = LS.get('gather', {});
+    if (g0.files && g0.files.length) {
+      const byName = {};
+      for (const f of g0.files) byName[f.name] = f.path || '';
+      const ip = {};
+      for (const it of S.items) {
+        const p0 = byName[P.nfc(it.files[0])];
+        if (p0) ip[it.id] = p0;
+      }
+      if (Object.keys(ip).length) {
+        LS.set('itempath', ip);
+        S.items = mergeCatalogs();
+        log.note(`在処を補った: ${Object.keys(ip).length} 本`);
+      }
+    }
+  }
   await loadMyCovers();
   await refreshHere();
   render();
