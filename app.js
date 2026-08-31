@@ -171,7 +171,8 @@ async function scanAll(say = () => {}) {
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
       seen.push(...r.files.filter(f => sysOf(f.name).length));
       count += r.files.length;
-      report.push(`${pl.name}: ${r.files.length}`);
+      report.push(`${pl.name}: ${r.files.length}`
+        + (r.truncated ? `（<b style="color:var(--danger)">途中で打ち切り・残り ${r.left} 部屋</b>）` : ''));
       log.note(`走査: ${pl.name} ${r.files.length} ファイル`);
     } catch (e) {
       /* **黙って落とさない。** 1か所が駄目でも他は続けるが、
@@ -676,8 +677,12 @@ function gridHtml(list) {
   const cl = shut();
   return names.map(nm => {
     const open = !cl.has(nm);
-    return `<h2 class="fold" data-fold="${esc(nm)}">
-        <span class="tri">${open ? '▾' : '▸'}</span>${esc(nm)}
+    /* 倉庫の道は深い（`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。
+       見出しでは末尾だけ見せ、全体は当てれば出る。 */
+    const label = by === 'path' && nm.split('/').length > 3
+      ? '…/' + nm.split('/').slice(-2).join('/') : nm;
+    return `<h2 class="fold" data-fold="${esc(nm)}" title="${esc(nm)}">
+        <span class="tri">${open ? '▾' : '▸'}</span>${esc(label)}
         <span class="cnt">${box.get(nm).length}</span></h2>
       <div data-body="${esc(nm)}"${open ? '' : ' hidden'}>${capped(box.get(nm), nm)}</div>`;
   }).join('');
@@ -1882,7 +1887,7 @@ async function screenPlaces(folderid) {
         S.items = mergeCatalogs();
         m.innerHTML = `${r.places} か所・${r.count} ファイル。`
           + (r.added ? `台帳に無い本を <b>${r.added} 本</b>、棚に起こしました。` : '')
-          + '<br><span class="sub">' + r.report.map(esc).join('　／　') + '</span>';
+          + '<br><span class="sub">' + r.report.join('　／　') + '</span>';
       } catch (e) { m.textContent = '見に行けません: ' + e.message; }
       screenPlaces();
     };
@@ -1894,7 +1899,7 @@ async function screenPlaces(folderid) {
         S.items = mergeCatalogs();
         S.lastScan = `${r.places} か所・${r.count} ファイル。`
           + (r.added ? `台帳に無い本を <b>${r.added} 本</b>、棚に起こしました。` : '台帳に無い本はありませんでした。')
-          + '<br><span class="sub">' + r.report.map(esc).join('　／　') + '</span>';
+          + '<br><span class="sub">' + r.report.join('　／　') + '</span>';
         m.innerHTML = S.lastScan;
       } catch (e) { m.textContent = '見られません: ' + e.message; }
     };

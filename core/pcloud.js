@@ -196,7 +196,8 @@ async function indexFolder(folderid, opt = {}) {
   const r = await scanFolder(folderid, opt);
   const map = {};
   for (const f of r.files) map[f.name] = f.fileid;
-  return { map, count: r.files.length, name: r.name };
+  return { map, count: r.files.length, name: r.name,
+           truncated: !!r.truncated, left: r.left || 0 };
 }
 
 /* 走査。`indexFolder` は名前→fileid の対だけを返すので、
@@ -229,8 +230,12 @@ async function scanFolder(folderid, opt = {}) {
   try {
     const out = [];
     const q = [{ id: folderid, path: '' }];
+    /* **黙って打ち切らない。** 上限で止めると「もっとあるはずなのに出ない」に
+       なるが、止まったことが誰にも分からない。上限は高く取り、
+       当たったら**そう言う**（`truncated` で返す）。 */
+    const LIMIT = 40000;
     let guard = 0;
-    while (q.length && guard++ < 4000) {
+    while (q.length && guard++ < LIMIT) {
       const { id, path } = q.shift();
       const r = await api('listfolder', { folderid: id },
         { host: opt.host, auth: opt.auth, ms: opt.ms || 30000 });
@@ -241,7 +246,9 @@ async function scanFolder(folderid, opt = {}) {
       }
       if (opt.onStep) opt.onStep(out.length, q.length);
     }
-    return { files: out, name: '/' };
+    const truncated = q.length > 0;
+    if (truncated) console.warn('走査を打ち切った: 部屋が多すぎる', q.length);
+    return { files: out, name: '/', truncated, left: q.length };
   } catch (e) {
     throw last || e;
   }
