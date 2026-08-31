@@ -1310,15 +1310,48 @@ async function screenGather(browse) {
     news.sort((a, b) => (a.path + a.name).localeCompare(b.path + b.name, 'ja'));
   }
   const n = Object.keys(G.pick).length;
+
+  /* 同じ名前が倉庫の何か所にもある（`/その他/整理隔離/重複/…` など）。
+     並べただけでは気づけないので**印を付ける**。 */
+  const seen = {};
+  for (const r of [...rows, ...news]) seen[r.name] = (seen[r.name] || 0) + 1;
+
+  const q = (G.q || '').trim().toLowerCase();
+  const hit = r => !q || r.name.toLowerCase().includes(q) || (r.path || '').toLowerCase().includes(q);
+
   const line = r => `
     <button class="row" data-fid="${r.fileid}">
       <span style="width:18px;flex:0 0 18px;color:${G.pick[r.fileid] ? 'var(--accent)' : 'var(--dim2)'}">${
         G.pick[r.fileid] ? '☑' : '☐'}</span>
       <span class="nm" style="text-align:left">${esc(r.name)}
-        <span class="sub">${r.item ? esc(r.item.name) + '・' + esc(r.item.short)
-                                   : '台帳に無い・' + esc((sysOf(r.name)[1]) || '機種不明')}</span></span>
-      <span class="sub" style="text-align:right">${size(r.size)}<br>${esc(r.path || '/')}</span>
+        <span class="sub">${r.item ? esc(r.item.name)
+                                   : '台帳に無い'}${
+          seen[r.name] > 1 ? ' <b style="color:var(--warn)">重複 ' + seen[r.name] + 'か所</b>' : ''}</span></span>
+      <span class="sub" style="text-align:right;flex:0 0 auto;max-width:44%">${size(r.size)}<br>${esc(r.path || '/')}</span>
     </button>`;
+
+  /* 棚と同じ作法で畳む。**探している最中は畳まない。** */
+  const gshut = () => new Set(LS.get('gshut', []));
+  const fold = (list, tag) => {
+    const box = new Map();
+    for (const r of list.filter(hit)) {
+      const k = sysOf(r.name)[0] || '機種不明';
+      if (!box.has(k)) box.set(k, []);
+      box.get(k).push(r);
+    }
+    if (!box.size) return '<div class="empty">ありません</div>';
+    const cl = gshut();
+    return [...box.entries()].sort((a, b) => b[1].length - a[1].length).map(([k, v]) => {
+      const key = tag + '/' + k;
+      const open = q ? true : !cl.has(key);
+      return `<h2 class="fold" data-gfold="${esc(key)}">
+          <span class="tri">${open ? '▾' : '▸'}</span>${esc(k)}
+          <span class="cnt">${v.length}</span></h2>
+        <div class="rowlist" data-gbody="${esc(key)}"${open ? '' : ' hidden'}>${
+          v.slice(0, 300).map(line).join('')}${
+          v.length > 300 ? `<div class="sub" style="padding:8px 14px">ほか ${v.length - 300} 件。題名で絞ってください</div>` : ''}</div>`;
+    }).join('');
+  };
 
   main().innerHTML = `
   <div class="card" style="max-width:720px">
@@ -1335,16 +1368,16 @@ async function screenGather(browse) {
 
     ${G.files ? ((rows.length + news.length) ? `
       <div style="display:flex;gap:6px;margin:10px 0">
-        <button class="hbtn sm" id="gall">全部選ぶ</button>
+        <button class="hbtn sm" id="gall">見えている分を全部選ぶ</button>
         <button class="hbtn sm" id="gnone">選び直す</button>
       </div>
-      ${rows.length ? `<h3>台帳にある（${rows.length}）</h3>
-        <div class="rowlist">${rows.map(line).join('')}</div>` : ''}
+      <input class="search" id="gq" placeholder="題名や置き場で絞る" value="${esc(G.q || '')}"
+        autocapitalize="off" autocorrect="off" spellcheck="false" style="margin:10px 0">
+      ${rows.length ? `<h3>台帳にある（${rows.length}）</h3>${fold(rows, 'A')}` : ''}
       ${news.length ? `<h3 style="margin-top:16px">台帳に無い（${news.length}）</h3>
         <p class="sub">台帳は Mac の中身から起こしたものなので、それ以外の道で
-          pCloud に入れた分は載っていません。移すと<b>この端末の棚に足します</b>
-          （題名はファイル名から。あとで直せます）。</p>
-        <div class="rowlist">${news.map(line).join('')}</div>` : ''}
+          倉庫に入れた分は載っていません。移すと<b>この端末の棚に足します</b>
+          （題名はファイル名から。あとで直せます）。</p>${fold(news, 'B')}` : ''}
       <div style="display:flex;gap:6px;align-items:center;margin-top:12px">
         <span class="sub">${n} 件えらんだ</span>
         <button class="hbtn" id="gmove"${n && !G.busy ? '' : ' disabled'}>棚へ移す</button>
@@ -1379,7 +1412,28 @@ async function screenGather(browse) {
     }
   };
   const gall = $('#gall'), gnone = $('#gnone');
-  if (gall)  gall.onclick  = () => { [...rows, ...news].forEach(r => G.pick[r.fileid] = 1); screenGather(); };
+  const gq = $('#gq');
+  if (gq) gq.oninput = () => {
+    G.q = gq.value;
+    clearTimeout(G.qt);
+    G.qt = setTimeout(() => { screenGather(); const e = $('#gq'); if (e) { e.focus();
+      e.setSelectionRange(e.value.length, e.value.length); } }, 280);
+  };
+  for (const h of main().querySelectorAll('h2.fold[data-gfold]')) h.onclick = () => {
+    const k = h.dataset.gfold, cl = new Set(LS.get('gshut', []));
+    cl.has(k) ? cl.delete(k) : cl.add(k);
+    LS.set('gshut', [...cl]);
+    const body = main().querySelector(`[data-gbody="${CSS.escape(k)}"]`);
+    const open = !cl.has(k);
+    if (body) body.hidden = !open;
+    h.querySelector('.tri').textContent = open ? '▾' : '▸';
+  };
+  /* 「全部選ぶ」は**いま見えている分だけ**。絞ってから押す使い方に合わせる
+     （403件を丸ごと選ばせても、選び直すのが大変なだけ）。 */
+  if (gall)  gall.onclick  = () => {
+    [...rows, ...news].filter(hit).forEach(r => G.pick[r.fileid] = 1);
+    screenGather();
+  };
   if (gnone) gnone.onclick = () => { G.pick = {}; screenGather(); };
   for (const b of main().querySelectorAll('[data-fid]')) b.onclick = () => {
     const k = b.dataset.fid;
