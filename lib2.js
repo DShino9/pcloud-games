@@ -43,7 +43,8 @@ function l2maker(i, head) {
     if (seg && !/^(PC-?98|PC98.*|select|fdd|collection|rom|disk|games?|パソコン|家庭用ゲーム機|その他|整理隔離|重複|削除待ち)$/i.test(seg))
       return seg;
   }
-  return (window.Makers ? Makers.makerOf(i.name, pp) : '') || 'その他';
+  return (window.Makers ? Makers.makerOf(i.name, pp) : '')
+    || (i.system === 'PC-98' && pp ? 'メーカーフォルダなし' : 'その他');
 }
 
 /* いま見ている機種の本（束ねた後）。メーカーも付けて返す。 */
@@ -96,7 +97,7 @@ function l2rail() {
       const mk = new Map();
       for (const g of items) mk.set(g._maker, (mk.get(g._maker) || 0) + 1);
       const mrows = [...mk.entries()].sort((a, b) =>
-        a[0] === 'その他' ? 1 : b[0] === 'その他' ? -1
+        /^(その他|メーカーフォルダなし)$/.test(a[0]) ? 1 : /^(その他|メーカーフォルダなし)$/.test(b[0]) ? -1
         : b[1] - a[1] || collator.compare(a[0], b[0]));
       /* ジャンル（未設定も1つの束） */
       const gn = new Map();
@@ -159,15 +160,39 @@ function l2row(g) {
   </button>`;
 }
 
+/* **ページで区切る（Amazon の検索結果と同じ形）。**
+   「もっと見る」は左下に小さく出るだけで、続きがあることに気づけなかった
+   （本人の指摘）。上に「◯冊中 ◯〜◯」、下に大きなページ番号を出す。 */
+function l2page(list) {
+  const pages = Math.max(1, Math.ceil(list.length / STEP));
+  const p = Math.min(Math.max(1, L.page || 1), pages);
+  return { pages, p, from: (p - 1) * STEP, to: Math.min(p * STEP, list.length) };
+}
+function l2pager(list) {
+  const { pages, p } = l2page(list);
+  if (pages <= 1) return '';
+  const btn = (n, label, cls) =>
+    `<button class="l2pg${cls || ''}" data-page="${n}">${label}</button>`;
+  const win = [...new Set([1, 2, p - 1, p, p + 1, pages - 1, pages]
+    .filter(n => n >= 1 && n <= pages))].sort((a, b) => a - b);
+  let h = '', last = 0;
+  for (const n of win) {
+    if (n - last > 1) h += '<span class="l2dots">…</span>';
+    h += btn(n, n, n === p ? ' on' : '');
+    last = n;
+  }
+  return `<div class="l2pager">${p > 1 ? btn(p - 1, '‹ 前へ') : ''}${h}${
+    p < pages ? btn(p + 1, '次へ ›') : ''}</div>`;
+}
 function l2grid(list) {
-  const n = Math.min(list.length, S.more.l2 || STEP);
-  const cells = list.slice(0, n).map(L.rows ? l2row : l2card).join('');
-  const more = n < list.length
-    ? `<button class="hbtn" data-more="l2" style="margin:10px 0">もっと見る（あと ${list.length - n} 本）</button>` : '';
   if (!list.length) return `<div class="empty">${S.q ? '見つかりません'
     : S.view === 'play' ? 'まだ棚に何も取り寄せていません。<br><span class="sub">「ぜんぶ」から選んで遊ぶと、その本が棚に入ります。</span>'
     : 'ここには何もありません'}</div>`;
-  return (L.rows ? `<div class="l2rows">${cells}</div>` : `<div class="grid">${cells}</div>`) + more;
+  const { from, to } = l2page(list);
+  const cells = list.slice(from, to).map(L.rows ? l2row : l2card).join('');
+  return `<div class="l2count">${list.length.toLocaleString()} 冊中 ${(from + 1).toLocaleString()}〜${to.toLocaleString()} 冊</div>`
+    + (L.rows ? `<div class="l2rows">${cells}</div>` : `<div class="grid">${cells}</div>`)
+    + l2pager(list);
 }
 
 /* ---- 右の札 ---- */
@@ -315,6 +340,11 @@ function screenLibrary() {
         <button class="hbtn" id="addto" style="margin-left:auto">＋ 棚に上げる</button>
       </div></div>
       <div class="sub" id="huntline" style="margin:0 0 8px;display:none"></div>
+      ${S.auth && S.rootId && !LS.get('scanAt2', '') ? `
+        <div class="msg err" style="margin:0 0 10px">
+          新しい台帳（約1万冊・メーカー別）をまだ取り込めていません。
+          <button class="hbtn sm" id="pullnow">いま取り込む</button>
+          <span id="pullline"></span></div>` : ''}
       <div id="g">${l2grid(list)}</div>
       <div class="sub" id="scanline" style="margin-top:14px">${(() => {
         const sc = LS.get('scan', null);
@@ -331,7 +361,7 @@ function screenLibrary() {
     const s = b.dataset.sys;
     if (L.sys === s && s) { L.sys = ''; }        // もう一度押すと枝ごと畳む
     else { L.sys = s; }
-    L.maker = ''; L.genre = ''; S.more.l2 = 0; l2save();
+    L.maker = ''; L.genre = ''; L.page = 1; l2save();
     screenLibrary();
   };
   for (const b of main().querySelectorAll('[data-grp]')) b.onclick = () => {
@@ -342,21 +372,31 @@ function screenLibrary() {
   };
   for (const b of main().querySelectorAll('[data-maker]')) b.onclick = () => {
     L.maker = (L.maker === b.dataset.maker) ? '' : b.dataset.maker;
-    S.more.l2 = 0; l2save(); screenLibrary();
+    L.page = 1; l2save(); screenLibrary();
   };
   for (const b of main().querySelectorAll('[data-genre]')) b.onclick = () => {
     L.genre = (L.genre === b.dataset.genre) ? '' : b.dataset.genre;
-    S.more.l2 = 0; l2save(); screenLibrary();
+    L.page = 1; l2save(); screenLibrary();
   };
   /* 一覧 */
   for (const b of main().querySelectorAll('[data-view]'))
-    b.onclick = () => { S.view = b.dataset.view; LS.set('view2', S.view); screenLibrary(); };
-  $('#q').oninput = e => { S.q = e.target.value; LS.set('q', S.q); l2redraw(); };
-  $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); l2redraw(); };
+    b.onclick = () => { S.view = b.dataset.view; LS.set('view2', S.view); L.page = 1; screenLibrary(); };
+  $('#q').oninput = e => { S.q = e.target.value; LS.set('q', S.q); L.page = 1; l2redraw(); };
+  $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); L.page = 1; l2redraw(); };
   $('#tools2').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLibrary(); };
   $('#vcard').onclick = () => { L.rows = false; l2save(); screenLibrary(); };
   $('#vrow').onclick = () => { L.rows = true; l2save(); screenLibrary(); };
   $('#addto').onclick = () => go('#/gather');
+  const pn = $('#pullnow');
+  if (pn) pn.onclick = async () => {
+    pn.disabled = true;
+    const line = $('#pullline');
+    line.textContent = ' 取り込んでいます…';
+    S2.err = '';
+    const ch = await s2pull();
+    if (ch) { toast('台帳を取り込みました'); screenLibrary(); }
+    else { line.textContent = ' 取り込めません: ' + (S2.err || '倉庫に台帳が無いか、すでに最新です'); pn.disabled = false; }
+  };
   const rs = $('#rescan2');
   if (rs) rs.onclick = async () => {
     const line = $('#scanline');
@@ -395,9 +435,11 @@ function l2bindCells() {
     for (const x of main().querySelectorAll('#g .sel')) x.classList.remove('sel');
     b.classList.add('sel');
   };
-  for (const b of main().querySelectorAll('[data-more]')) b.onclick = () => {
-    S.more.l2 = (S.more.l2 || STEP) + STEP * 3;
+  for (const b of main().querySelectorAll('[data-page]')) b.onclick = () => {
+    L.page = Number(b.dataset.page);
     l2redraw();
+    const g = $('#g');
+    if (g) g.scrollIntoView({ block: 'start' });
   };
 }
 

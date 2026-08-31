@@ -80,7 +80,7 @@ async function s2pull() {
       s2apply(hd, S2.HAND, 'handAt2');
       changed = true;
     }
-  } catch (e) { log.note('台帳を読めない: ' + e.message); }
+  } catch (e) { S2.err = e.message; log.note('台帳を読めない: ' + e.message); }
   if (changed) s2rebuild();
   return changed;
 }
