@@ -121,7 +121,7 @@ def md5_of(f):
 
 def vg_lookup(db, md5, sysids):
     q = """SELECT r.releaseTitleName, r.releaseGenre, r.releaseCoverFront,
-                  r.TEMPregionLocalizedName
+                  r.TEMPregionLocalizedName, ro.romFileName
            FROM ROMs ro JOIN RELEASES r ON r.romID = ro.romID
            WHERE upper(ro.romHashMD5) = ? AND ro.systemID IN (%s)""" % \
         ",".join("?" * len(sysids))
@@ -149,11 +149,13 @@ def safe_id(gid):
 
 
 def lr_cover(system, name):
+    """libretro の絵の名前は **No-Intro のファイル名**（`(Japan)` 付き）。
+       題名（releaseTitleName）では当たらない —— romFileName の拡張子抜きを渡す。
+       使えない字は `_` に置く決まり。"""
     repo = LR.get(system)
-    if not repo:
+    if not repo or not name:
         return None
-    # libretro のファイル名は `&` を `_` に置く決まり
-    fn = name.replace("&", "_")
+    fn = re.sub(r'[&*/:`<>?\\|"]', "_", name)
     url = ("https://raw.githubusercontent.com/libretro-thumbnails/" + repo +
            "/master/Named_Boxarts/" + quote(fn) + ".png")
     try:
@@ -186,8 +188,9 @@ def stage_hash(only, limit):
             led[g["id"]] = {"name": g["name"], "sys": g["system"],
                             "file": g["files"][0], "method": "hash-miss"}
         else:
-            name, genre, coverfront, region = row
-            raw = lr_cover(g["system"], name)
+            name, genre, coverfront, region, nifile = row
+            stem = re.sub(r"\.[^.]+$", "", nifile or "")
+            raw = lr_cover(g["system"], stem) or lr_cover(g["system"], name)
             src = "libretro"
             if raw is None and coverfront:
                 try:
@@ -199,7 +202,8 @@ def stage_hash(only, limit):
             hit += 1
             led[g["id"]] = {"name": g["name"], "sys": g["system"],
                             "file": g["files"][0], "method": "hash",
-                            "nointro": name, "genre": genre or "",
+                            "nointro": name, "nifile": nifile or "",
+                            "genre": genre or "",
                             "img": src if ok else ""}
         if (i + 1) % 20 == 0:
             save(led)
@@ -307,6 +311,44 @@ def stage_pics(limit):
     print(f"倉庫の絵 終わり: 当たり {hit} / {len(todo)}", flush=True)
 
 
+def stage_fiximg(limit):
+    """当たったのに絵が付かなかったもの（題名で libretro を引いていた頃の分）を、
+       No-Intro のファイル名で引き直す。"""
+    shelf, emu, byname, led = load()
+    db = sqlite3.connect(VG)
+    todo = [(gid, e) for gid, e in led.items()
+            if e.get("method") == "hash" and not e.get("img")]
+    if limit:
+        todo = todo[:limit]
+    print(f"絵の引き直し: {len(todo)} 本", flush=True)
+    hit = 0
+    for i, (gid, e) in enumerate(todo):
+        stems = [re.sub(r"\.[^.]+$", "", e["nifile"])] if e.get("nifile") else []
+        if not stems:
+            sysids = SYSID.get(e["sys"], ())
+            if sysids:
+                q = """SELECT ro.romFileName FROM ROMs ro
+                       JOIN RELEASES r ON r.romID = ro.romID
+                       WHERE r.releaseTitleName = ? AND ro.systemID IN (%s)
+                       LIMIT 4""" % ",".join("?" * len(sysids))
+                stems = [re.sub(r"\.[^.]+$", "", r[0] or "")
+                         for r in db.execute(q, (e.get("nointro", ""), *sysids))]
+        raw = None
+        for st in stems:
+            raw = lr_cover(e["sys"], st)
+            if raw:
+                break
+        if raw and put_cover(gid, raw):
+            e["img"] = "libretro"
+            hit += 1
+        if (i + 1) % 25 == 0:
+            save(led)
+            print(f"  {i+1}/{len(todo)}  付いた {hit}", flush=True)
+        time.sleep(0.15)
+    save(led)
+    print(f"絵の引き直し 終わり: 付いた {hit} / {len(todo)}", flush=True)
+
+
 def report():
     shelf, emu, byname, led = load()
     from collections import Counter
@@ -319,7 +361,9 @@ def report():
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     limit = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 0
-    if "--hash" in sys.argv:
+    if "--fiximg" in sys.argv:
+        stage_fiximg(limit)
+    elif "--hash" in sys.argv:
         stage_hash(only, limit)
     elif "--search" in sys.argv:
         stage_search(only, limit)
