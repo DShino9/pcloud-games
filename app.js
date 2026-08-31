@@ -1334,39 +1334,60 @@ async function screenGather(browse) {
   const q = (G.q || '').trim().toLowerCase();
   const hit = r => !q || r.name.toLowerCase().includes(q) || (r.path || '').toLowerCase().includes(q);
 
-  const line = r => `
-    <button class="row" data-fid="${r.fileid}">
+  const line = (r, depth = 0) => `
+    <button class="row" data-fid="${r.fileid}" style="padding-left:${14 + depth * 14}px">
       <span style="width:18px;flex:0 0 18px;color:${G.pick[r.fileid] ? 'var(--accent)' : 'var(--dim2)'}">${
         G.pick[r.fileid] ? '☑' : '☐'}</span>
       <span class="nm" style="text-align:left">${esc(r.name)}
         <span class="sub">${r.item ? esc(r.item.name)
-                                   : '台帳に無い'}${
+                                   : '<b>台帳に無い</b>'}${
           seen[r.name] > 1 ? ' <b style="color:var(--warn)">重複 ' + seen[r.name] + 'か所</b>' : ''}</span></span>
-      <span class="sub" style="text-align:right;flex:0 0 auto;max-width:44%">${size(r.size)}<br>${esc(r.path || '/')}</span>
+      <span class="sub" style="text-align:right;flex:0 0 auto">${size(r.size)}</span>
     </button>`;
 
-  /* 棚と同じ作法で畳む。**探している最中は畳まない。** */
-  const gshut = () => new Set(LS.get('gshut', []));
-  const fold = (list, tag) => {
-    const box = new Map();
-    for (const r of list.filter(hit)) {
-      const k = sysOf(r.name)[0] || '機種不明';
-      if (!box.has(k)) box.set(k, []);
-      box.get(k).push(r);
+  /* **フォルダの形のまま木にする。**
+     機種で束ねても、1つの束が数百行になって縦に長いままだった。
+     倉庫は `/ROM/家庭用ゲーム機/任天堂/NINTENDO64` のように整理されているので、
+     **その形をそのまま出す**のがいちばん読める。
+     開いた枝は端末に覚える。**探している最中は木にしない**（平らに出す）。 */
+  const topen = () => new Set(LS.get('gtree', []));
+
+  function treeOf(list) {
+    const root = { dirs: new Map(), files: [], n: 0 };
+    for (const r of list) {
+      const parts = (r.path || '/').split('/').filter(Boolean);
+      let node = root;
+      node.n++;
+      for (const seg of parts) {
+        if (!node.dirs.has(seg)) node.dirs.set(seg, { dirs: new Map(), files: [], n: 0 });
+        node = node.dirs.get(seg);
+        node.n++;
+      }
+      node.files.push(r);
     }
-    if (!box.size) return '<div class="empty">ありません</div>';
-    const cl = gshut();
-    return [...box.entries()].sort((a, b) => b[1].length - a[1].length).map(([k, v]) => {
-      const key = tag + '/' + k;
-      const open = q ? true : !cl.has(key);
-      return `<h2 class="fold" data-gfold="${esc(key)}">
-          <span class="tri">${open ? '▾' : '▸'}</span>${esc(k)}
-          <span class="cnt">${v.length}</span></h2>
-        <div class="rowlist" data-gbody="${esc(key)}"${open ? '' : ' hidden'}>${
-          v.slice(0, 300).map(line).join('')}${
-          v.length > 300 ? `<div class="sub" style="padding:8px 14px">ほか ${v.length - 300} 件。題名で絞ってください</div>` : ''}</div>`;
-    }).join('');
-  };
+    return root;
+  }
+
+  function renderNode(node, path, depth, op) {
+    let out = '';
+    for (const [name, kid] of [...node.dirs.entries()].sort((a, b) => b[1].n - a[1].n)) {
+      const key = path + '/' + name;
+      const open = op.has(key);
+      out += `<div class="tnode" style="padding-left:${depth * 14}px">
+        <button class="trow" data-tdir="${esc(key)}">
+          <span class="tri">${open ? '▾' : '▸'}</span>
+          <span class="tname">${esc(name)}</span>
+          <span class="cnt">${kid.n}</span>
+        </button>
+        <button class="hbtn sm tsel" data-tpick="${esc(key)}">この下を選ぶ</button>
+      </div>`;
+      if (open) out += renderNode(kid, key, depth + 1, op);
+    }
+    for (const f of node.files.slice(0, 400)) out += line(f, depth);
+    if (node.files.length > 400)
+      out += `<div class="sub" style="padding:6px 14px">ほか ${node.files.length - 400} 件。題名で絞ってください</div>`;
+    return out;
+  }
 
   main().innerHTML = `
   <div class="card" style="max-width:720px">
@@ -1389,11 +1410,12 @@ async function screenGather(browse) {
       </div>
       <input class="search" id="gq" placeholder="題名や置き場で絞る" value="${esc(G.q || '')}"
         autocapitalize="off" autocorrect="off" spellcheck="false" style="margin:10px 0">
-      ${rows.length ? `<h3>台帳にある（${rows.length}）</h3>${fold(rows, 'A')}` : ''}
-      ${news.length ? `<h3 style="margin-top:16px">台帳に無い（${news.length}）</h3>
-        <p class="sub">台帳は Mac の中身から起こしたものなので、それ以外の道で
-          倉庫に入れた分は載っていません。移すと<b>この端末の棚に足します</b>
-          （題名はファイル名から。あとで直せます）。</p>${fold(news, 'B')}` : ''}
+      <div class="sub" style="margin-bottom:8px">
+        台帳にある ${rows.length} 件・台帳に無い ${news.length} 件。
+        <b>台帳に無い</b>ものは、移すとこの端末の棚に足します（題名はファイル名から）。</div>
+      ${q ? `<div class="rowlist">${[...rows, ...news].filter(hit).slice(0, 300).map(r =>
+              line(r)).join('')}</div>`
+          : `<div class="tree">${renderNode(treeOf([...rows, ...news]), '', 0, topen())}</div>`}
       <div style="display:flex;gap:6px;align-items:center;margin-top:12px">
         <span class="sub">${n} 件えらんだ</span>
         <button class="hbtn" id="gmove"${n && !G.busy ? '' : ' disabled'}>棚へ移す</button>
@@ -1437,14 +1459,22 @@ async function screenGather(browse) {
     G.qt = setTimeout(() => { screenGather(); const e = $('#gq'); if (e) { e.focus();
       e.setSelectionRange(e.value.length, e.value.length); } }, 280);
   };
-  for (const h of main().querySelectorAll('h2.fold[data-gfold]')) h.onclick = () => {
-    const k = h.dataset.gfold, cl = new Set(LS.get('gshut', []));
-    cl.has(k) ? cl.delete(k) : cl.add(k);
-    LS.set('gshut', [...cl]);
-    const body = main().querySelector(`[data-gbody="${CSS.escape(k)}"]`);
-    const open = !cl.has(k);
-    if (body) body.hidden = !open;
-    h.querySelector('.tri').textContent = open ? '▾' : '▸';
+  /* 枝の開け閉め。開いた枝は端末に覚える。 */
+  for (const b of main().querySelectorAll('[data-tdir]')) b.onclick = () => {
+    const k = b.dataset.tdir, op = new Set(LS.get('gtree', []));
+    op.has(k) ? op.delete(k) : op.add(k);
+    LS.set('gtree', [...op]);
+    screenGather();
+  };
+  /* 枝ごと選ぶ。メーカーの棚を丸ごと寄せたいときに要る。 */
+  for (const b of main().querySelectorAll('[data-tpick]')) b.onclick = ev => {
+    ev.stopPropagation();
+    const k = b.dataset.tpick;
+    const inside = [...rows, ...news].filter(r => ('/' + (r.path || '').replace(/^\//, '') + '/').includes(k + '/')
+      || (r.path || '') === k);
+    const allOn = inside.length && inside.every(r => G.pick[r.fileid]);
+    for (const r of inside) { if (allOn) delete G.pick[r.fileid]; else G.pick[r.fileid] = 1; }
+    screenGather();
   };
   /* 「全部選ぶ」は**いま見えている分だけ**。絞ってから押す使い方に合わせる
      （403件を丸ごと選ばせても、選び直すのが大変なだけ）。 */
