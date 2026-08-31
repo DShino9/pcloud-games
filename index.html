@@ -18,7 +18,7 @@
 /* 3つの見方の札。耳読の書棚と同じ作り —— 名前と数が並び、いま見ているものが塗られる。
    説明文をいくら足すより、これ1つのほうが分かる。 */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;
-  flex:0 0 auto}
+  flex:0 0 auto;order:-1;position:sticky;left:0;z-index:3;background:var(--bg)}
 .seg button{border:0;background:none;color:var(--dim);font-size:12.5px;
   padding:7px 12px;cursor:pointer;white-space:nowrap;
   border-right:1px solid var(--line)}
@@ -169,6 +169,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=4"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=59"></script>
+<script src="./app.js?v=60"></script>
 </body>
 </html>
