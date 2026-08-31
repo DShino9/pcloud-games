@@ -2698,20 +2698,18 @@ async function shelfRoot(name) {
   return base;
 }
 
-/* 棚に取り寄せる。**遊べるようにするだけでなく、周りのものも揃える。** */
+/* その本の控え置き場を作る（Steam のクラウドセーブに当たる）。
+
+   **ROM は写さない。** 前は `/ゲーム棚/棚/<本>/` に本体を複製していたが、
+   Steam がライブラリを別のクラウドへ写さないのと同じで、**ただの無駄**だった。
+   倉庫にある本体はそのまま。ここに置くのは
+   **その本にまつわるもの（箱絵・メモ・セーブ）だけ。**
+
+   遊べるようにするのは「端末に入れる」（＝インストール）ほうの役目。 */
 async function stock(item, say = () => {}) {
   if (!S.auth || !S.rootId) return null;
   const shelf = await shelfRoot('棚');
   const dir = await P.ensureFolder(shelf, SAFE(item.name), { host: S.host, auth: S.auth });
-
-  /* ① 本体を写す。**移さない。** 倉庫の整理を崩さないため。 */
-  for (const f of item.files) {
-    const fid = S.files[P.nfc(f)];
-    if (!fid) continue;
-    say(`${f} を棚へ…`);
-    try { await P.moveFile(fid, dir, { host: S.host, auth: S.auth, copy: true }); }
-    catch (e) { log.note('棚へ写せない: ' + f + ' — ' + e.message); }
-  }
 
   /* ② 箱絵。手で入れた絵があればそれ、無ければ棚の絵を取り直して置く。 */
   try {
@@ -2757,7 +2755,7 @@ async function stock(item, say = () => {}) {
     }
   } catch (e) { log.note('セーブを置けない: ' + e.message); }
 
-  log.note(`棚に取り寄せた: ${item.name}`);
+  log.note(`控えを置いた: ${item.name}`);
   return dir;
 }
 
