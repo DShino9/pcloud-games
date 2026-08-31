@@ -115,7 +115,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
 
   let blob = null;
   const hit = await ROMS.get(id);
-  if (hit) { blob = await hit.blob(); say('取り寄せ済みでした'); bar(100); }
+  if (hit) { blob = await hit.blob(); say('棚にありました'); bar(100); }
   else {
     /* 入口（ds9）の下では、中継所は入口の中に同居している。設定させない。
          ここは棚の一覧とは別のページなので、同じ判断を自前で持つ必要がある。 */

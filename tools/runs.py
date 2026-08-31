@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """棚に上がった「動きの記録」を読む。
 
-    python3 tools/runs.py            読む
+    python3 tools/runs.py            動きの記録を読む
+    python3 tools/runs.py --shelf    棚の題名の一覧を落とす（絵の捜索用）
     python3 tools/runs.py --login    合鍵を取り直す
 
 **手で写して貼る必要をなくすための道具。** 遊んでいる最中、棚は20秒ごとに
@@ -12,6 +13,7 @@
 合鍵は取り消せる（pCloud の設定 → セキュリティ）。
 """
 import json, os, ssl, sys, urllib.request, unicodedata
+from pathlib import Path
 from hashlib import sha1 as _s
 from getpass import getpass
 from urllib.parse import urlencode
@@ -90,9 +92,33 @@ def bar(v, top=60, w=22):
     return "█" * n + "·" * (w - n)
 
 
+def shelf_list():
+    """倉庫の `_記録/棚.json` を読む。棚が書き出した題名の一覧。
+       **絵の捜索はブラウザからできない**（CORS）ので、Mac 側はこれを見て探す。"""
+    host, auth = creds()
+    f = find_folder(host, auth, "_記録")
+    if not f:
+        sys.exit("倉庫に _記録 がまだ無い。棚で一度「倉庫を見直す」を回すと置かれる。")
+    c = next((x for x in f.get("contents", []) if x.get("name") == "棚.json"), None)
+    if not c:
+        sys.exit("_記録 に 棚.json が無い。棚で一度「倉庫を見直す」を回す。")
+    j = get(host, "getfilelink", {"auth": auth, "fileid": c["fileid"]})
+    url = "https://" + j["hosts"][0] + j["path"]
+    with urllib.request.urlopen(url, timeout=120, context=CTX) as r:
+        d = json.loads(r.read().decode())
+    print(f"{d.get('本数')} 本（書いた: {d.get('書いた','')[:16]}）")
+    out = Path(__file__).resolve().parent.parent / "棚.json"
+    out.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"置いた: {out}")
+    return d
+
+
 def main():
     if "--login" in sys.argv:
         login()
+    if "--shelf" in sys.argv:
+        shelf_list()
+        return
     host, auth = creds()
     f = find_folder(host, auth, "_記録")
     if not f:
