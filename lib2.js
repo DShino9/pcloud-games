@@ -362,6 +362,48 @@ function l2bindCells() {
   };
 }
 
+/* ---- 書庫（#75）。下ろした本を見る・棚へ戻す ---- */
+async function screenStore() {
+  $('#title').textContent = '書庫';
+  main().innerHTML = '<div class="sub">書庫を見ています…</div>';
+  if (!S.auth || !S.rootId) {
+    main().innerHTML = '<div class="empty">pCloud につながっていません</div>';
+    return;
+  }
+  let rows = [];
+  try {
+    const store = await shelfRoot('書庫');
+    const r = await call('listfolder', { folderid: store });
+    rows = (r.metadata.contents || []).filter(c => c.isfolder)
+      .sort((a, b) => collator.compare(a.name, b.name));
+  } catch (e) {
+    main().innerHTML = `<div class="empty">書庫を見られません: ${esc(e.message)}</div>`;
+    return;
+  }
+  main().innerHTML = `
+  <div class="card" style="max-width:620px">
+    <h2>書庫</h2>
+    <div class="sub" style="margin-bottom:10px">棚から下ろした本が、周りのもの（箱絵・メモ・セーブ）ごとここにあります。
+      倉庫の元の置き場はそのままなので、消えている本はありません。</div>
+    ${rows.length ? `<div class="rowlist">${rows.map(c => `
+      <div class="row"><span class="nm" style="text-align:left">${esc(c.name)}</span>
+        <button class="hbtn sm" data-back="${c.folderid}" data-nm="${esc(c.name)}">棚へ戻す</button>
+      </div>`).join('')}</div>`
+      : '<div class="empty">書庫は空です（まだ何も下ろしていません）</div>'}
+    <div class="msg" id="sm"></div>
+  </div>`;
+  for (const b of main().querySelectorAll('[data-back]')) b.onclick = async () => {
+    if (!confirm(`${b.dataset.nm} を書庫から棚へ戻します（フォルダごと1回の移動）。`)) return;
+    b.disabled = true;
+    try {
+      const shelf = await shelfRoot('棚');
+      await P.moveFolder(Number(b.dataset.back), shelf, { host: S.host, auth: S.auth });
+      $('#sm').textContent = `${b.dataset.nm} を棚へ戻しました`;
+      screenStore();
+    } catch (e) { $('#sm').textContent = '戻せません: ' + e.message; b.disabled = false; }
+  };
+}
+
 /* 狭い画面: 札の外を押したらシートを閉じる。 */
 addEventListener('click', e => {
   const side = $('#lside');
