@@ -776,22 +776,9 @@ function gridHtml(list) {
 const digAt = () => (S.dig || {})[S.sys || '*'] || '';
 
 function digHtml(list) {
-  let at = digAt();
-  /* **1本道は飛ばす。** `ROM › パソコン › PC-98 › PC98` のように
-     枝が1つしかない階を、押させる意味がない。分かれる所まで降りる。 */
-  for (let i = 0; i < 12; i++) {
-    const kids = new Set();
-    let hereN = 0;
-    for (const it of list) {
-      const path = it.path || '';
-      if (at && !(path === at || path.startsWith(at + '/'))) continue;
-      const rest = at ? path.slice(at.length).replace(/^\//, '') : path.replace(/^\//, '');
-      if (!rest) { hereN++; continue; }
-      kids.add(rest.split('/')[0]);
-    }
-    if (kids.size === 1 && hereN === 0) at = (at || '') + '/' + [...kids][0];
-    else break;
-  }
+  /* **勝手に階を飛ばさない。** 1本道を飛ばす細工を入れたら、
+     メーカーの階を通り過ぎてしまった。倉庫の形をそのまま見せる。 */
+  const at = digAt();
   const dirs = new Map();
   const here = [];
   for (const i of list) {
@@ -810,16 +797,20 @@ function digHtml(list) {
     ${crumbs.map((c, n) => `<span>›</span><button data-dig="${
       esc('/' + crumbs.slice(0, n + 1).join('/'))}">${esc(c)}</button>`).join('')}
   </div>`;
-  const rows = [...dirs.entries()].sort((a, b) => b[1] - a[1] || collator.compare(a[0], b[0]));
+  const rows = [...dirs.entries()].sort((a, b) => collator.compare(a[0], b[0]));
   return bar
-    + (rows.length ? `<div class="tree" style="margin-bottom:12px">${rows.map(([nm, n]) => `
+    + (rows.length ? `<h2 class="fold" style="cursor:default">この中のフォルダ
+        <span class="cnt">${rows.length}</span></h2>
+      <div class="tree" style="margin-bottom:14px;max-height:46vh;overflow:auto">${
+        rows.map(([nm, n]) => `
         <div class="tnode">
           <button class="trow" data-dig="${esc((at || '') + '/' + nm)}">
             <span class="tri">📁</span><span class="tname">${esc(nm)}</span>
             <span class="cnt">${n}</span>
           </button>
         </div>`).join('')}</div>` : '')
-    + (here.length ? capped(here, 'dig:' + at)
+    + (here.length ? `<h2 class="fold" style="cursor:default">ここに置いてある本
+        <span class="cnt">${here.length}</span></h2>` + capped(here, 'dig:' + at)
        : (rows.length ? '' : '<div class="empty">この下に本がありません</div>'));
 }
 
