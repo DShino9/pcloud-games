@@ -223,6 +223,8 @@ function render() {
   if (h.startsWith('#/gather/')) return screenGather(h.slice(9));
   if (h === '#/gather') return screenGather();
   if (h.startsWith('#/places/')) return screenPlaces(h.slice(9));
+  if (h.startsWith('#/dupes/')) return dupesPick(h.slice(8));
+  if (h === '#/dupes') return screenDupes();
   if (h === '#/places') return screenPlaces();
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
@@ -1501,12 +1503,14 @@ async function screenPlaces(folderid) {
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
         <button class="hbtn" id="add">場所を足す</button>
         <button class="hbtn" id="scan2">いま見直す</button>
+        <button class="hbtn" id="dupes">重複を片付ける</button>
         <button class="hbtn" id="back">← 設定へ</button>
       </div>
       <div class="msg" id="pm">${S.lastScan ? S.lastScan : ''}</div>
     </div>`;
     $('#back').onclick = () => go('#/set');
     $('#add').onclick = () => go('#/places/0');
+    $('#dupes').onclick = () => go('#/dupes');
     $('#scan2').onclick = async () => {
       const m = $('#pm');
       try {
@@ -1627,5 +1631,168 @@ async function gatherPick(folderid, G) {
     G.where = { id: folderid, name: md.name || '/' };
     G.files = null; G.pick = {};
     go('#/gather');
+  };
+}
+
+/* ============ 重複を片付ける ============ */
+/* 倉庫には同じ名前が何か所にもある（`/その他/整理隔離/重複/…` など）。
+   **消す操作なので、安全側に倒す。**
+   ・**大きさが違うものは重複と見なさない。** 同じ名前でも中身は別物のことがある
+     （版違い・壊れた控え）。消す候補から外し、印だけ付ける
+   ・残す1本は**置き場で決める**。`重複`・`隔離`・`バックアップ` の下は後回し、
+     次に浅い所、それでも並べば名前順。**利用者が選び直せる**
+   ・消す前に、何を何件どれだけ消すかを必ず出して確かめる */
+const JUNKY = /重複|隔離|バックアップ|backup|copy|コピー|old|旧/i;
+
+async function screenDupes() {
+  $('#title').textContent = '重複を片付ける';
+  const D2 = S.dupes || (S.dupes = { where: null, groups: null, keep: {}, busy: false });
+
+  const body = D2.groups ? (() => {
+    const same = D2.groups.filter(g => g.same);
+    const diff = D2.groups.filter(g => !g.same);
+    const extra = same.reduce((n, g) => n + g.files.length - 1, 0);
+    const bytes = same.reduce((n, g) =>
+      n + g.files.filter(f => f.fileid !== (D2.keep[g.name] || g.files[0].fileid))
+              .reduce((m, f) => m + f.size, 0), 0);
+    return `
+      <div class="msg" style="margin:10px 0">
+        同じ名前で<b>大きさも同じ</b>: ${same.length} 組（余り ${extra} 件・${size(bytes)}）<br>
+        <span class="sub">同じ名前だが<b>大きさが違う</b>: ${diff.length} 組
+          —— 中身が別物の見込みなので、消す候補から外しています。</span>
+      </div>
+      ${same.length ? `<div class="rowlist">${same.slice(0, 120).map(g => `
+        <div class="row" style="display:block;padding:10px 14px">
+          <div class="nm" style="text-align:left;font-size:13px">${esc(g.name)}
+            <span class="sub">${size(g.files[0].size)}・${g.files.length} か所</span></div>
+          ${g.files.map(f => {
+            const keep = (D2.keep[g.name] || g.files[0].fileid) === f.fileid;
+            return `<button class="row" data-keep="${esc(g.name)}|${f.fileid}"
+              style="padding:5px 0;border:0;background:none;width:100%">
+              <span style="width:16px;flex:0 0 16px;color:${keep ? 'var(--ok)' : 'var(--dim2)'}">${keep ? '●' : '○'}</span>
+              <span class="sub" style="text-align:left;flex:1">${esc(f.path || '/')}</span>
+              <span class="sub">${keep ? '残す' : '消す'}</span>
+            </button>`;
+          }).join('')}
+        </div>`).join('')}</div>
+        ${same.length > 120 ? `<div class="sub">ほか ${same.length - 120} 組</div>` : ''}
+        <button class="hbtn" id="del" style="margin-top:12px"${D2.busy ? ' disabled' : ''}>
+          余り ${extra} 件を倉庫から消す</button>`
+      : '<div class="empty">消してよい重複はありません。</div>'}`;
+  })() : '<div class="empty">まだ調べていません。</div>';
+
+  main().innerHTML = `
+  <div class="card" style="max-width:720px">
+    <h2>重複を片付ける</h2>
+    <p>倉庫の中で<b>同じ名前・同じ大きさ</b>のものを探し、1本だけ残して余りを消します。<br>
+       <span class="sub">大きさが違うものは<b>中身が別物の見込み</b>なので触りません。
+       残す1本は選び直せます（●が残す方）。<b>消したら戻せません。</b></span></p>
+    <div class="msg" style="margin:6px 0">調べる場所: <b>${esc(D2.where ? D2.where.name : '未指定')}</b></div>
+    <button class="hbtn" id="pick">場所を選ぶ</button>
+    <button class="hbtn" id="scan"${D2.busy || !D2.where ? ' disabled' : ''}>調べる</button>
+    <div class="msg" id="dm"></div>
+    ${body}
+    <button class="hbtn" id="back" style="margin-top:14px">← 倉庫の場所へ</button>
+  </div>`;
+
+  $('#back').onclick = () => go('#/places');
+  $('#pick').onclick = () => go('#/dupes/0');
+  $('#scan').onclick = async () => {
+    D2.busy = true; $('#dm').textContent = '調べています…';
+    try {
+      const r = await P.scanFolder(D2.where.id, { host: S.host, auth: S.auth,
+        onStep: (n, left) => { $('#dm').textContent = `見ています… ${n} ファイル・残り ${left} 部屋`; } });
+      const box = new Map();
+      for (const f of r.files) {
+        if (!sysOf(f.name).length) continue;
+        if (!box.has(f.name)) box.set(f.name, []);
+        box.get(f.name).push(f);
+      }
+      const groups = [];
+      for (const [name, files] of box) {
+        if (files.length < 2) continue;
+        /* 残すのは「まともな置き場」の1本。重複・隔離・控えの下は後回し、
+           次に浅い所（`/` の数が少ない）、それでも並べば名前順。 */
+        files.sort((a, b) => (JUNKY.test(a.path) - JUNKY.test(b.path))
+          || (a.path.split('/').length - b.path.split('/').length)
+          || a.path.localeCompare(b.path, 'ja'));
+        groups.push({ name, files, same: files.every(f => f.size === files[0].size) });
+      }
+      groups.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      D2.groups = groups; D2.busy = false;
+      screenDupes();
+    } catch (e) { D2.busy = false; $('#dm').textContent = '調べられません: ' + e.message; }
+  };
+  for (const b of main().querySelectorAll('[data-keep]')) b.onclick = () => {
+    const [nm, fid] = b.dataset.keep.split('|');
+    D2.keep[nm] = +fid;
+    screenDupes();
+  };
+  const del = $('#del');
+  if (del) del.onclick = async () => {
+    const same = D2.groups.filter(g => g.same);
+    const todo = [];
+    for (const g of same) {
+      const keep = D2.keep[g.name] || g.files[0].fileid;
+      for (const f of g.files) if (f.fileid !== keep) todo.push(f);
+    }
+    if (!todo.length) return;
+    const mb = size(todo.reduce((n, f) => n + f.size, 0));
+    if (!confirm(`倉庫から ${todo.length} 件（${mb}）を消します。\n\n`
+      + todo.slice(0, 6).map(f => f.path + '/' + f.name).join('\n')
+      + (todo.length > 6 ? `\nほか ${todo.length - 6} 件` : '')
+      + '\n\n戻せません。よろしいですか。')) return;
+    D2.busy = true;
+    let ok = 0, ng = 0, i = 0;
+    for (const f of todo) {
+      i++;
+      $('#dm').textContent = `消しています… ${i}/${todo.length}　${f.name}`;
+      try { await P.deleteFile(f.fileid, { host: S.host, auth: S.auth }); ok++; }
+      catch (e) { ng++; log.note('消し損ね: ' + f.path + '/' + f.name + ' — ' + e.message); }
+    }
+    D2.busy = false; D2.groups = null;
+    log.note(`重複を消した ${ok} / 駄目 ${ng}`);
+    screenDupes();
+    $('#dm').textContent = `消した ${ok} / 駄目 ${ng}。もう一度「調べる」で確かめられます。`;
+  };
+}
+
+/* 調べる場所を選ぶ。 */
+async function dupesPick(folderid) {
+  const D2 = S.dupes || (S.dupes = { where: null, groups: null, keep: {}, busy: false });
+  main().innerHTML = '<div class="card"><p>見ています…</p></div>';
+  let r;
+  try { r = await call('listfolder', { folderid }); }
+  catch (e) {
+    main().innerHTML = `<div class="card"><div class="msg err">${esc(e.message)}</div>
+      <button class="hbtn" id="back">← 戻る</button></div>`;
+    $('#back').onclick = () => go('#/dupes');
+    return;
+  }
+  const md = r.metadata;
+  const dirs = (md.contents || []).filter(c => c.isfolder)
+    .sort((a, b) => collator.compare(a.name, b.name));
+  const up = md.parentfolderid != null && String(folderid) !== '0';
+  main().innerHTML = `
+  <div class="card" style="max-width:560px">
+    <h2>調べる場所を選ぶ</h2>
+    <p>ここから下を調べます。<b>広く取ったほうが重複は見つかります</b>
+       （倉庫の根に近い所を選ぶと、離れた場所どうしの重複も拾えます）。</p>
+    <div style="font-size:13px;color:var(--dim);margin-bottom:10px">${esc(md.name || '/')}</div>
+    <div class="rowlist">
+      ${up ? `<button class="row" data-go="${md.parentfolderid}"><span class="nm">← 上へ</span></button>` : ''}
+      ${dirs.map(d => `<button class="row" data-go="${d.folderid}">
+        <span class="nm">📁 ${esc(d.name)}</span></button>`).join('')}
+    </div>
+    <button class="hbtn" id="use4" style="margin-top:12px"${String(folderid) === '0' ? ' disabled' : ''}>
+      ここを調べる</button>
+    <button class="hbtn" id="back" style="margin-left:6px">← 戻る</button>
+  </div>`;
+  $('#back').onclick = () => go('#/dupes');
+  for (const b of main().querySelectorAll('[data-go]')) b.onclick = () => go('#/dupes/' + b.dataset.go);
+  $('#use4').onclick = () => {
+    D2.where = { id: folderid, name: md.name || '/' };
+    D2.groups = null; D2.keep = {};
+    go('#/dupes');
   };
 }
