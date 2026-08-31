@@ -68,6 +68,8 @@ h2.fold:hover .tri{color:var(--accent)}
 .trow .tname{font-weight:600}
 .trow .cnt{margin-left:auto;font-size:12px;font-weight:400;color:var(--dim2)}
 .tsel{flex:0 0 auto;margin-right:8px;font-size:11px}
+/* 版はいつも見える所に。設定の奥に置いたら「どこに表示?」と聞かせてしまった。 */
+#hver{margin-left:auto;font-size:11px;color:var(--dim2);letter-spacing:.04em}
 .tree .row{border-bottom:1px solid var(--line)}
 /* 機種の見分け。**小さい灰色の札では、並べたときに読めない。**
    機種ごとに色を決め、字も大きくする。色は「その機械の顔」に寄せた:
@@ -139,6 +141,7 @@ body{--ratio:3/4; --fit:contain}
 <body>
 <header>
   <h1 id="title">ゲーム棚</h1>
+  <span id="hver" title="いま動いている版"></span>
   <button class="hbtn hide" id="hcell">中</button>
   <button class="hbtn" id="hset">設定</button>
 </header>
@@ -156,6 +159,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=4"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=52"></script>
+<script src="./app.js?v=53"></script>
 </body>
 </html>

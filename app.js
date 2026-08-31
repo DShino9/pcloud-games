@@ -27,6 +27,8 @@ const log = P.logger(LS);
 const VERSION = (document.querySelector('script[src*="app.js"]') || {})
   .getAttribute?.('src')?.match(/v=(\d+)/)?.[1] || '?';
 
+try { document.getElementById('hver').textContent = 'v' + VERSION; } catch (e) {}
+
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
 /* 手で入れた箱絵。**置き場に入れずに端末の中に置く。**
    探しても出てこない本（`Aya3` など3本）と、切り出しを外した本を、
