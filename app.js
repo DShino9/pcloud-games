@@ -98,10 +98,12 @@ function mergeCatalogs() {
   const out = [];
   /* 走査で分かった在処（本 → 道）。掘り下げに要る。 */
   const IP = LS.get('itempath', {});
+  /* 目録（コレクションの HTML）で拾い直した題名。 */
+  const RN = LS.get('renamed', {});
   for (const g of ((S.cat && S.cat.games) || [])) {
     if (!g.core) continue;                       // ブラウザで動かない機種は出さない
     out.push({
-      id: g.id, name: g.name, sub: g.title || '', system: g.system, short: g.short,
+      id: g.id, name: RN[g.id] || g.name, sub: g.title || '', system: g.system, short: g.short,
       cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
       files: [g.file], path: IP[g.id] || '',
     });
@@ -111,14 +113,14 @@ function mergeCatalogs() {
      入れた分は載っていない。棚に出せないと「無いもの」になってしまうので、
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
-    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short,
+    out.push({ id: e.id, name: RN[e.id] || e.name, sub: e.sub || '', system: e.system, short: e.short,
                core: e.core, path: IP[e.id] || e.path || '',
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
   for (const t of ((S.cat98 && S.cat98.titles) || [])) {
     out.push({
-      id: t.id, name: t.name,
+      id: t.id, name: RN[t.id] || t.name,
       sub: t.count > 1 ? t.count + '枚' : (t.hdd ? 'HDD' : ''),
       system: 'PC-98', short: '98',
       cover: t.cover || null, bytes: t.bytes, kind: t.kind, pc98: true, genre: '',
@@ -2098,6 +2100,7 @@ async function screenPlaces(folderid) {
         <button class="hbtn" id="add">場所を足す</button>
         <button class="hbtn" id="scan2">いま見直す</button>
         <button class="hbtn" id="dupes">重複を片付ける</button>
+        <button class="hbtn" id="idx">目録を読む</button>
         <button class="hbtn" id="back">← 設定へ</button>
       </div>
       <div class="msg" id="pm">${S.lastScan ? S.lastScan : ''}</div>
@@ -2133,6 +2136,16 @@ async function screenPlaces(folderid) {
       screenPlaces();
     };
     $('#dupes').onclick = () => go('#/dupes');
+    $('#idx').onclick = async () => {
+      const m = $('#pm');
+      try {
+        const r = await readIndexHtml(t => { m.textContent = t; });
+        m.innerHTML = r.docs
+          ? `目録 ${r.docs} 件のうち ${r.used} 件を読み、<b>${r.hit} 本</b>の題名を入れ直しました。`
+          : '倉庫に目録（HTML・CSV・TXT）が見つかりませんでした。';
+        screenPlaces();
+      } catch (e) { m.textContent = '読めません: ' + e.message; }
+    };
     $('#scan2').onclick = async () => {
       const m = $('#pm');
       try {
@@ -2713,4 +2726,78 @@ function pickVer(gkey, vs) {
     box.remove();
     play(b.dataset.v);
   };
+}
+
+/* ============ 目録（コレクションの HTML）を読む ============ */
+/* 倉庫に置いてある目録は、**本人が作った一番確かな出どころ**。
+   ファイル名から題名を当てるより、これを読むほうがずっと正しい。
+
+   形は決め打ちにしない（どう作られているか分からないので）。
+   **ROM のファイル名が出てくる所を探し、その周りの字を題名として拾う。**
+   `<a href="…fdi">題名</a>` でも `<td>ファイル名</td><td>題名</td>` でも拾える。 */
+async function readIndexHtml(say = () => {}) {
+  const g = LS.get('gather', {});
+  const files = (g.files || []);
+  /* 走査の一覧は ROM だけに絞ってあるので、目録は別に探す。 */
+  say('目録を探しています…');
+  const places = [...S.roots, ...(S.rootId ? [{ id: S.rootId, name: S.rootName }] : [])];
+  const docs = [];
+  for (const pl of places) {
+    try {
+      const r = await P.scanFolder(pl.id, { host: S.host, auth: S.auth });
+      for (const f of r.files) if (/\.(html?|csv|txt)$/i.test(f.name)) docs.push(f);
+    } catch (e) { log.note('目録を探せない: ' + pl.name + ' — ' + e.message); }
+  }
+  if (!docs.length) return { docs: 0, hit: 0 };
+
+  /* 大きい順に見る（目録は普通いちばん大きい）。多くても3つまで。 */
+  docs.sort((a, b) => (b.size || 0) - (a.size || 0));
+  const known = new Map();
+  for (const it of S.items) for (const f of it.files) known.set(P.nfc(f).toLowerCase(), it);
+
+  let hit = 0, used = 0;
+  const rename = {};
+  for (const d of docs.slice(0, 3)) {
+    say(`${d.name} を読んでいます…`);
+    let text = '';
+    try {
+      const blob = await P.fetchFile(S.relay, { fileid: d.fileid, name: d.name },
+                                     null, d.size);
+      text = await blob.text();
+    } catch (e) { log.note('目録を読めない: ' + d.name + ' — ' + e.message); continue; }
+    used++;
+    /* 行ごとに見て、ROM のファイル名が入っていれば、その行の他の字を題名にする。 */
+    /* **タグの中の名前も拾う。** `<a href="AOKI.fdi">蒼き狼…</a>` は、
+       タグごと消すとファイル名まで消えて当たらなくなる（実際に外した）。
+       先に href/src を字に出しておく。 */
+    const lines = text
+      /* **タグの中で置き換えても駄目。** そのあとタグごと消すので、
+         せっかく出した名前まで一緒に消える（実際に消えた）。
+         タグを**丸ごと**名前に置き換える。 */
+      .replace(/<[^>]*?(?:href|src)\s*=\s*["']([^"']+)["'][^>]*>/gi, '\t$1\t')
+      .replace(/<\/(tr|li|p|div)>/gi, '\n')
+      .replace(/<[^>]+>/g, '\t')
+      .split('\n');
+    for (const line of lines) {
+      const low = line.toLowerCase();
+      for (const [fn, it] of known) {
+        if (!low.includes(fn)) continue;
+        const cells = line.split('\t').map(x => x.replace(/&[a-z]+;/gi, ' ').trim())
+                          .filter(x => x && x.toLowerCase() !== fn);
+        const title = cells.sort((a, b) => b.length - a.length)[0];
+        if (title && title.length >= 2 && title.length < 80) { rename[it.id] = title; hit++; }
+        break;
+      }
+    }
+  }
+  /* 拾った題名で、端末側の本を書き換える。**倉庫には触らない。** */
+  if (hit) {
+    const extra = LS.get('extra', []);
+    for (const e of extra) if (rename[e.id]) { e.title = e.name; e.name = rename[e.id]; }
+    LS.set('extra', extra);
+    LS.set('renamed', { ...LS.get('renamed', {}), ...rename });
+    S.items = mergeCatalogs();
+  }
+  log.note(`目録を読んだ: ${used} 件・題名 ${hit} 本`);
+  return { docs: docs.length, used, hit };
 }
