@@ -71,6 +71,7 @@ const S = {
   fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
   view:     LS.get('view', 'play'),   // 遊べる / ぜんぶ / 倉庫に無い
+  more:     {},                       // 束ごとに、いくつまで出したか
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
   cat:      null,                     // games.json
@@ -565,6 +566,7 @@ function screenLib(sys) {
   $('#home').onclick  = () => { S.q = ''; LS.set('q', ''); go('#/lib'); };
   bindCells();
   bindFold();
+  bindMore();
 }
 
 function redrawGrid() {
@@ -573,6 +575,7 @@ function redrawGrid() {
   g.innerHTML = gridHtml(shelfList());
   bindCells();
   bindFold();
+  bindMore();
 }
 
 /* 畳んだ束は端末ごとに覚える。数が増えると一覧が長くなるので、
@@ -584,7 +587,10 @@ function gridHtml(list) {
   if (!list.length) {
     return `<div class="empty">${S.q || S.genre || S.view !== 'all' ? '見つかりません' : '棚が空です'}</div>`;
   }
-  if (!S.fold || S.q.trim()) return `<div class="grid">${list.map(cellHtml).join('')}</div>`;
+  /* **一度に全部は描かない。** 倉庫を読んだら 7171 本になった。
+     3000枚の札を一度に組み立てると、iPhone は固まる。
+     区切って出し、「もっと見る」で伸ばす。 */
+  if (!S.fold || S.q.trim()) return capped(list, 'flat');
 
   /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
      その場合はジャンルで畳む。 */
@@ -605,9 +611,27 @@ function gridHtml(list) {
     return `<h2 class="fold" data-fold="${esc(nm)}">
         <span class="tri">${open ? '▾' : '▸'}</span>${esc(nm)}
         <span class="cnt">${box.get(nm).length}</span></h2>
-      <div class="grid" data-body="${esc(nm)}"${open ? '' : ' hidden'}>${
-        box.get(nm).map(cellHtml).join('')}</div>`;
+      <div data-body="${esc(nm)}"${open ? '' : ' hidden'}>${capped(box.get(nm), nm)}</div>`;
   }).join('');
+}
+
+/* 区切って出す。いくつまで出したかは束ごとに覚える。 */
+const STEP = 120;
+function capped(list, key) {
+  const n = Math.min(list.length, S.more[key] || STEP);
+  return `<div class="grid">${list.slice(0, n).map(cellHtml).join('')}</div>`
+    + (n < list.length
+      ? `<button class="hbtn" data-more="${esc(key)}" style="margin:10px 0">
+           もっと見る（あと ${list.length - n} 本）</button>`
+      : '');
+}
+
+function bindMore() {
+  for (const b of main().querySelectorAll('[data-more]')) b.onclick = () => {
+    const k = b.dataset.more;
+    S.more[k] = (S.more[k] || STEP) + STEP * 3;
+    redrawGrid();
+  };
 }
 
 function bindFold() {
@@ -1219,7 +1243,21 @@ function screenLog() {
     }
   }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    /* **`updateViaCache:'none'` が要る。** これが無いと、見張り番そのものが
+       ブラウザの控えから配られ、GitHub Pages の `max-age=600` のぶん
+       新しい版に気づかない。
+       さらに、**開きっぱなしのページは見に行かない。** ブラウザが見張り番の
+       更新を確かめるのは、たいてい遷移したときだけ。朝から開いたままだと
+       いつまでも古い（実際に「全然反映されない」と言われた）。
+       → 自分から確かめる: 5分ごとと、画面に戻ってきたとき。 */
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        const look = () => { try { reg.update(); } catch (e) {} };
+        look();
+        setInterval(look, 5 * 60 * 1000);
+        addEventListener('visibilitychange', () => { if (!document.hidden) look(); });
+      })
+      .catch(() => {});
     /* **新しい版に入れ替わったら、一度だけ読み直す。**
        黙って古い画面を見せていると「直したのに変わらない」が起きる
        （実際に、畳む口も探し口も出ていないと言われた）。 */
