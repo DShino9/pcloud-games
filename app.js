@@ -330,7 +330,7 @@ async function loadMyCovers() {
    見出しに「←（一つ上）」と「棚（トップ）」を常に置く。 */
 const UP = {
   '#/set': '#/lib', '#/log': '#/set', '#/runs': '#/set', '#/relay': '#/set',
-  '#/covers': '#/set', '#/disks': '#/set', '#/places': '#/set',
+  '#/covers': '#/set', '#/disks': '#/set', '#/places': '#/set', '#/store': '#/set',
   '#/dupes': '#/places', '#/gather': '#/lib', '#/edit': '#/gather',
   '#/all': '#/lib',
 };
@@ -368,6 +368,7 @@ function render() {
   if (h === '#/runs')  return screenRuns();
   if (h === '#/disks') return screenDisks();
   if (h === '#/covers') return screenCovers();
+  if (h === '#/store') return screenStore();
   if (h.startsWith('#/gather/')) return screenGather(h.slice(9));
   if (h === '#/gather') return screenGather();
   if (h.startsWith('#/places/')) return screenPlaces(h.slice(9));
@@ -1214,6 +1215,7 @@ function screenSet() {
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
       <button class="row" id="places"><span class="nm">棚と倉庫</span><span class="sub">棚の置き先と、見に行く場所 ${S.roots.length} か所</span></button>
+      <button class="row" id="store"><span class="nm">書庫</span><span class="sub">下ろした本を見る・棚へ戻す</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
@@ -1234,6 +1236,7 @@ function screenSet() {
   $('#log').onclick    = () => go('#/log');
   $('#runs').onclick   = () => go('#/runs');
   $('#relay').onclick  = () => go('#/relay');
+  $('#store').onclick  = () => go('#/store');
   $('#disks').onclick  = () => go('#/disks');
   $('#fixcov').onclick = () => go('#/covers');
   $('#gather').onclick = () => go('#/gather');
