@@ -340,7 +340,7 @@ function screenLibrary() {
         <button class="hbtn" id="addto" style="margin-left:auto">＋ 棚に上げる</button>
       </div></div>
       <div class="sub" id="huntline" style="margin:0 0 8px;display:none"></div>
-      ${S.auth && S.rootId && !LS.get('scanAt2', '') ? `
+      ${S.auth && S.rootId && !LS.get('scanAt3', '') ? `
         <div class="msg err" style="margin:0 0 10px">
           新しい台帳（約1万冊・メーカー別）をまだ取り込めていません。
           <button class="hbtn sm" id="pullnow">いま取り込む</button>
