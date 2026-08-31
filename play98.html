@@ -17,8 +17,12 @@ html,body{overflow:hidden;background:#000}
    image-rendering:pixelated で、拡大しても粒がぼやけない。 */
 #canvas{display:block;background:#000;image-rendering:pixelated;
   width:100%;height:100%;object-fit:contain}
+/* **スクロールできるように。** テレビのブラウザ（低い画面）でディスク選びが
+   下にはみ出し、「起動」に届かなかった。あふれたときに上下が切れないよう、
+   中央寄せは子の margin:auto で行う（justify-content:center は上が切れる）。 */
 #load{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:14px;padding:24px;text-align:center;background:#000;z-index:5}
+  gap:14px;padding:24px;text-align:center;background:#000;z-index:5;overflow-y:auto}
+#load::before,#load::after{content:'';margin:auto}
 #load.hide{display:none}
 #load h2{margin:0;font-size:16px;font-weight:600}
 #bar{width:min(320px,78vw);height:6px;border-radius:3px;background:#22222b;overflow:hidden}
@@ -881,6 +885,7 @@ function askDisks() {
             <select id="fd1">${opt(inFD[0])}</select></div>
           <div class="field"><label>Bドライブ</label>
             <select id="fd2">${opt(inFD[1])}</select></div>
+          <button class="primary" id="fdgo" style="margin:2px 0 14px">この組み合わせで起動</button>
           <div class="field"><label>ほかから足す（道具ディスク・別の本）</label>
             <select id="fdadd">
               <option value="">— 選ぶと組み合わせに加わります —</option>
@@ -892,7 +897,6 @@ function askDisks() {
             セーブ用の空ディスクです。<b>整形済みなので、そのまま書き込めます。</b>
             書いた中身は端末に残ります。
           </div>
-          <button class="primary" id="fdgo">この組み合わせで起動</button>
         </div>`;
 
       /* 同じ1枚を両方には入れられない。選んだら、もう一方から外す。 */
