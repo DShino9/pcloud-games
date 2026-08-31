@@ -78,6 +78,95 @@ function l2list() {
   return list.sort((a, b) => (hasAll(b) - hasAll(a)) || cmp(a, b));
 }
 
+/* ---- 選択シート（メーカー431社などの長い一覧のため）----
+   世間の定番の組み合わせ: Amazon＝絞り込みに検索ボックス／iOS連絡先・EGG＝
+   頭文字の見出し／スマホ＝下から出る選択シート。 */
+function l2initial(nm) {
+  const c = (nm || '').trim().charAt(0);
+  if (/[0-9０-９]/.test(c)) return '#';
+  if (/[A-Za-zＡ-Ｚａ-ｚ]/.test(c)) return c.toUpperCase().normalize('NFKC');
+  const k = c.normalize('NFKC');
+  const rows = [['あ', 'あいうえおぁぃぅぇぉアイウエオァィゥェォヴ'], ['か', 'かきくけこがぎぐげごカキクケコガギグゲゴ'],
+    ['さ', 'さしすせそざじずぜぞサシスセソザジズゼゾ'], ['た', 'たちつてとだぢづでどタチツテトダヂヅデドッっ'],
+    ['な', 'なにぬねのナニヌネノ'], ['は', 'はひふへほばびぶべぼぱぴぷぺぽハヒフヘホバビブベボパピプペポ'],
+    ['ま', 'まみむめもマミムメモ'], ['や', 'やゆよゃゅょヤユヨャュョ'],
+    ['ら', 'らりるれろラリルレロ'], ['わ', 'わをんワヲン']];
+  for (const [h, cs] of rows) if (cs.includes(k)) return h + '行';
+  return '漢字ほか';
+}
+function l2sheet(kind, rows) {
+  const label = kind === 'maker' ? 'メーカー' : 'ジャンル';
+  const cur = kind === 'maker' ? L.maker : L.genre;
+  /* 頭文字で並べ直す（シートは探す場なので、数の順より引ける順）。 */
+  const sorted = [...rows].sort((a, b) => collator.compare(a[0], b[0]));
+  const buckets = new Map();
+  for (const r of sorted) {
+    const h = /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(r[0]) ? '＿末尾' : l2initial(r[0]);
+    if (!buckets.has(h)) buckets.set(h, []);
+    buckets.get(h).push(r);
+  }
+  const order = [...buckets.keys()].sort((a, b) =>
+    (a === '＿末尾') - (b === '＿末尾') || collator.compare(a, b));
+  const box = document.createElement('div');
+  box.className = 'sheet';
+  box.innerHTML = `<div class="sheetbox l2shbox">
+    <input class="l2shq" placeholder="${label}を探す（打てば絞れます）"
+      autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="l2shlist">${order.map(h => `
+      <div class="l2shhead" data-h="${esc(h)}">${h === '＿末尾' ? '—' : esc(h)}</div>
+      ${buckets.get(h).map(([m, c]) => `
+        <button class="l2shrow${cur === m ? ' on' : ''}" data-v="${esc(m)}">
+          <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('')}`).join('')}
+    </div>
+    <div class="l2shfoot">
+      ${cur ? `<button class="hbtn" id="shclear">絞り込みを外す（いま: ${esc(cur)}）</button>` : ''}
+      <button class="hbtn" id="shclose">閉じる</button>
+    </div>
+  </div>`;
+  document.body.appendChild(box);
+  const close = () => box.remove();
+  box.onclick = e => { if (e.target === box) close(); };
+  box.querySelector('#shclose').onclick = close;
+  const cl = box.querySelector('#shclear');
+  if (cl) cl.onclick = () => {
+    if (kind === 'maker') L.maker = ''; else L.genre = '';
+    L.page = 1; l2save(); close(); screenLibrary();
+  };
+  for (const b of box.querySelectorAll('.l2shrow')) b.onclick = () => {
+    const v = b.dataset.v;
+    if (kind === 'maker') L.maker = (L.maker === v ? '' : v);
+    else L.genre = (L.genre === v ? '' : v);
+    L.page = 1; l2save(); close(); screenLibrary();
+  };
+  const q = box.querySelector('.l2shq');
+  q.oninput = () => {
+    const t = q.value.trim().toLowerCase();
+    for (const b of box.querySelectorAll('.l2shrow'))
+      b.style.display = !t || b.dataset.v.toLowerCase().includes(t) ? '' : 'none';
+    for (const h of box.querySelectorAll('.l2shhead')) {
+      let el = h.nextElementSibling, any = false;
+      while (el && el.classList.contains('l2shrow')) {
+        if (el.style.display !== 'none') { any = true; break; }
+        el = el.nextElementSibling;
+      }
+      h.style.display = any ? '' : 'none';
+    }
+  };
+  q.focus();
+}
+function l2facets(kind) {
+  const items = l2items();
+  const map = new Map();
+  for (const g of items) {
+    const k = kind === 'maker' ? g._maker : (g.genre || 'ジャンル未設定');
+    map.set(k, (map.get(k) || 0) + 1);
+  }
+  return [...map.entries()].sort((a, b) =>
+    /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(a[0]) ? 1
+    : /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(b[0]) ? -1
+    : b[1] - a[1] || collator.compare(a[0], b[0]));
+}
+
 /* ---- 左レール ---- */
 function l2rail() {
   const bySys = new Map();
@@ -92,33 +181,29 @@ function l2rail() {
     const openSys = L.sys === nm;
     let sub = '';
     if (openSys) {
-      const items = l2items();
-      /* メーカー */
-      const mk = new Map();
-      for (const g of items) mk.set(g._maker, (mk.get(g._maker) || 0) + 1);
-      const mrows = [...mk.entries()].sort((a, b) =>
-        /^(その他|メーカーフォルダなし)$/.test(a[0]) ? 1 : /^(その他|メーカーフォルダなし)$/.test(b[0]) ? -1
-        : b[1] - a[1] || collator.compare(a[0], b[0]));
-      /* ジャンル（未設定も1つの束） */
-      const gn = new Map();
-      for (const g of items) {
-        const k = g.genre || 'ジャンル未設定';
-        gn.set(k, (gn.get(k) || 0) + 1);
-      }
-      const grows = [...gn.entries()].sort((a, b) =>
-        a[0] === 'ジャンル未設定' ? 1 : b[0] === 'ジャンル未設定' ? -1
-        : b[1] - a[1] || collator.compare(a[0], b[0]));
+      const mrows = l2facets('maker');
+      const grows = l2facets('genre');
       const grp = (kind, label, rows, cur) => {
         const key = nm + '/' + kind;
         const open = op.has(key);
         return `<button class="l2grp" data-grp="${esc(key)}">
-            <span class="tri">${open ? '▾' : '▸'}</span>${label}</button>`
+            <span class="tri">${open ? '▾' : '▸'}</span>${label}
+            <span class="c">${rows.length}</span></button>`
+          /* 25社を超えたら、頭に検索ボックス（Steam のタグ検索と同じ）。 */
+          + (open && rows.length > 25
+              ? `<input class="l2mkq" data-mkq="${kind}" placeholder="打って絞る（${rows.length}件）"
+                   autocapitalize="off" autocorrect="off" spellcheck="false">` : '')
           + (open ? rows.map(([m, c]) => `
             <button class="l2mk${cur === m ? ' on' : ''}" data-${kind}="${esc(m)}">
               <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('') : '');
       };
       sub = `<div class="l2sub">${grp('maker', 'メーカー', mrows, L.maker)}${
-        grp('genre', 'ジャンル', grows, L.genre)}</div>`;
+        grp('genre', 'ジャンル', grows, L.genre)}</div>`
+        /* 狭い画面ではチップ2つ → 下から出る選択シート（Amazon の絞り込みと同じ）。 */
+        + `<div class="l2pickers">
+          <button class="l2mk" data-pick="maker">メーカー${L.maker ? '｜' + esc(L.maker) : ''} ▾</button>
+          <button class="l2mk" data-pick="genre">ジャンル${L.genre ? '｜' + esc(L.genre) : ''} ▾</button>
+        </div>`;
     }
     return `<button class="l2sys${openSys ? ' on' : ''}" data-sys="${esc(nm)}">
         <span class="tri">${openSys ? '▾' : '▸'}</span>
@@ -363,6 +448,16 @@ function screenLibrary() {
     else { L.sys = s; }
     L.maker = ''; L.genre = ''; L.page = 1; l2save();
     screenLibrary();
+  };
+  for (const b of main().querySelectorAll('[data-pick]')) b.onclick = () =>
+    l2sheet(b.dataset.pick, l2facets(b.dataset.pick));
+  for (const q of main().querySelectorAll('[data-mkq]')) q.oninput = () => {
+    const t = q.value.trim().toLowerCase();
+    let el = q.nextElementSibling;
+    while (el && el.classList.contains('l2mk')) {
+      el.style.display = !t || (el.dataset.maker || el.dataset.genre || '').toLowerCase().includes(t) ? '' : 'none';
+      el = el.nextElementSibling;
+    }
   };
   for (const b of main().querySelectorAll('[data-grp]')) b.onclick = () => {
     const op = l2open();

@@ -26,16 +26,20 @@ async function s2folder() {
   return P.ensureFolder(S.rootId, '_台帳', { host: S.host, auth: S.auth });
 }
 
-async function s2read(fname) {
+/* **変わったときだけ落とす。** 前は開くたび・画面に戻るたびに台帳9MBを
+   丸ごと中継所から引いていて、Cloudflare の消費が無駄に嵩んだ。
+   listfolder の更新時刻（modified）を先に見て、変わっていなければ触らない。 */
+async function s2read(fname, modKey) {
   const fid = await s2folder();
   const r = await call('listfolder', { folderid: fid });
   const f = (r.metadata.contents || []).find(x => P.nfc(x.name) === fname);
   if (!f) return null;
-  /* **中継所ごしで読む。** file_open はこの倉庫では 2003 で断られる
-     （ROM は通るのに、こちらで上げた JSON は駄目 —— 実測）。
-     ROM と同じ、実績のある道を使う。 */
+  if (modKey && (f.modified || '') === LS.get(modKey, '')) return 'same';
+  /* 中継所ごしで読む（file_open はこの倉庫の JSON に 2003 を返す —— 実測）。 */
   const blob = await P.fetchFile(S.relay, { fileid: f.fileid, host: S.host, auth: S.auth });
-  return JSON.parse(await blob.text());
+  const d = JSON.parse(await blob.text());
+  d._mod = f.modified || '';
+  return d;
 }
 
 async function s2write(fname, keys) {
@@ -78,15 +82,17 @@ async function s2pull() {
   while (!S2.ready) await new Promise(r => setTimeout(r, 100));
   let changed = false;
   try {
-    const sc = await s2read('走査.json');
-    if (sc && sc.書いた && sc.書いた > LS.get('scanAt3', '')) {
+    const sc = await s2read('走査.json', 'scanMod');
+    if (sc && sc !== 'same' && sc.書いた && sc.書いた > LS.get('scanAt3', '')) {
       s2apply(sc, S2.SCAN, 'scanAt3');
+      LS.set('scanMod', sc._mod);
       changed = true;
       log.note(`走査の台帳を取り込んだ（${sc.端末 || '?'}・${String(sc.書いた).slice(0, 16)}）`);
     }
-    const hd = await s2read('手元.json');
-    if (hd && hd.書いた && hd.書いた > LS.get('handAt2', '')) {
+    const hd = await s2read('手元.json', 'handMod');
+    if (hd && hd !== 'same' && hd.書いた && hd.書いた > LS.get('handAt2', '')) {
       s2apply(hd, S2.HAND, 'handAt2');
+      LS.set('handMod', hd._mod);
       changed = true;
     }
   } catch (e) { S2.err = e.message; log.note('台帳を読めない: ' + e.message); }
