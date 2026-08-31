@@ -103,11 +103,18 @@ def search_name(name):
        ③半角カナを全角に（`ﾄﾞﾗｺﾞﾝﾎﾞｰﾙ`）。"""
     if name in PC98_ALIAS:
         return PC98_ALIAS[name]
-    n = re.sub(r"\s*\([^()]*\)\s*$", "", name)
+    n = name.replace("_", " ")                # `Minna_no_Golf_...` のような区切り
+    n = re.sub(r"^\s*\([^()]*\)\s*", "", n)  # 頭の括弧 `(N64 ROM)マリオカート64J`
+    n = re.sub(r"\s*\([^()]*\)\s*$", "", n)  # 末尾の括弧 `Lemmings (J)`
     if n in PC98_ALIAS:                       # 括弧を落とした形でも引く
         return PC98_ALIAS[n]
     for _ in range(2):                       # 括弧が2つ続くもの (19xx)(Falcom)
         n = re.sub(r"\s*\([^()]*\)\s*$", "", n)
+    # 配り手の付け足しを落とす（`JPN` `PSP-Caravan` `[t1]` `v1.1` など）。
+    # 題名の一部ではないので、付いたままだと検索に当たらない。
+    n = re.sub(r"\s*\[[^\]]*\]", "", n)
+    n = re.sub(r"\s+(JPN|USA|EUR|JAP|NTSC|PAL|Rev\s*\w+|v\d[\d.]*)\b.*$", "", n, flags=re.I)
+    n = re.sub(r"\s+\S+-(Caravan|Hoodlum|PARADOX|BAHAMUT)\b.*$", "", n, flags=re.I)
     n = unicodedata.normalize("NFKC", n)
     return n.strip() or name
 

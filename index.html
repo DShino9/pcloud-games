@@ -23,11 +23,15 @@
   padding:3px 7px;color:#fff;background:rgba(0,0,0,.72);
   border:1px solid rgba(255,255,255,.28);text-shadow:0 1px 2px rgba(0,0,0,.6);
   display:flex;align-items:center;gap:4px;line-height:1}
-/* その機械のロゴを白抜きで載せる。横長・縦長がまちまちなので、
-   同じ枠に収めて（contain）並びを揃える。取れなかった機種は字のまま。 */
-.cov .tag img{height:15px;max-width:56px;object-fit:contain;display:block}
-.cov .tag.logo{padding:4px 7px}
+/* ロゴには**枠を付けない。** 札にすると絵の上で四角が目立ちすぎて、
+   箱絵より先に目に入る。白抜きのロゴを直に置き、影だけで浮かせる。
+   絵の上辺に薄く影を敷けば、明るい箱の上でも読める。 */
+.cov .tag.logo{background:none;border:0;padding:0;left:8px;top:7px;z-index:2}
 .cov .tag.logo span{display:none}
+.cov .tag.logo img{height:13px;max-width:58px;object-fit:contain;display:block;opacity:.96;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.95)) drop-shadow(0 0 7px rgba(0,0,0,.55))}
+.cov::before{content:"";position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;
+  background:linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,0))}
 .cov .tag[data-s="FC"] {background:#c8392b;border-color:#e8695c}
 .cov .tag[data-s="SFC"]{background:#5b5f9e;border-color:#8b8fd0}
 .cov .tag[data-s="N64"]{background:#1f8a63;border-color:#4fc493}
@@ -96,6 +100,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=2"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=27"></script>
+<script src="./app.js?v=30"></script>
 </body>
 </html>
