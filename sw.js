@@ -3,12 +3,13 @@
 
    GitHub Pages は cache-control: max-age=600 を返す。素の fetch はブラウザの控えを掴むので、
    ここでは必ず no-cache を付けて取りに行く。公開しただけで直ったことにしない。 */
-const SHELL = 'pg-shell-v1';
+/* **控えの名前に版を入れる。** 名前が変わらないと、古い殻が居座って
+   「直したのに変わらない」が起きる。公開のたびにここを上げる。 */
+const SHELL = 'pg-shell-v3';
+/* 先に控えるのは**必ずある物だけ**。版つきの名前を書くと、版を上げるたびに
+   ここも直さねばならず、必ず忘れる（`app.js?v=21` が残っていた）。 */
 const FILES = [
-  './', './index.html', './app.js?v=21', './play.html',
-  './core/pcloud.js?v=1', './core/shelf.css?v=1',
-  './np2/emnp21kai_sdl2_jspi.js?v=2', './np2/emnp21kai_sdl2_jspi.wasm',
-  './games.json?v=1', './pc98.json?v=1', './play98.html',
+  './', './index.html', './play.html', './play98.html',
   './manifest.webmanifest',
 ];
 
@@ -29,6 +30,8 @@ self.addEventListener('activate', e => {
       if (k.startsWith('pg-shell-') && k !== SHELL) await caches.delete(k);
     }
     await self.clients.claim();
+    /* 入れ替わったことを画面に知らせる。黙って古いまま見せない。 */
+    for (const c of await self.clients.matchAll()) c.postMessage({ 版: SHELL });
   })());
 });
 

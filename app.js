@@ -1142,6 +1142,15 @@ function screenLog() {
   render();
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
+    /* **新しい版に入れ替わったら、一度だけ読み直す。**
+       黙って古い画面を見せていると「直したのに変わらない」が起きる
+       （実際に、畳む口も探し口も出ていないと言われた）。 */
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
   }
 })();
 
@@ -1285,7 +1294,11 @@ const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || []).slice(1);
    向こう側で動かせば一瞬で終わる（`renamefile` に行き先を渡す）。 */
 async function screenGather(browse) {
   $('#title').textContent = '棚に上げる';
-  const G = S.gather || (S.gather = { files: null, pick: {}, busy: false, where: null });
+  /* **調べた結果を捨てない。** 1万2千ファイル歩いた結果を、画面を離れただけで
+     失うのは論外。端末に残して次に開いたら続きから。 */
+  const G = S.gather || (S.gather = Object.assign(
+    { files: null, pick: {}, busy: false, where: null, at: '' },
+    LS.get('gather', {})));
 
   /* **探す場所は「見に行く場所」とは別に決める。**
      見に行く場所は「置いたまま棚に出す」ための登録で、
@@ -1365,7 +1378,8 @@ async function screenGather(browse) {
     <div class="msg" style="margin:6px 0">探す場所: <b>${esc(G.where ? G.where.name : '未指定')}</b></div>
     <button class="hbtn" id="pickwhere">探す場所を選ぶ</button>
     <button class="hbtn" id="scan"${G.busy || !G.where ? ' disabled' : ''}>ここを探す</button>
-    ${G.files ? `<span class="sub" style="margin-left:8px">${G.files.length} ファイル見た</span>` : ''}
+    ${G.files ? `<span class="sub" style="margin-left:8px">ROM ${G.files.length} 件${
+      G.at ? '・' + esc(G.at) + ' に調べた分' : ''}</span>` : ''}
     <div class="msg" id="gm"></div>
 
     ${G.files ? ((rows.length + news.length) ? `
@@ -1408,6 +1422,8 @@ async function screenGather(browse) {
       const all = r.files;
       /* 拾う拡張子は EXT_SYS と揃える（別々に書くと必ずずれる）。 */
       G.files = all.filter(f => sysOf(f.name).length);
+      G.at = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      keepGather(G);
       G.busy = false; screenGather();
     } catch (e) {
       G.busy = false; $('#gm').textContent = '探せません: ' + e.message;
@@ -1466,6 +1482,7 @@ async function screenGather(browse) {
     S.items = mergeCatalogs();
     G.busy = false;
     G.files = G.files.filter(f => !S.files[f.name] || f.fileid === S.files[f.name]);
+    keepGather(G);
     screenGather();
     $('#gm').textContent = `${copy ? '写した' : '移した'} ${ok} / 駄目 ${ng}`;
     log.note(`pCloud の中で ${copy ? '写した' : '移した'} ${ok} / 駄目 ${ng}`);
@@ -1592,6 +1609,15 @@ async function screenPlaces(folderid) {
   };
 }
 
+/* 調べた結果を端末に残す。**大きいので、入らなければ諦めて黙って続ける**
+   （残せないことより、動かないことのほうが困る）。 */
+function keepGather(G) {
+  try {
+    LS.set('gather', { where: G.where, at: G.at,
+      files: (G.files || []).slice(0, 6000) });
+  } catch (e) { log.note('調べた結果を残せません（置き場がいっぱい）'); }
+}
+
 /* 「棚に上げる」で探す場所を選ぶ。1階ずつ降りる（棚のフォルダ選びと同じ呼び方）。 */
 async function gatherPick(folderid, G) {
   main().innerHTML = '<div class="card"><p>見ています…</p></div>';
@@ -1629,7 +1655,8 @@ async function gatherPick(folderid, G) {
   for (const b of main().querySelectorAll('[data-go]')) b.onclick = () => go('#/gather/' + b.dataset.go);
   $('#use3').onclick = () => {
     G.where = { id: folderid, name: md.name || '/' };
-    G.files = null; G.pick = {};
+    G.files = null; G.pick = {}; G.at = '';
+    keepGather(G);
     go('#/gather');
   };
 }
