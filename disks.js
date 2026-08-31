@@ -34,9 +34,9 @@ async function screenDisks() {
 
   const keys  = Object.keys(S.here);
   const mine  = keys.filter(isMine).sort();
-  /* 本のディスクで、すでに手元に来ているもの。取り寄せ済みなら中が見られる。 */
+  /* 本のディスクで、すでに取り寄せ済みのもの。取り寄せ済みなら中が見られる。 */
   const held  = keys.filter(k => !isMine(k) && isImage(k)).sort();
-  /* 棚にはあるが、まだ手元に来ていないもの。 */
+  /* 棚にはあるが、まだまだ取り寄せていないもの。 */
   const away  = [];
   for (const t of (S.cat98 ? S.cat98.titles : []))
     for (const d of (t.disks || []))
@@ -66,14 +66,14 @@ async function screenDisks() {
          <button class="hbtn sm" data-rm="${esc(k)}">消す</button>`)).join('')}</div>`
       : '<div class="empty">まだありません。上の「整形済みのブランクを作る」から。</div>'}
 
-    <h3 style="margin-top:18px">手元にある本のディスク（${held.length}）</h3>
+    <h3 style="margin-top:18px">取り寄せたディスク（${held.length}）</h3>
     ${held.length ? `<div class="rowlist">${held.map(k => card(k,
         '取り寄せ済み・中が見られます',
         `<button class="hbtn sm" data-see="${esc(k)}">中を見る</button>
          <button class="hbtn sm" data-cp="${esc(k)}">複製して道具箱へ</button>`)).join('')}</div>`
-      : '<div class="empty">まだ取り寄せていません。一度遊ぶと手元に残ります。</div>'}
+      : '<div class="empty">まだ取り寄せていません。一度遊ぶと取り寄せた分として残ります。</div>'}
 
-    ${away.length ? `<h3 style="margin-top:18px">棚にある（まだ手元に無い・${away.length}）</h3>
+    ${away.length ? `<h3 style="margin-top:18px">棚にある（まだ取り寄せていない・${away.length}）</h3>
       <div class="rowlist">${away.slice(0, 40).map(d => card(d.file,
         esc(d.of) + '・' + (d.bytes / 1024 / 1024).toFixed(2) + 'MB',
         `<button class="hbtn sm" data-get="${esc(d.file)}">取り寄せる</button>`)).join('')}
@@ -116,7 +116,7 @@ async function copyDisk(key) {
   const n = ask('複製の名前', nextName(src + 'のコピー'));
   if (!n) return;
   const b = await ROMS.get(key);
-  if (!b) return toast('中身が手元にありません');
+  if (!b) return toast('中身が取り寄せていません');
   await ROMS.put(DISK_KEY(n), await b.blob());
   toast('複製しました');
   screenDisks();
@@ -127,14 +127,14 @@ async function renameDisk(key) {
   if (!n || n === mineName(key)) return;
   if (S.here[DISK_KEY(n)]) return toast('その名前はもうあります');
   const b = await ROMS.get(key);
-  if (!b) return toast('中身が手元にありません');
+  if (!b) return toast('中身が取り寄せていません');
   await ROMS.put(DISK_KEY(n), await b.blob());
   await ROMS.del(key);
   toast('名前を変えました');
   screenDisks();
 }
 
-/* **消すのは手元だけ。** pCloud には触らない。
+/* **消すのは取り寄せた分だけ。** pCloud には触らない。
    ただし道具箱で作ったものは pCloud に無いので、消したら戻らない。 */
 async function removeDisk(key) {
   if (!confirm(mineName(key) + ' を消します。\n道具箱で作ったディスクは pCloud に控えが無いので、戻せません。'))
@@ -167,7 +167,7 @@ async function seeDisk(key) {
 
   const bytes = await diskBytes(key);
   if (!bytes) return void (main().innerHTML =
-    `<div class="card"><div class="empty">中身が手元にありません</div>
+    `<div class="card"><div class="empty">中身が取り寄せていません</div>
      <button class="hbtn" id="back">← 道具箱へ</button></div>`,
     $('#back').onclick = () => go('#/disks'));
 

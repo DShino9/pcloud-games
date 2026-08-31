@@ -78,7 +78,7 @@ const S = {
   cat98:    null,                     // pc98.json
   items:    [],                       // 2つの台帳を1つにまとめたもの
   here:     {},
-  covurl:   {},                      // 手で入れた箱絵（id → 見かけの住所）                       // id → 1（手元に置いた分）
+  covurl:   {},                      // 手で入れた箱絵（id → 見かけの住所）                       // id → 1（取り寄せた分）
 };
 
 /* 台帳が2つあるのは、中身の作りが違うから。
@@ -117,6 +117,14 @@ function mergeCatalogs() {
 }
 
 /* PC-98 は全部の枚が揃っていないと遊べない。1枚でも欠けていれば「棚にない」。 */
+/* **取り寄せ済みか。しまう鍵が機種で違う。**
+   ファミコン系は本の id で、PC-98 はディスクの fileid で置いている
+   （遊ぶ画面が別なので、置き方も別々に育ってしまった）。
+   `S.here[g.id]` だけを見ていたので、**PC-98 には一度も当たっていなかった**。 */
+const gotIt = it => it.pc98
+  ? it.files.length > 0 && it.files.every(f => S.here[String(S.files[P.nfc(f)])])
+  : !!S.here[it.id];
+
 const hasAll = it => it.files.length > 0 && it.files.every(f => !!S.files[P.nfc(f)]);
 
 const call = (m, p, ms) => P.api(m, p, { host: S.host, auth: S.auth, ms });
@@ -264,6 +272,7 @@ function screenHome() {
     const b = box.get(i.system);
     b.all++;
     if (hasAll(i)) b.have++;
+    if (gotIt(i)) b.got = (b.got || 0) + 1;
     /* 棚の顔にする絵は、その機種で**いちばん遊んだ本**の箱絵。
        無ければ絵のある本から1枚借りる。 */
     const cov = S.covurl[i.id] || i.cover;
@@ -291,10 +300,11 @@ function screenHome() {
                            : `<span class="systag">${esc(b.short)}</span>`}
           <span class="sysname">${esc(name)}</span>
         </div>
-        <div class="syscnt">${b.have} / ${b.all} 本</div>
+        <div class="syscnt">倉庫に <b>${b.have}</b> / ${b.all} 本${
+          b.got ? `<span class="sub"> ・取り寄せ済み ${b.got}</span>` : ''}</div>
       </button>`).join('')}
   </div>
-  <div class="sub" style="margin-top:14px">全部で ${total} 本、うち ${held} 本が棚にあります。</div>`;
+  <div class="sub" style="margin-top:14px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
 
   for (const b of main().querySelectorAll('[data-sys]'))
     b.onclick = () => go('#/sys/' + encodeURIComponent(b.dataset.sys));
@@ -471,7 +481,7 @@ function shelfList() {
   if (S.onlyHave) list = list.filter(hasAll);                 // 上げていないものは伏せる
   if (S.sys) list = list.filter(g => g.system === S.sys);
   if (S.genre) list = list.filter(g => g.genre === S.genre);
-  if (S.onlyHere) list = list.filter(g => S.here[g.id]);
+  if (S.onlyHere) list = list.filter(gotIt);
   const q = S.q.trim().toLowerCase();
   if (q) list = list.filter(g =>
     (g.name || '').toLowerCase().includes(q) ||
@@ -521,7 +531,7 @@ function screenLib(sys) {
       <option value="size"${S.sort === 'size' ? ' selected' : ''}>大きい順</option>
     </select>
     <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">倉庫にある分だけ</button>
-    <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">手元にある分</button>
+    <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">取り寄せた分</button>
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
@@ -531,6 +541,10 @@ function screenLib(sys) {
     <button class="hbtn" id="home" style="margin-left:auto">← 機種へ</button>
     <button class="hbtn" id="addto">＋ 棚に上げる</button>
   </div></div>
+  <div class="sub" style="margin:0 0 8px">
+    <span style="color:var(--ok)">●</span> 取り寄せ済み（圏外でも遊べます）　
+    <span style="color:var(--danger)">倉庫に無い</span> は遊べません（押すと上げに行けます）　
+    印の無いものは倉庫にあります（押すと取り寄せて遊びます）</div>
   ${missing ? `<div class="msg warn" style="margin:0 0 10px">
     まだ倉庫に無い本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
   <div id="g">${gridHtml(list)}</div>`;
@@ -620,8 +634,8 @@ function cellHtml(g) {
           onerror="this.remove();this.parentNode.classList.remove('logo')">` : ''
       }<span>${esc(g.short)}</span>${g.kind === 'tool' ? '<span style="display:inline">道具</span>'
         : g.kind === 'save' ? '<span style="display:inline">セーブ</span>' : ''}</span>
-      ${S.here[g.id] ? '<span class="off">●</span>' : ''}
-      ${has ? '' : '<span class="no">未アップ</span>'}
+      ${gotIt(g) ? '<span class="off">●</span>' : ''}
+      ${has ? '' : '<span class="no">倉庫に無い</span>'}
     </div>
     <div class="t">${esc(nm)}</div>
     <div class="s">${esc(sub || g.genre || '')}</div>
@@ -780,7 +794,7 @@ function screenSet() {
       <div class="row"><span class="nm">pCloud</span><span class="sub">${S.auth ? esc(S.email) : '未接続'}</span></div>
 
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が倉庫にある</span></div>
-      <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
+      <div class="row"><span class="nm">取り寄せた分</span><span class="sub">${S.items.filter(gotIt).length} 本</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
       <button class="row" id="places"><span class="nm">倉庫の場所</span><span class="sub">${
@@ -791,7 +805,7 @@ function screenSet() {
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
     </div>
     <button class="hbtn" id="fdclr">ディスクの組み合わせを忘れる</button>
-    <button class="hbtn" id="clr" style="margin-left:6px">手元に置いた分を消す</button>
+    <button class="hbtn" id="clr" style="margin-left:6px">取り寄せた分を消す</button>
     <button class="hbtn" id="out" style="margin-left:6px">つなぎを切る</button>
     <div class="msg" id="m"></div>
     <div class="note">
@@ -944,7 +958,7 @@ function screenEdit() {
       <button class="hbtn" id="esrcf" style="flex:0 0 auto">ファイルを選ぶ</button>
       <button class="hbtn" id="eup" style="flex:0 0 auto"${n && E.src ? '' : ' disabled'}>倉庫へ上げる</button>
       <button class="hbtn" id="edown" style="flex:0 0 auto"${n ? '' : ' disabled'}>倉庫から下げる</button>
-      <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>手元から消す</button>
+      <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>取り寄せた分を消す</button>
     </div>
     <div class="msg" id="ep" style="min-height:0;margin-top:6px"></div>
   </div>
@@ -1056,7 +1070,7 @@ async function doDelete() {
   screenEdit();
 }
 
-/* 手元の控えだけ消す。pCloud には触らない。 */
+/* 取り寄せた分だけ消す。倉庫には触らない。 */
 async function doUncache() {
   const items = picked();
   let n = 0;
@@ -1068,7 +1082,7 @@ async function doUncache() {
     }
   }
   await refreshHere();
-  prog(`手元から ${n} 件消しました（pCloud はそのまま）`);
+  prog(`取り寄せた分を ${n} 件消しました（倉庫はそのまま）`);
   screenEdit();
 }
 
