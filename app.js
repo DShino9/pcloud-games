@@ -102,6 +102,8 @@ function mergeCatalogs() {
   const out = [];
   /* 走査で分かった在処（本 → 道）。掘り下げに要る。 */
   const IP = LS.get('itempath', {});
+  /* 倉庫の中の箱絵（フォルダ → 絵の fileid）。 */
+  const PIC = LS.get('pics', {});
   /* 目録（コレクションの HTML）で拾い直した題名。 */
   const RN = LS.get('renamed', {});
   for (const g of ((S.cat && S.cat.games) || [])) {
@@ -109,7 +111,7 @@ function mergeCatalogs() {
     out.push({
       id: g.id, name: RN[g.id] || g.name, sub: g.title || '', system: g.system, short: g.short,
       cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
-      files: [g.file], path: IP[g.id] || '',
+      files: [g.file], path: IP[g.id] || '', pic: (PIC[IP[g.id]] || {}).id || null,
     });
   }
   /* 台帳に無い本。**pCloud には台帳より多く入っている。**
@@ -119,6 +121,7 @@ function mergeCatalogs() {
   for (const e of LS.get('extra', [])) {
     out.push({ id: e.id, name: RN[e.id] || e.name, sub: e.sub || '', system: e.system, short: e.short,
                core: e.core, path: IP[e.id] || e.path || '', fids: e.fids || null,
+               pic: (PIC[IP[e.id] || e.path] || {}).id || null,
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -129,7 +132,7 @@ function mergeCatalogs() {
       system: 'PC-98', short: '98',
       cover: t.cover || null, bytes: t.bytes, kind: t.kind, pc98: true, genre: '',
       files: t.disks.map(d => d.file),
-      path: IP[t.id] || '',
+      path: IP[t.id] || '', pic: (PIC[IP[t.id]] || {}).id || null,
       garbled: !!t.garbled,
     });
   }
@@ -170,6 +173,7 @@ async function scanFolder(folderid, say = () => {}) {
 async function scanAll(say = () => {}) {
   const map = {};
   const seen = [];
+  const pics = {};
   const ext = {};
   let count = 0;
   const report = [];
@@ -183,6 +187,14 @@ async function scanAll(say = () => {}) {
       /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
       seen.push(...r.files.filter(f => sysOf(f.name).length));
+      /* **倉庫の中の絵を拾う。** 本と同じフォルダに箱絵が置いてある。
+         外を探し回る前に、まずこれを使う（本人「絵も教えたのに」）。 */
+      for (const f of r.files) {
+        if (!/\.(jpe?g|png|gif|webp|bmp)$/i.test(f.name)) continue;
+        const dir = f.path || '';
+        /* 同じフォルダに何枚もあれば、名前の順で先のものを採る。 */
+        if (!pics[dir] || String(f.name) < pics[dir].name) pics[dir] = { id: f.fileid, name: f.name };
+      }
       /* **何を拾って何を捨てたかを数える。** 「ROM は終わったのか?」に
          数字で答えられるように。拾っていない拡張子が大量にあれば、
          それは取りこぼしの手がかりになる。 */
@@ -202,6 +214,7 @@ async function scanAll(say = () => {}) {
     }
   }
   S.files = map; LS.set('files', map);
+  LS.set('pics', pics);
   /* **走ったことを残す。** 見えないと「スキャンしているか」が分からない。 */
   const top = Object.entries(ext).sort((a, b) => b[1] - a[1]).slice(0, 24)
     .map(([e, n]) => ({ e, n, 拾う: !!sysOf('x.' + e).length }));
@@ -2621,7 +2634,8 @@ function huntTried() {
    **見えている分だけ。** 7171本を総当たりしたら、置き場にも端末にも悪い。 */
 function huntCovers(items) {
   const t = huntTried();
-  const add = items.filter(g => !g.cover && !S.covurl[g.id] && !t.has(g.id) && LR_REPO[g.system]);
+  const add = items.filter(g => !g.cover && !S.covurl[g.id] && !t.has(g.id)
+    && (g.pic || LR_REPO[g.system]));
   for (const g of add) if (!HUNT.queue.some(x => x.id === g.id)) HUNT.queue.push(g);
   runHunt();
 }
@@ -2638,6 +2652,20 @@ async function runHunt() {
       t.add(g.id);
       HUNT.done++;
       let got = false;
+      /* **まず倉庫の絵。** 本と同じフォルダに置いてあるものが、いちばん確か。 */
+      if (g.pic) {
+        try {
+          const blob = await P.fetchFile(S.relay, { fileid: g.pic, name: 'cover' });
+          if (blob && blob.size > 1000) {
+            await MYCOV.put(g.id, blob);
+            S.covurl[g.id] = URL.createObjectURL(blob);
+            got = true; HUNT.found++; huntLine();
+            const cell = main().querySelector(`.item[data-id="${CSS.escape(g.id)}"] .cov`);
+            if (cell) cell.innerHTML = `<img src="${S.covurl[g.id]}" alt="">`;
+          }
+        } catch (e) { /* 取れなければ外を探す */ }
+      }
+      if (got) { await new Promise(r => setTimeout(r, 60)); continue; }
       for (const nm of lrNames(g)) {
         const url = 'https://raw.githubusercontent.com/libretro-thumbnails/'
           + LR_REPO[g.system] + '/master/Named_Boxarts/' + encodeURIComponent(nm) + '.png';
