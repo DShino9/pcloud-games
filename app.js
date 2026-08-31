@@ -660,11 +660,11 @@ function shelfList() {
 function screenLib(sys) {
   if (sys !== undefined) {
     S.sys = sys; LS.set('sys', sys);
-    /* **本数が多い機種は、はじめから掘る形で開く。**
-       3000本を平らに並べても選べない。在処が分かっている本が多いときだけ。 */
+    /* **本数が多い機種は、はじめから束ねて開く。** 3000本を平らに並べても選べない。
+       ここで `path`（廃した束ね方）を入れ続けていたのが、
+       棚が `PC-98` 1束・中身なしになっていた正体。**廃したものは代入もしない。** */
     const n = S.items.filter(i => i.system === sys);
-    if (n.length > 300 && n.filter(i => i.path).length > n.length * 0.3
-        && !LS.get('foldPicked', false)) S.fold = 'path';
+    if (n.length > 300 && !LS.get('foldPicked', false)) S.fold = 'sys';
   }
   const list = shelfList();
   const systems = [...new Set(S.items.map(i => i.system))].sort();
