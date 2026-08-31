@@ -293,10 +293,17 @@ function screenLibrary() {
           <button id="vcard"${L.rows ? '' : ' class="on"'}>▦ 札</button>
           <button id="vrow"${L.rows ? ' class="on"' : ''}>☰ 行</button>
         </div>
+        <button class="hbtn${S.tools ? ' on' : ''}" id="tools2" title="PC-98 の道具ディスクも並べる">道具</button>
         <button class="hbtn" id="addto" style="margin-left:auto">＋ 棚に上げる</button>
       </div></div>
       <div class="sub" id="huntline" style="margin:0 0 8px;display:none"></div>
       <div id="g">${l2grid(list)}</div>
+      <div class="sub" id="scanline" style="margin-top:14px">${(() => {
+        const sc = LS.get('scan', null);
+        return (sc ? `倉庫を見たのは <b>${esc(sc.at)}</b>（${esc(String(sc.count))} ファイル）`
+                   : '<b>まだ倉庫を見ていません。</b>')
+          + ' <button class="hbtn sm" id="rescan2">いま見直す</button>';
+      })()}</div>
     </section>
     <aside class="l2side" id="lside">${l2detail()}</aside>
   </div>`;
@@ -328,9 +335,23 @@ function screenLibrary() {
     b.onclick = () => { S.view = b.dataset.view; LS.set('view2', S.view); screenLibrary(); };
   $('#q').oninput = e => { S.q = e.target.value; LS.set('q', S.q); l2redraw(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); l2redraw(); };
+  $('#tools2').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLibrary(); };
   $('#vcard').onclick = () => { L.rows = false; l2save(); screenLibrary(); };
   $('#vrow').onclick = () => { L.rows = true; l2save(); screenLibrary(); };
   $('#addto').onclick = () => go('#/gather');
+  const rs = $('#rescan2');
+  if (rs) rs.onclick = async () => {
+    const line = $('#scanline');
+    rs.disabled = true;
+    try {
+      const r = await scanAll(t => { line.textContent = t; });
+      S.items = mergeCatalogs();
+      screenLibrary();
+      const l2 = $('#scanline');
+      if (l2) l2.innerHTML = `見直しました: ${r.places} か所・${r.count} ファイル`
+        + (r.added ? `／<b>${r.added} 本</b>を新たに棚へ` : '／新しい本はありませんでした');
+    } catch (e) { line.textContent = '見られません: ' + e.message; rs.disabled = false; }
+  };
   l2bindCells();
   l2bindDetail();
   huntCovers(list.slice(0, 200));
