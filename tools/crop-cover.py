@@ -17,6 +17,8 @@ import json, shutil, sys
 from pathlib import Path
 import numpy as np
 from scipy import ndimage
+from skimage import measure, transform
+from scipy.spatial import ConvexHull
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent.parent
@@ -25,7 +27,7 @@ ORIG = HERE / "covers-orig"
 WIDTH = 320                      # 棚に置く幅（build-catalog.py と揃える）
 
 
-def box_of(im):
+def mask_of(im):
     """箱のある四角を返す。見つからなければ None。
 
        **行と列の合計では取れない。** 明るい背景や写り込みに負けて、
@@ -87,16 +89,112 @@ def box_of(im):
             sat = float(np.mean((mx - mn) / np.maximum(mx, 1)))
             sc = (fill ** 1.5) * (0.30 + area) * (0.45 + sat)
             if not best or sc > best[0]:
-                best = (sc, x0, y0, x1, y1)
+                best = (sc, x0, y0, x1, y1, lab == i)
 
     if not best:
         return None
-    _, x0, y0, x1, y1 = best
-    pad = 0.012
-    x0 = max(0, x0 - int(w * pad)); x1 = min(w - 1, x1 + int(w * pad))
-    y0 = max(0, y0 - int(h * pad)); y1 = min(h - 1, y1 + int(h * pad))
-    sx, sy = im.width / w, im.height / h
-    return (int(x0 * sx), int(y0 * sy), int((x1 + 1) * sx), int((y1 + 1) * sy))
+    return best[5], (im.width / w, im.height / h), best[1:5]
+
+
+def quad_of(mask):
+    """塊の**角を4点**取る。取れなければ None。
+
+       **四角く囲うだけでは、傾いた箱・斜めから撮った箱は直らない。**
+       周りの机が残るし、箱そのものも歪んだまま。
+       角が取れれば、そこから起こして（射影変換）真正面の四角にできる。"""
+    cs = measure.find_contours(mask.astype(float), 0.5)
+    if not cs:
+        return None
+    c = max(cs, key=len)
+    if len(c) < 24:
+        return None
+    area = float(mask.sum())
+    # 荒さを少しずつ上げて、4点になったところを採る
+    for tol in (2, 3, 4, 6, 8, 11, 15, 20):
+        q = measure.approximate_polygon(c, tolerance=tol)
+        if len(q) and np.allclose(q[0], q[-1]):
+            q = q[:-1]
+        if len(q) != 4:
+            continue
+        # 角が塊とかけ離れていないか。行き過ぎ・足りなさを面積で見る。
+        qa = 0.5 * abs(sum(q[i][1] * q[(i + 1) % 4][0] - q[(i + 1) % 4][1] * q[i][0]
+                           for i in range(4)))
+        if not 0.80 <= qa / max(area, 1) <= 1.30:
+            continue
+        return q[:, ::-1]                       # (行,列) → (x,y)
+    return None
+
+
+def min_rect(mask):
+    """塊を包む**いちばん小さい「傾いた四角」**の4点を返す。
+
+       角がぴったり4点に落ちることは稀（`approximate_polygon` では82枚中4枚しか
+       取れなかった）。こちらは必ず求まるので、**傾いた箱**はこれで起きる。
+       やり方は回転カリパス: 包む多角形の辺ごとに、その向きへ揃えて囲み、
+       いちばん小さかった向きを採る。"""
+    ys, xs = np.nonzero(mask)
+    if len(xs) < 16:
+        return None
+    pts = np.column_stack([xs, ys]).astype(float)
+    try:
+        hull = pts[ConvexHull(pts).vertices]
+    except Exception:
+        return None
+    best = None
+    for i in range(len(hull)):
+        e = hull[(i + 1) % len(hull)] - hull[i]
+        n = np.hypot(*e)
+        if n < 1e-6:
+            continue
+        c, s2 = e / n
+        R = np.array([[c, s2], [-s2, c]])       # その辺を横向きに揃える
+        r = hull @ R.T
+        lo, hi = r.min(axis=0), r.max(axis=0)
+        a = float((hi[0] - lo[0]) * (hi[1] - lo[1]))
+        if not best or a < best[0]:
+            corners = np.array([[lo[0], lo[1]], [hi[0], lo[1]],
+                                [hi[0], hi[1]], [lo[0], hi[1]]])
+            best = (a, corners @ R)             # 元の向きへ戻す
+    return None if not best else best[1]
+
+
+def order_quad(q):
+    """左上・右上・右下・左下の順に並べ替える。"""
+    q = np.asarray(q, dtype=float)
+    s = q.sum(axis=1)
+    d = np.diff(q, axis=1).ravel()
+    return np.array([q[np.argmin(s)], q[np.argmin(d)], q[np.argmax(s)], q[np.argmax(d)]])
+
+
+def deskew(im, q):
+    """4点から真正面の四角へ起こす。**斜めに撮られた箱がまっすぐになる。**"""
+    tl, tr, br, bl = order_quad(q)
+    wid = (np.linalg.norm(tr - tl) + np.linalg.norm(br - bl)) / 2
+    hei = (np.linalg.norm(bl - tl) + np.linalg.norm(br - tr)) / 2
+    if wid < 60 or hei < 60:
+        return None
+    ar = wid / hei
+    if not 0.45 <= ar <= 2.1:
+        return None
+    W2 = int(round(min(WIDTH, wid)))
+    H2 = int(round(W2 / ar))
+    dst = np.array([[0, 0], [W2, 0], [W2, H2], [0, H2]], dtype=float)
+    t = transform.ProjectiveTransform()
+    if not t.estimate(dst, np.array([tl, tr, br, bl], dtype=float)):
+        return None
+    a = np.asarray(im.convert("RGB"), dtype=np.float32) / 255.0
+    out = transform.warp(a, t, output_shape=(H2, W2), order=1, mode="edge")
+    return Image.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8))
+
+
+def worth_deskew(im, q, b):
+    """起こす値打ちがあるか。**まっすぐなものを起こすと粗くなるだけ。**
+       四角の囲みに比べて、角で囲ったほうが十分小さいときだけ起こす。"""
+    q = order_quad(q)
+    qa = 0.5 * abs(sum(q[i][0] * q[(i + 1) % 4][1] - q[(i + 1) % 4][0] * q[i][1]
+                       for i in range(4)))
+    ba = max(1.0, (b[2] - b[0]) * (b[3] - b[1]))
+    return qa / ba < 0.93
 
 
 def judge(im, b):
@@ -111,6 +209,16 @@ def judge(im, b):
         return False
     ar = aw / ah
     return 0.45 <= ar <= 2.0
+
+
+def box_of(im):
+    """四角い囲みを返す（角が取れなかったとき用）。"""
+    r = mask_of(im)
+    if not r:
+        return None
+    _, (sx, sy), (x0, y0, x1, y1) = r
+    x0 = max(0, x0 - 3); y0 = max(0, y0 - 3)     # ほんの少し余白を残す
+    return (int(x0 * sx), int(y0 * sy), int((x1 + 4) * sx), int((y1 + 4) * sy))
 
 
 def main():
@@ -134,7 +242,7 @@ def main():
                 want.add(Path(t["cover"]).name)
     print(f"写真から取った箱絵 {len(want)} 枚が対象")
 
-    rows, cut, keep = [], 0, 0
+    rows, cut, keep, skew = [], 0, 0, 0
     for f in sorted(COVERS.glob("*.jpg")):
         if f.name not in want:
             continue
@@ -144,9 +252,9 @@ def main():
             im.load()
         except Exception:
             continue
+        r = mask_of(im)
         b = box_of(im)
-        ok = judge(im, b)
-        if not ok:
+        if not judge(im, b):
             keep += 1
             continue
         cut += 1
@@ -155,12 +263,29 @@ def main():
             continue
         if not (ORIG / f.name).exists():
             shutil.copy2(f, ORIG / f.name)
-        out = im.convert("RGB").crop(b)
+
+        out = None
+        # まず角を4点取って起こす。取れないときだけ四角く切る。
+        if r:
+            mask, (sx, sy), _ = r
+            # 角が4点取れればそれが一番良い（台形の歪みまで直る）。
+            # 取れなければ、包むいちばん小さい傾いた四角で起こす（傾きは直る）。
+            q = quad_of(mask)
+            if q is None:
+                q = min_rect(mask)
+            if q is not None:
+                q = q * np.array([sx, sy])       # 縮めた絵の座標を元の大きさへ戻す
+                if worth_deskew(im, q, b):
+                    out = deskew(im, q)
+                    if out is not None:
+                        skew += 1
+        if out is None:
+            out = im.convert("RGB").crop(b)
         if out.width > WIDTH:
             out = out.resize((WIDTH, round(out.height * WIDTH / out.width)), Image.LANCZOS)
         out.save(f, "JPEG", quality=86)
 
-    print(f"切る {cut} 枚 / そのまま {keep} 枚")
+    print(f"切る {cut} 枚（うち起こした {skew} 枚）/ そのまま {keep} 枚")
     if check and rows:
         cells = "".join(
             f'<figure><div class=p style="background-image:url(covers-orig/{n2}),url(covers/{n2})">'
