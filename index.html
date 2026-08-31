@@ -15,6 +15,17 @@
 <!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
 <link rel="stylesheet" href="./core/shelf.css?v=2">
 <style>
+/* 束の見出し。押すと畳む。数が増えると一覧が長くなるので、
+   ふだん見ない機種は畳んだままにしておける（耳読の書棚と同じ作法）。 */
+h2.fold{display:flex;align-items:center;gap:8px;margin:18px 0 10px;cursor:pointer;
+  font-size:15px;font-weight:650;color:var(--fg);user-select:none}
+h2.fold:first-child{margin-top:4px}
+h2.fold .tri{color:var(--dim2);font-size:12px;width:12px}
+h2.fold .cnt{margin-left:auto;font-size:12px;font-weight:400;color:var(--dim2)}
+h2.fold:hover .tri{color:var(--accent)}
+/* **`hidden` だけでは畳めない。** `.grid{display:grid}` のほうが強くて
+   ブラウザ既定の `display:none` を押し返す。ここで明示的に消す。 */
+.grid[hidden]{display:none}
 /* 機種の見分け。**小さい灰色の札では、並べたときに読めない。**
    機種ごとに色を決め、字も大きくする。色は「その機械の顔」に寄せた:
    ファミコンは赤白、スーファミは灰に四色、64 は青緑、DS は銀青、
@@ -102,6 +113,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=2"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=2"></script>
-<script src="./app.js?v=33"></script>
+<script src="./app.js?v=36"></script>
 </body>
 </html>
