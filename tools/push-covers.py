@@ -77,7 +77,21 @@ def main():
             for c in api("listfolder", folderid=efid)["metadata"].get("contents", [])
             if not c.get("isfolder")}
 
-    amap, todo = {}, []
+    amap, gmap, todo = {}, {}, []
+    # ジャンルは絵の有無に関係なく、ハッシュで当たった全部に付く。
+    # openvgdb は英語なので、よくあるものは日本語に直す（複数はいちばん前を採る）。
+    JA = {"Action": "アクション", "Adventure": "アドベンチャー",
+          "Shooter": "シューティング", "Shooting": "シューティング",
+          "Role-Playing": "RPG", "RPG": "RPG", "Sports": "スポーツ",
+          "Racing": "レース", "Driving": "レース", "Puzzle": "パズル",
+          "Strategy": "シミュレーション", "Simulation": "シミュレーション",
+          "Fighting": "格闘", "Platform": "アクション", "Pinball": "ピンボール",
+          "Board": "テーブル", "Trivia": "クイズ", "Education": "学習",
+          "Music": "音楽", "Miscellaneous": "その他"}
+    for gid, ent in led.items():
+        if ent.get("method") == "hash" and ent.get("genre"):
+            g = ent["genre"].split(",")[0].strip()
+            gmap[ent["sys"] + "|" + NFC(ent["file"])] = JA.get(g, g)
     for gid, ent in led.items():
         if ent.get("img") not in ok_img:
             continue
@@ -102,11 +116,12 @@ def main():
             print(f"  {i+1}/{len(todo)}", flush=True)
         time.sleep(0.08)
     body = json.dumps({"書いた": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                       "枚数": len(amap), "map": amap}, ensure_ascii=False)
+                       "枚数": len(amap), "map": amap,
+                       "ジャンル": gmap}, ensure_ascii=False)
     tmp = FOUND / "絵.json"
     tmp.write_text(body, encoding="utf-8")
     upload(efid, "絵.json", tmp)
-    print(f"索引を書いた: {len(amap)} 枚")
+    print(f"索引を書いた: 絵 {len(amap)} 枚・ジャンル {len(gmap)} 本")
 
 
 if __name__ == "__main__":

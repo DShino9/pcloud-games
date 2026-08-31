@@ -102,8 +102,10 @@ async function s2art() {
     const blob = await P.readFile(f.fileid, { host: S.host, auth: S.auth });
     const j = JSON.parse(await blob.text());
     LS.set('artmap', j.map || {});
+    LS.set('genremap', j.ジャンル || {});
     LS.set('artAt', f.modified || '');
-    log.note(`箱絵の索引を取り込んだ: ${j.枚数 || 0} 枚`);
+    S.items = mergeCatalogs();
+    log.note(`箱絵の索引を取り込んだ: 絵 ${j.枚数 || 0} 枚・ジャンル ${Object.keys(j.ジャンル || {}).length} 本`);
   } catch (e) { log.note('箱絵の索引を読めない: ' + e.message); }
 }
 
