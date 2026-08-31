@@ -75,7 +75,10 @@ const S = {
   lastPath: LS.get('lastPath', ''),
   fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
-  view:     LS.get('view', 'all'),   // 遊べる / ぜんぶ / 倉庫に無い
+  /* **鍵の名前を変えてある。** `view` の意味を途中で変えた（遊べる＝倉庫にある →
+     遊べる＝取り寄せ済み）ので、前の選択が残っていると 0 本の札に留まってしまう。
+     意味を変えたら鍵も変える。 */
+  view:     LS.get('view2', 'all'),   // 遊べる / ぜんぶ / 倉庫に無い
   more:     {},                       // 束ごとに、いくつまで出したか
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
@@ -531,7 +534,7 @@ function screenLib(sys) {
   main().innerHTML = `
   <div class="bar"><div class="row1">
     <div class="seg">
-      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
+      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>すぐ遊べる (${nPlay})</button>
       <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>倉庫 (${nWare})</button>
       ${nNone ? `<button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>` : ''}
     </div>
@@ -569,7 +572,7 @@ function screenLib(sys) {
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
   $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold); screenLib(); };
   for (const b of main().querySelectorAll('[data-view]'))
-    b.onclick = () => { S.view = b.dataset.view; LS.set('view', S.view); screenLib(); };
+    b.onclick = () => { S.view = b.dataset.view; LS.set('view2', S.view); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
   $('#addto').onclick = () => go('#/gather');
   $('#home').onclick  = () => { S.q = ''; LS.set('q', ''); go('#/lib'); };
@@ -594,7 +597,10 @@ const shut = () => new Set(LS.get('shut', []));
 /* 一覧を組む。**探している最中は畳まない**（探した意味がなくなる）。 */
 function gridHtml(list) {
   if (!list.length) {
-    return `<div class="empty">${S.q || S.genre || S.view !== 'all' ? '見つかりません' : '棚が空です'}</div>`;
+    return `<div class="empty">${S.q ? '見つかりません'
+      : S.view === 'play' ? 'まだ1本も取り寄せていません。<br><span class="sub">「倉庫」の札から選んで遊ぶと、取り寄せた分がここに残ります（次からは圏外でも遊べます）。</span>'
+      : S.view === 'none' ? '倉庫に無い本はありません。'
+      : '棚が空です'}</div>`;
   }
   /* **一度に全部は描かない。** 倉庫を読んだら 7171 本になった。
      3000枚の札を一度に組み立てると、iPhone は固まる。
