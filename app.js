@@ -134,6 +134,7 @@ function render() {
   if (h === '#/runs')  return screenRuns();
   if (h === '#/disks') return screenDisks();
   if (h === '#/covers') return screenCovers();
+  if (h === '#/gather') return screenGather();
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
@@ -526,7 +527,8 @@ function screenSet() {
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が棚にある</span></div>
       <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
-      <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">選んで上げる・下げる</span></button>
+      <button class="row" id="gather"><span class="nm">pCloud から棚へ</span><span class="sub">棚の外にある分を移す・上げ直さない</span></button>
+      <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">Mac から上げる・棚から下げる</span></button>
       <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
@@ -551,6 +553,7 @@ function screenSet() {
   $('#relay').onclick  = () => go('#/relay');
   $('#disks').onclick  = () => go('#/disks');
   $('#fixcov').onclick = () => go('#/covers');
+  $('#gather').onclick = () => go('#/gather');
   $('#edit').onclick   = () => go('#/edit');
   $('#repick').onclick = () => go('#/pick/0');
   $('#rescan').onclick = async () => {
@@ -666,8 +669,10 @@ function screenEdit() {
 
   <div class="msg" id="em" style="margin:0 0 8px">
     ${esc(S.rootName || '棚のフォルダが未選択')} に ${have} / ${list.length} 本。
-    ${E.src ? '元のフォルダ: ' + esc(E.srcName) + '（' + Object.keys(E.src).length + ' ファイル）'
-            : '上げるには、先に元のフォルダを選んでください。'}
+    ${E.src ? '元: ' + esc(E.srcName) + '（' + Object.keys(E.src).length + ' ファイル）'
+            : '上げるには、先に元のファイルを選んでください。'
+              + '<br><span class="sub">iPhone・iPad はフォルダを選べないので（Safari が対応していない）、'
+              + '「ファイルを選ぶ」で選んでください。まとめて選べます。</span>'}
   </div>
 
   <div class="rowlist" style="margin-bottom:96px">
@@ -690,13 +695,15 @@ function screenEdit() {
     <div style="display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none">
       <span class="sub" style="flex:0 0 auto">${n} 本えらんだ</span>
       <button class="hbtn" id="esrc" style="flex:0 0 auto">元のフォルダを選ぶ</button>
+      <button class="hbtn" id="esrcf" style="flex:0 0 auto">ファイルを選ぶ</button>
       <button class="hbtn" id="eup" style="flex:0 0 auto"${n && E.src ? '' : ' disabled'}>pCloud へ上げる</button>
       <button class="hbtn" id="edown" style="flex:0 0 auto"${n ? '' : ' disabled'}>pCloud から下げる</button>
       <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>手元から消す</button>
     </div>
     <div class="msg" id="ep" style="min-height:0;margin-top:6px"></div>
   </div>
-  <input type="file" id="efile" webkitdirectory directory multiple class="hide">`;
+  <input type="file" id="efile" webkitdirectory directory multiple class="hide">
+  <input type="file" id="efile2" multiple class="hide">`;
 
   main().querySelectorAll('.row[data-id]').forEach(b => b.onclick = () => {
     const id = b.dataset.id;
@@ -709,15 +716,24 @@ function screenEdit() {
   $('#eback').onclick = () => go('#/set');
 
   /* 元のフォルダ。中身は憶えるが、この画面を離れると消える（ブラウザの決まり）。 */
-  $('#esrc').onclick = () => $('#efile').click();
-  $('#efile').onchange = ev => {
+  /* 元の置き場。**iPhone・iPad はフォルダを選べない**（Safari が
+     webkitdirectory に対応していない）ので、ファイルを直に選ぶ口も出す。
+     どちらで選んでも、名前を NFC に揃えて憶える（macOS の名前は NFD のことがある）。 */
+  const takeFiles = (files, how) => {
     const map = {};
-    for (const f of ev.target.files) map[P.nfc(f.name)] = f;
-    E.src = map;
-    E.srcName = (ev.target.files[0] && ev.target.files[0].webkitRelativePath || '').split('/')[0] || 'えらんだフォルダ';
-    log.note('元のフォルダを選んだ: ' + Object.keys(map).length + ' ファイル');
+    for (const f of files) map[P.nfc(f.name)] = f;
+    /* 選び直しではなく**足す**。何度かに分けて選べる（一度に選びきれないとき用）。 */
+    E.src = { ...(E.src || {}), ...map };
+    const first = files[0];
+    const dir = (first && first.webkitRelativePath || '').split('/')[0];
+    E.srcName = dir || (how === 'files' ? 'えらんだファイル' : 'えらんだフォルダ');
+    log.note(`元を選んだ（${how}）: ${Object.keys(map).length} ファイル`);
     screenEdit();
   };
+  $('#esrc').onclick  = () => $('#efile').click();
+  $('#esrcf').onclick = () => $('#efile2').click();
+  $('#efile').onchange  = ev => takeFiles(ev.target.files, 'folder');
+  $('#efile2').onchange = ev => takeFiles(ev.target.files, 'files');
 
   $('#eup').onclick    = () => doUpload();
   $('#edown').onclick  = () => doDelete();
@@ -1016,4 +1032,115 @@ function shrinkImage(file, width = 320) {
     img.onerror = () => rej(new Error('絵として読めません'));
     img.src = URL.createObjectURL(file);
   });
+}
+
+/* ============ pCloud から棚へ ============ */
+/* 耳読の書棚に倣った口。あちらは「pCloud にある本を並べて、その場でボタンを押す」だけで、
+   **元のフォルダを選ばせない。** こちらの「棚を編む」は Mac の中から選ばせていたので、
+   iPhone からは何もできなかった（Safari はフォルダを選べない）。
+
+   すでに pCloud にあるものは、**上げ直す必要がない。**
+   向こう側で動かせば一瞬で終わる（`renamefile` に行き先を渡す）。 */
+async function screenGather() {
+  $('#title').textContent = 'pCloud から棚へ';
+  const G = S.gather || (S.gather = { files: null, pick: {}, busy: false });
+
+  const known = new Map();          // 台帳にあるファイル名 → その本
+  for (const i of S.items) for (const f of i.files) known.set(P.nfc(f), i);
+  const inShelf = new Set(Object.values(S.files));
+
+  let rows = [];
+  if (G.files) {
+    for (const f of G.files) {
+      if (inShelf.has(f.fileid)) continue;          // すでに棚にある
+      const item = known.get(f.name);
+      if (!item) continue;                          // 台帳に無いものは出さない
+      if (S.files[f.name]) continue;                // 同じ名前が棚にもうある
+      rows.push({ ...f, item });
+    }
+    rows.sort((a, b) => a.item.name.localeCompare(b.item.name, 'ja'));
+  }
+  const n = Object.keys(G.pick).length;
+
+  main().innerHTML = `
+  <div class="card" style="max-width:720px">
+    <h2>pCloud から棚へ</h2>
+    <p>棚の外に置いてある ROM やディスクを、<b>棚のフォルダへ移します</b>。<br>
+       すでに pCloud にあるので<b>上げ直しません</b>（向こう側で動かすだけ。一瞬で終わります）。
+       Mac のフォルダを選ぶ必要が無いので、iPhone からもできます。</p>
+    <button class="hbtn" id="scan"${G.busy ? ' disabled' : ''}>pCloud の中を探す</button>
+    ${G.files ? `<span class="sub" style="margin-left:8px">${G.files.length} ファイル見た</span>` : ''}
+    <div class="msg" id="gm"></div>
+
+    ${G.files ? (rows.length ? `
+      <div style="display:flex;gap:6px;margin:10px 0">
+        <button class="hbtn sm" id="gall">全部選ぶ</button>
+        <button class="hbtn sm" id="gnone">選び直す</button>
+      </div>
+      <div class="rowlist">${rows.map(r => `
+        <button class="row" data-fid="${r.fileid}">
+          <span style="width:18px;flex:0 0 18px;color:${G.pick[r.fileid] ? 'var(--accent)' : 'var(--dim2)'}">${
+            G.pick[r.fileid] ? '☑' : '☐'}</span>
+          <span class="nm" style="text-align:left">${esc(r.name)}
+            <span class="sub">${esc(r.item.name)}・${esc(r.item.short)}</span></span>
+          <span class="sub" style="text-align:right">${size(r.size)}<br>${esc(r.path || '/')}</span>
+        </button>`).join('')}</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:12px">
+        <span class="sub">${n} 件えらんだ</span>
+        <button class="hbtn" id="gmove"${n && !G.busy ? '' : ' disabled'}>棚へ移す</button>
+        <button class="hbtn" id="gcopy"${n && !G.busy ? '' : ' disabled'}>写す（元を残す）</button>
+      </div>`
+      : '<div class="empty">棚の外に、台帳に載っているファイルは見つかりませんでした。</div>')
+    : '<div class="empty">まだ探していません。</div>'}
+
+    <button class="hbtn" id="back" style="margin-top:14px">← 設定へ</button>
+  </div>`;
+
+  $('#back').onclick = () => go('#/set');
+  $('#scan').onclick = async () => {
+    G.busy = true; $('#gm').textContent = 'pCloud の中を探しています…（本数が多いと少しかかります）';
+    try {
+      const r = await P.scanFolder(0, { host: S.host, auth: S.auth });
+      G.files = r.files.filter(f => /\.(nes|fds|smc|sfc|fig|swc|n64|v64|z64|nds|iso|cso|fdi|hdi|d88|hdm|xdf|nfd)$/i.test(f.name));
+      G.busy = false; screenGather();
+    } catch (e) {
+      G.busy = false; $('#gm').textContent = '探せません: ' + e.message;
+    }
+  };
+  const gall = $('#gall'), gnone = $('#gnone');
+  if (gall)  gall.onclick  = () => { rows.forEach(r => G.pick[r.fileid] = 1); screenGather(); };
+  if (gnone) gnone.onclick = () => { G.pick = {}; screenGather(); };
+  for (const b of main().querySelectorAll('[data-fid]')) b.onclick = () => {
+    const k = b.dataset.fid;
+    if (G.pick[k]) delete G.pick[k]; else G.pick[k] = 1;
+    screenGather();
+  };
+  const run = async copy => {
+    if (G.busy) return;
+    const todo = rows.filter(r => G.pick[r.fileid]);
+    if (!todo.length) return;
+    G.busy = true;
+    let ok = 0, ng = 0, i = 0;
+    const folders = {};
+    for (const r of todo) {
+      i++;
+      $('#gm').textContent = `${copy ? '写して' : '移して'}います… ${i}/${todo.length}　${r.name}`;
+      try {
+        const sys = r.item.system;
+        if (!folders[sys]) folders[sys] = await folderFor(sys);
+        const fid = await P.moveFile(r.fileid, folders[sys], { host: S.host, auth: S.auth, copy });
+        S.files[r.name] = fid; ok++;
+        delete G.pick[r.fileid];
+      } catch (e) { ng++; log.note('移し損ね: ' + r.name + ' — ' + e.message); }
+    }
+    LS.set('files', S.files);
+    G.busy = false;
+    G.files = G.files.filter(f => !S.files[f.name] || f.fileid === S.files[f.name]);
+    screenGather();
+    $('#gm').textContent = `${copy ? '写した' : '移した'} ${ok} / 駄目 ${ng}`;
+    log.note(`pCloud の中で ${copy ? '写した' : '移した'} ${ok} / 駄目 ${ng}`);
+  };
+  const gm = $('#gmove'), gc = $('#gcopy');
+  if (gm) gm.onclick = () => run(false);
+  if (gc) gc.onclick = () => run(true);
 }
