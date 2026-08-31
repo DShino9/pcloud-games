@@ -357,7 +357,8 @@ async function grab(name, expectBytes, onProg) {
   /* 入口（ds9）の下では、中継所は入口の中に同居している。設定させない。
        ここは棚の一覧とは別のページなので、同じ判断を自前で持つ必要がある。 */
     const relay = /(^|\.)github\.io$/.test(location.hostname)
-      ? LS.get('relay', '') : location.origin + '/relay';
+      ? (LS.get('relay', '') || 'https://gamedana.d-shino.workers.dev')
+        : location.origin + '/relay';
   const host = LS.get('host', P.HOSTS[0]);
   const auth = LS.get('auth', '');
   /* fetchFile が道を順に降りる：中継所の直リンク → 公開リンク → 中継所なし。

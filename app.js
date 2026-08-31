@@ -49,6 +49,7 @@ function toast(msg, ms) {
    （端末ごとに中継所を入れ直させるのが、そもそもの間違いだった） */
 const UNDER_GATE = !/(^|\.)github\.io$/.test(location.hostname);
 const RELAY_HERE = location.origin + '/relay';
+const RELAY_DEFAULT = 'https://gamedana.d-shino.workers.dev';
 
 const S = {
   host:     LS.get('host', P.HOSTS[0]),
@@ -61,7 +62,11 @@ const S = {
      上げ先・記録の置き先は rootId のまま。 */
   roots:    LS.get('roots', []),      // [{id, name}]
   rootName: LS.get('rootName', ''),
-  relay:    UNDER_GATE ? RELAY_HERE : LS.get('relay', ''),   // 入口の下なら同居しているものを使う
+  /* **中継所は既定で入れておく。** 中継所なしの道（`file_open`）は
+     この倉庫では `2003 Access denied` で塞がっている。
+     未設定のまま遊ぼうとすると、そこで詰む（実際に詰んだ）。
+     ゲーム棚用に立ててある素の中継所を初めから指しておく。 */
+  relay:    UNDER_GATE ? RELAY_HERE : (LS.get('relay', '') || RELAY_DEFAULT),
   pub:      LS.get('pub', false),
   files:    LS.get('files', {}),      // NFCにした名前 → fileid
   plays:    LS.get('plays', {}),      // id → {n, last}
@@ -70,7 +75,7 @@ const S = {
   lastPath: LS.get('lastPath', ''),
   fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
-  view:     LS.get('view', 'play'),   // 遊べる / ぜんぶ / 倉庫に無い
+  view:     LS.get('view', 'all'),   // 遊べる / ぜんぶ / 倉庫に無い
   more:     {},                       // 束ごとに、いくつまで出したか
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
@@ -300,8 +305,8 @@ function screenHome() {
                            : `<span class="systag">${esc(b.short)}</span>`}
           <span class="sysname">${esc(name)}</span>
         </div>
-        <div class="syscnt">倉庫に <b>${b.have}</b> / ${b.all} 本${
-          b.got ? `<span class="sub"> ・取り寄せ済み ${b.got}</span>` : ''}</div>
+        <div class="syscnt">倉庫 <b>${b.have}</b> 本${
+          b.got ? ` ・<span style="color:var(--ok)">遊べる ${b.got}</span>` : ''}</div>
       </button>`).join('')}
   </div>
   <div class="sub" style="margin-top:14px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
@@ -478,7 +483,8 @@ async function screenPick(folderid) {
 function shelfList() {
   let list = S.items.slice();
   /* 3つの見方。遊べる＝倉庫にある。倉庫に無いものは遊べないので分けて置く。 */
-  if (S.view === 'play') list = list.filter(hasAll);
+  if (S.view === 'play') list = list.filter(gotIt);
+  else if (S.view === 'all') list = list.filter(hasAll);
   else if (S.view === 'none') list = list.filter(i => !hasAll(i));
   if (!S.tools) list = list.filter(g => g.kind === 'game');   // 道具ディスクは既定で伏せる
   if (S.sys) list = list.filter(g => g.system === S.sys);
@@ -516,15 +522,18 @@ function screenLib(sys) {
      いま見ている機種の中で数える（機種を選んで入っているので）。 */
   const inSys = S.items.filter(i => i.kind === 'game' && (!S.sys || i.system === S.sys));
   const nAll = inSys.length;
-  const nPlay = inSys.filter(hasAll).length;
-  const nNone = nAll - nPlay;
+  /* **遊べる＝棚にある＝取り寄せ済み。** すぐ遊べるもの。
+     **倉庫＝pCloud にある。** 遊ぶには取り寄せが要る（取り寄せ済みも含む蔵書）。 */
+  const nPlay = inSys.filter(gotIt).length;
+  const nWare = inSys.filter(hasAll).length;
+  const nNone = nAll - nWare;
   const missing = nNone;
   main().innerHTML = `
   <div class="bar"><div class="row1">
     <div class="seg">
       <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
-      <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>ぜんぶ (${nAll})</button>
-      <button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>
+      <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>倉庫 (${nWare})</button>
+      ${nNone ? `<button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>` : ''}
     </div>
     <input class="search" id="q" placeholder="題名で探す" value="${esc(S.q)}"
       autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -736,9 +745,9 @@ function play(id) {
   $('#pname').textContent = g.name;
   /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
-    ? './play98.html?id=' + encodeURIComponent(id) + '&v=26'
+    ? './play98.html?id=' + encodeURIComponent(id) + '&v=27'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=10';
+      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=11';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
