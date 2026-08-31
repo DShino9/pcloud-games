@@ -353,6 +353,14 @@ async function moveFile(fileid, tofolderid, opt = {}) {
   return (j.metadata && j.metadata.fileid) || fileid;
 }
 
+/* フォルダごと動かす。棚から下ろしたものを、周りのものと**紐づけたまま**
+   一箇所へ寄せるのに要る（中身を1つずつ動かすと、途中で落ちたとき散らばる）。 */
+async function moveFolder(folderid, tofolderid, opt = {}) {
+  const j = await api('renamefolder', { folderid, tofolderid },
+                      { host: opt.host, auth: opt.auth });
+  return (j.metadata && j.metadata.folderid) || folderid;
+}
+
 async function deleteFile(fileid, opt = {}) {
   await api('deletefile', { fileid }, { host: opt.host, auth: opt.auth });
   return true;
@@ -407,7 +415,7 @@ root.PCloud = {
   HOSTS, nfc, sha1hex, PCloudError,
   store, logger, api, login,
   relayUrl, relayAlive, indexFolder, shelfCache, download, fetchFile,
-  ensureFolder, uploadFile, deleteFile, moveFile, readFile, scanFolder,
+  ensureFolder, uploadFile, deleteFile, moveFile, moveFolder, readFile, scanFolder,
 };
 
 })(window);

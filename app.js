@@ -787,6 +787,9 @@ function play(id) {
      コアまで届かない（PC-98 の「どれかキーを押してください」で止まる）。 */
   const fr = $('#pframe');
   fr.onload = () => { try { fr.contentWindow.focus(); } catch (e) {} };
+  /* 遊び始めたら、その本を棚に取り寄せる（本体・箱絵・メモを1つのフォルダに）。
+     裏でやる。遊ぶのを待たせない。 */
+  stock(g).catch(e => log.note('棚に取り寄せられない: ' + e.message));
   /* 遊んでいるあいだ上げ続ける。落ちても直前までは棚に残る。 */
   clearInterval(RUNTIMER);
   RUNTIMER = setInterval(() => pushRuns(), 20000);
@@ -869,7 +872,7 @@ function screenSet() {
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
     </div>
     <button class="hbtn" id="fdclr">ディスクの組み合わせを忘れる</button>
-    <button class="hbtn" id="clr" style="margin-left:6px">棚から下ろす</button>
+    <button class="hbtn" id="clr" style="margin-left:6px">端末の控えを全部消す</button>
     <button class="hbtn" id="out" style="margin-left:6px">つなぎを切る</button>
     <div class="msg" id="m"></div>
     <div class="note">
@@ -1135,18 +1138,28 @@ async function doDelete() {
 }
 
 /* 棚から下ろすだけ。倉庫には触らない。 */
+/* 棚から下ろす。**周りのものと紐づけたまま、書庫へ一箇所に寄せる。**
+   端末に残っている分も消す（棚に無いものが端末にだけ残っていると分からなくなる）。
+   倉庫の元の置き場（`/EMU/ROM` など）には触らない —— 棚へは写しただけなので。 */
 async function doUncache() {
   const items = picked();
-  let n = 0;
+  if (!items.length) return;
+  if (!confirm(`${items.length} 本を棚から下ろし、周りのもの（箱絵・メモ・セーブ）ごと`
+    + `書庫へ移します。\n\n${items.slice(0, 5).map(i => i.name).join('、')}`
+    + `${items.length > 5 ? ' ほか' : ''}\n\n倉庫の元の置き場はそのままです。`)) return;
+  let moved = 0, dropped = 0;
   for (const i of items) {
-    if (!i.pc98) { if (await removeCached(i.id)) n++; continue; }
+    prog(`${i.name} を書庫へ…`);
+    try { if (await archive(i, prog)) moved++; }
+    catch (e) { log.note('書庫へ移せない: ' + i.name + ' — ' + e.message); }
+    if (!i.pc98) { if (await removeCached(i.id)) dropped++; continue; }
     for (const f of i.files) {
       const fid = S.files[P.nfc(f)];
-      if (fid && await removeCached(String(fid))) n++;
+      if (fid && await removeCached(String(fid))) dropped++;
     }
   }
   await refreshHere();
-  prog(`棚から ${n} 件下ろしました（倉庫はそのまま）`);
+  prog(`書庫へ ${moved} 本／端末からも ${dropped} 件消しました（倉庫はそのまま）`);
   screenEdit();
 }
 
@@ -2237,3 +2250,102 @@ async function runHunt() {
   }
 }
 addEventListener('visibilitychange', () => { if (!document.hidden) runHunt(); });
+
+/* ============ 棚に取り寄せる／棚から下ろす ============ */
+/* **棚は倉庫の中の実体**。本ごとにフォルダを作り、その本にまつわるものを
+   まとめて入れる。散らばらせない。
+
+     /ゲーム棚/棚/<本の名前>/
+         <ROM>        倉庫から**写す**（倉庫の整理は崩さない）
+         箱絵.jpg
+         メモ.json     ディスクの組み合わせ・機種・ジャンル
+         セーブ/       書き換わったディスク（PC-98 のセーブはここに入る）
+
+   下ろすときは、**フォルダごと** `/ゲーム棚/書庫/` へ動かす。
+   1つずつ動かすと、途中で落ちたときに散らばる。 */
+
+const SAFE = n => String(n).replace(/[\/\\:*?"<>|]/g, '_').slice(0, 90) || '名無し';
+
+async function shelfRoot(name) {
+  const base = await P.ensureFolder(S.rootId, name, { host: S.host, auth: S.auth });
+  return base;
+}
+
+/* 棚に取り寄せる。**遊べるようにするだけでなく、周りのものも揃える。** */
+async function stock(item, say = () => {}) {
+  if (!S.auth || !S.rootId) return null;
+  const shelf = await shelfRoot('棚');
+  const dir = await P.ensureFolder(shelf, SAFE(item.name), { host: S.host, auth: S.auth });
+
+  /* ① 本体を写す。**移さない。** 倉庫の整理を崩さないため。 */
+  for (const f of item.files) {
+    const fid = S.files[P.nfc(f)];
+    if (!fid) continue;
+    say(`${f} を棚へ…`);
+    try { await P.moveFile(fid, dir, { host: S.host, auth: S.auth, copy: true }); }
+    catch (e) { log.note('棚へ写せない: ' + f + ' — ' + e.message); }
+  }
+
+  /* ② 箱絵。手で入れた絵があればそれ、無ければ棚の絵を取り直して置く。 */
+  try {
+    let blob = null;
+    const r = await MYCOV.get(item.id);
+    if (r) blob = await r.blob();
+    else if (item.cover) blob = await (await fetch(item.cover)).blob();
+    if (blob) {
+      say('箱絵を置いています…');
+      await P.uploadFile(dir, '箱絵.jpg', blob, { host: S.host, auth: S.auth });
+    }
+  } catch (e) { log.note('箱絵を置けない: ' + e.message); }
+
+  /* ③ メモ。ディスクの組み合わせは本ごとに端末が覚えているので、ここに書き出す。 */
+  try {
+    const memo = {
+      題名: item.name, 機種: item.system, ジャンル: item.genre || '',
+      ファイル: item.files,
+      ディスクの組み合わせ: LS.get('fdpick', {})[item.id] || null,
+      置いた: new Date().toISOString(),
+    };
+    await P.uploadFile(dir, 'メモ.json',
+      new Blob([JSON.stringify(memo, null, 1)], { type: 'application/json' }),
+      { host: S.host, auth: S.auth });
+  } catch (e) { log.note('メモを置けない: ' + e.message); }
+
+  /* ④ セーブ。PC-98 はセーブがディスクそのものに書かれるので、
+     端末に残っている書き換わったディスクを上げる。 */
+  try {
+    const here = await ROMS.list();
+    const mine = Object.keys(here).filter(k =>
+      k.startsWith('blank-' + item.id + '-') || k.startsWith('cfg-' + item.id)
+      || item.files.some(f => String(S.files[P.nfc(f)]) === k));
+    if (mine.length) {
+      const sdir = await P.ensureFolder(dir, 'セーブ', { host: S.host, auth: S.auth });
+      for (const k of mine) {
+        const res = await ROMS.get(k);
+        if (!res) continue;
+        const nm = decodeURIComponent(res.headers.get('x-name') || k);
+        say(`セーブ ${nm} を置いています…`);
+        await P.uploadFile(sdir, nm, await res.blob(), { host: S.host, auth: S.auth });
+      }
+    }
+  } catch (e) { log.note('セーブを置けない: ' + e.message); }
+
+  log.note(`棚に取り寄せた: ${item.name}`);
+  return dir;
+}
+
+/* 棚から下ろす。**周りのものごと**書庫へ。 */
+async function archive(item, say = () => {}) {
+  if (!S.auth || !S.rootId) return false;
+  const shelf = await shelfRoot('棚');
+  const store = await shelfRoot('書庫');
+  const r = await call('listfolder', { folderid: shelf });
+  const want = P.nfc(SAFE(item.name));
+  const dir = (r.metadata.contents || [])
+    .find(c => c.isfolder && P.nfc(c.name) === want);
+  if (!dir) return false;
+  say('書庫へ移しています…');
+  await P.moveFolder(dir.folderid, store, { host: S.host, auth: S.auth });
+  log.note(`棚から下ろした: ${item.name} → 書庫`);
+  return true;
+}
