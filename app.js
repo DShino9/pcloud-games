@@ -203,7 +203,7 @@ async function scanAll(say = () => {}) {
       /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
       seen.push(...r.files.filter(f => sysOf(f.name).length
-        || /\.(rar|zip|lzh)$/i.test(f.name)));   // 圧縮のままの本も拾う（PC-98）
+        || /\.(rar|zip|lzh|7z)$/i.test(f.name)));   // 圧縮の本も拾う（PC-98・GB・MSX）
       /* **倉庫の中の絵を拾う。** 本と同じフォルダに箱絵が置いてある。
          外を探し回る前に、まずこれを使う（本人「絵も教えたのに」）。 */
       for (const f of r.files) {
@@ -290,11 +290,24 @@ function learnFrom(map, seen = []) {
        1本＝1 rar/zip/lzh が数千本ある。素のディスクしか拾わないと丸ごと見えない
        （PC-98 が 595 本しか無かったもう一つの正体）。
        まず一覧に出す。遊ぶには「起こす」が要るので、印（arc）を付けて分ける。 */
-    if (/\.(rar|zip|lzh)$/i.test(name)) {
-      if (!/PC-?98/i.test(f.path || '')) continue;   // まずは PC-98 の区画だけ
-      const akey = (f.path || '') + '|' + name;
+    if (/\.(rar|zip|lzh|7z)$/i.test(name)) {
+      const pp = f.path || '';
+      /* **zip のままでも遊べる区画。** EmulatorJS は zip を直接読めるので、
+         1 zip＝1本のセット（ゲームボーイ 5,769 本・MSX）は展開せずそのまま本にする。
+         中身が見えない区画（アーケード＝MAME など）は出さない。 */
+      const zarea = /\/任天堂\/ゲームボーイ\//.test(pp + '/') ? ['ゲームボーイ', 'GB', 'gambatte']
+        : /\/パソコン\/MSX\//.test(pp + '/') ? ['MSX', 'MSX', 'bluemsx'] : null;
+      if (zarea && /\.(zip|7z)$/i.test(name)) {
+        const zkey = pp + '|' + name;
+        group.set(zkey, { system: zarea[0], short: zarea[1], core: zarea[2],
+                          files: [name], paths: [pp], fids: [f.fileid],
+                          base: name.replace(/\.[^.]+$/, '') });
+        continue;
+      }
+      if (!/PC-?98/i.test(pp)) continue;   // PC-98 の圧縮は「起こす」対象
+      const akey = pp + '|' + name;
       group.set(akey, { system: 'PC-98', short: '98', core: null,
-                        files: [name], paths: [f.path || ''], fids: [f.fileid],
+                        files: [name], paths: [pp], fids: [f.fileid],
                         base: name.replace(/\.[^.]+$/, ''), arc: true });
       continue;
     }
@@ -708,6 +721,10 @@ function grouped(list) {
     out.push(vs.length === 1 ? chosen
       : (S.gmap[key] = vs, { ...chosen,
           name: baseName(chosen.name) || chosen.name,
+          /* **絵とジャンルは束で引き継ぐ。** 代表が絵なしの版に切り替わると
+             箱絵ごと消えていた（ファミコンの札が字だけになった正体）。 */
+          cover: chosen.cover || (vs.find(v => v.cover) || {}).cover || null,
+          genre: chosen.genre || (vs.find(v => v.genre) || {}).genre || '',
           gkey: key, vers: vs,
           /* 棚に入っていれば、どの版かを添える（決まっているので数は出さない）。 */
           settled: !!onShelf,
