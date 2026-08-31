@@ -67,6 +67,7 @@ const S = {
   plays:    LS.get('plays', {}),      // id → {n, last}
   sys:      LS.get('sys', ''),
   sort:     LS.get('sort', 'name'),
+  lastPath: LS.get('lastPath', ''),
   fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
   onlyHere: LS.get('onlyHere', false),
@@ -356,13 +357,33 @@ function screenLogin(keep) {
 /* ============ フォルダを選ぶ ============ */
 async function screenPick(folderid) {
   $('#title').textContent = '倉庫のフォルダを選ぶ';
+  /* **つないでいないと倉庫は見られない。** 先に断る（黙って待たせない）。 */
+  if (!S.auth) {
+    main().innerHTML = `<div class="card" style="max-width:560px">
+      <div class="msg err">まだ pCloud につないでいません。</div>
+      <button class="hbtn" id="back">← 戻る</button></div>`;
+    $('#back').onclick = () => go('#/lib');
+    return;
+  }
   const t0 = Date.now();
   main().innerHTML = `<div class="card" style="max-width:560px">
-    <p id="wait">見ています…</p></div>`;
+    <p id="wait">見ています…</p>
+    <div class="sub" id="slow" style="display:none;margin-top:8px">
+      返事がありません。つながりが細いか、pCloud が混んでいます。</div>
+    <button class="hbtn" id="again0" style="display:none;margin-top:8px">もう一度</button>
+  </div>`;
+  $('#again0').onclick = () => screenPlaces(folderid);
   const tick = setInterval(() => {
     const w = $('#wait');
     if (w) w.textContent = `見ています… ${Math.round((Date.now() - t0) / 1000)} 秒`;
+    /* 8秒で「やり直す」を出す。待ち切るまで何もできないのは不親切。 */
+    if (Date.now() - t0 > 8000) {
+      const sl = $('#slow'), ag = $('#again0');
+      if (sl) sl.style.display = '';
+      if (ag) ag.style.display = '';
+    }
   }, 1000);
+  log.note(`倉庫を開く: folderid=${folderid}`);
   let r;
   try { r = await call('listfolder', { folderid }, 60000); }
   catch (e) {
@@ -1163,6 +1184,22 @@ function screenLog() {
   await loadMyCovers();
   await refreshHere();
   render();
+  /* **一度だけ、よくある置き場を自分で探す。** 見つかれば見に行って棚を埋める。
+     本人に登録させない（「場所も分かってるんだから読んどきなよ」）。 */
+  if (S.auth && S.rootId && !LS.get('autoDone', false)) {
+    LS.set('autoDone', true);
+    const found = await autoPlaces(t => toast(t));
+    if (found.length) {
+      toast(`置き場を見つけました: ${found.join('・')}`);
+      try {
+        const r = await scanAll(t => toast(t));
+        toast(`${r.places} か所・${r.count} ファイル`
+          + (r.added ? `／${r.added} 本を新たに棚へ` : ''));
+        S.items = mergeCatalogs();
+        render();
+      } catch (e) { log.note('自動の走査に失敗: ' + e.message); }
+    }
+  }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
     /* **新しい版に入れ替わったら、一度だけ読み直す。**
@@ -1550,6 +1587,70 @@ async function screenGather(browse) {
   if (gc) gc.onclick = () => run(true);
 }
 
+/* **よくある置き場は、こちらから探しに行く。**
+   置き場が分かっているのに本人に登録させるのは、ただの手間。
+   道で直に聞けば1回で済む（`listfolder?path=…`）。
+   見つからない道は黙って飛ばす。 */
+const LIKELY = ['/EMU/ROM', '/EMU/BIOS', '/ROM', '/roms', '/Games', '/ゲーム棚'];
+
+async function autoPlaces(say = () => {}) {
+  const found = [];
+  for (const path of LIKELY) {
+    const have = [...S.roots, { id: S.rootId }].some(x => String(x.path || '') === path);
+    if (have) continue;
+    say(`${path} を見ています…`);
+    try {
+      const r = await call('listfolder', { path }, 30000);
+      const id = r.metadata.folderid;
+      if (String(id) === String(S.rootId)) continue;
+      if (S.roots.some(x => String(x.id) === String(id))) continue;
+      S.roots.push({ id, name: path, path });
+      found.push(path);
+      log.note(`置き場を見つけた: ${path} → folderid=${id}`);
+    } catch (e) { /* 無い道は飛ばす */ }
+  }
+  if (found.length) LS.set('roots', S.roots);
+  return found;
+}
+
+/* 道を直に打つ口。**降りて探させない。**
+   置き場が分かっているのに根から1階ずつ降りるのは遅いし、
+   根の一覧が重い倉庫では、そこで止まってしまう。 */
+function pathBox() {
+  return `
+    <div class="field" style="margin:10px 0">
+      <label>道が分かっているなら、そのまま打てます</label>
+      <div style="display:flex;gap:6px">
+        <input id="ppath" placeholder="/EMU/ROM" value="${esc(S.lastPath || '')}"
+          autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1">
+        <button class="hbtn" id="pgo">この道で足す</button>
+      </div>
+      <div class="msg" id="pmsg"></div>
+    </div>`;
+}
+
+function bindPathBox(after) {
+  const go2 = $('#pgo'), inp = $('#ppath');
+  if (!go2 || !inp) return;
+  go2.onclick = async () => {
+    const path = inp.value.trim();
+    if (!path.startsWith('/')) { $('#pmsg').textContent = '/ から始めてください（例 /EMU/ROM）'; return; }
+    S.lastPath = path; LS.set('lastPath', path);
+    go2.disabled = true; $('#pmsg').textContent = '見ています…';
+    try {
+      const r = await call('listfolder', { path }, 60000);
+      const id = r.metadata.folderid;
+      const nm = r.metadata.name || path.split('/').filter(Boolean).pop() || path;
+      log.note(`道で開いた: ${path} → folderid=${id}`);
+      after(id, nm);
+    } catch (e) {
+      log.note(`道で開けない: ${path} — ${e.message}`);
+      $('#pmsg').textContent = '開けません: ' + e.message;
+      go2.disabled = false;
+    }
+  };
+}
+
 /* ============ 見に行く場所 ============ */
 /* **ROM を棚のフォルダへ移させない。** `/EMU/ROM/…` のようにメーカー別で
    整理してある置き場を崩すのは筋が悪い。**その場所も見に行けば済む。**
@@ -1576,6 +1677,7 @@ async function screenPlaces(folderid) {
         </div>`).join('')}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+        <button class="hbtn" id="auto">よくある置き場を探す</button>
         <button class="hbtn" id="add">場所を足す</button>
         <button class="hbtn" id="scan2">いま見直す</button>
         <button class="hbtn" id="dupes">重複を片付ける</button>
@@ -1585,6 +1687,21 @@ async function screenPlaces(folderid) {
     </div>`;
     $('#back').onclick = () => go('#/set');
     $('#add').onclick = () => go('#/places/0');
+    $('#auto').onclick = async () => {
+      const m = $('#pm');
+      m.textContent = '探しています…';
+      const found = await autoPlaces(t => { m.textContent = t; });
+      if (!found.length) { m.textContent = 'よくある置き場は見つかりませんでした。「場所を足す」から選んでください。'; return; }
+      m.textContent = `見つけた: ${found.join('・')}。見に行きます…`;
+      try {
+        const r = await scanAll(t => { m.textContent = t; });
+        S.items = mergeCatalogs();
+        m.innerHTML = `${r.places} か所・${r.count} ファイル。`
+          + (r.added ? `台帳に無い本を <b>${r.added} 本</b>、棚に起こしました。` : '')
+          + '<br><span class="sub">' + r.report.map(esc).join('　／　') + '</span>';
+      } catch (e) { m.textContent = '見に行けません: ' + e.message; }
+      screenPlaces();
+    };
     $('#dupes').onclick = () => go('#/dupes');
     $('#scan2').onclick = async () => {
       const m = $('#pm');
@@ -1632,16 +1749,31 @@ async function screenPlaces(folderid) {
   try { r = await call('listfolder', { folderid }, 60000); }
   catch (e) {
     clearInterval(tick);
+    log.note(`倉庫を開けない: folderid=${folderid} — ${e.message}`);
     main().innerHTML = `<div class="card" style="max-width:560px">
       <div class="msg err">開けません: ${esc(e.message)}</div>
-      <div class="sub">つながりが細いか、pCloud が混んでいるのかもしれません。</div>
+      <div class="sub">つながりが細いか、pCloud が混んでいるのかもしれません。
+        設定 →「押した記録」に残しています。</div>
+      ${pathBox()}
       <button class="hbtn" id="again" style="margin-top:10px">もう一度</button>
       <button class="hbtn" id="back" style="margin-left:6px">← 戻る</button></div>`;
+    bindPathBox(async (id, nm) => {
+      if (!S.roots.some(x => String(x.id) === String(id)) && String(S.rootId) !== String(id)) {
+        S.roots.push({ id, name: nm }); LS.set('roots', S.roots);
+      }
+      $('#pmsg').textContent = '足しました。見に行きます…';
+      try { const r2 = await scanAll(t => { $('#pmsg').textContent = t; });
+        toast(`${r2.places} か所・${r2.count} ファイル`
+          + (r2.added ? `／${r2.added} 本を新たに棚へ` : '')); } catch (e) {}
+      S.items = mergeCatalogs();
+      go('#/places');
+    });
     $('#again').onclick = () => screenPlaces(folderid);
     $('#back').onclick = () => go('#/places');
     return;
   }
   clearInterval(tick);
+  log.note(`倉庫を開いた: folderid=${folderid} ${Math.round((Date.now() - t0) / 1000)}秒`);
   const md = r.metadata;
   const dirs = (md.contents || []).filter(c => c.isfolder)
     .sort((a, b) => collator.compare(a.name, b.name));
@@ -1650,7 +1782,8 @@ async function screenPlaces(folderid) {
   <div class="card" style="max-width:560px">
     <h2>場所を足す</h2>
     <p>ROM の入っているフォルダを選んでください。<b>中の入れ子は問いません</b>
-       （`/EMU/ROM` を選べば、その下のメーカー別のフォルダも全部見ます）。</p>
+       （<code>/EMU/ROM</code> を選べば、その下のメーカー別のフォルダも全部見ます）。</p>
+    ${pathBox()}
     <div style="font-size:13px;color:var(--dim);margin-bottom:10px">${esc(md.name || '/')}</div>
     <div class="rowlist">
       ${up ? `<button class="row" data-go="${md.parentfolderid}"><span class="nm">← 上へ</span></button>` : ''}
@@ -1664,21 +1797,26 @@ async function screenPlaces(folderid) {
   </div>`;
   $('#back').onclick = () => go('#/places');
   for (const b of main().querySelectorAll('[data-go]')) b.onclick = () => go('#/places/' + b.dataset.go);
-  $('#use2').onclick = async () => {
+  bindPathBox((id, nm) => addPlace(id, nm));
+  $('#use2').onclick = async () => addPlace(folderid, md.name || '/');
+  async function addPlace(folderid, nm) {
     if (S.roots.some(x => String(x.id) === String(folderid)) || String(S.rootId) === String(folderid)) {
-      $('#pm').textContent = 'その場所はもう入っています';
+      const m = $('#pmsg') || $('#pm');
+      if (m) m.textContent = 'その場所はもう入っています';
       return;
     }
-    S.roots.push({ id: folderid, name: md.name || '/' });
+    S.roots.push({ id: folderid, name: nm });
     LS.set('roots', S.roots);
-    $('#pm').textContent = '足しました。見に行きます…';
+    const m = $('#pmsg') || $('#pm');
+    if (m) m.textContent = '足しました。見に行きます…';
     try {
-      const r2 = await scanAll(t => { $('#pm').textContent = t; });
-      toast(`${r2.places} か所・${r2.count} ファイルを見ました`);
-    } catch (e) {}
+      const r2 = await scanAll(t => { if (m) m.textContent = t; });
+      toast(`${r2.places} か所・${r2.count} ファイル`
+        + (r2.added ? `／${r2.added} 本を新たに棚へ` : ''));
+    } catch (e) { if (m) m.textContent = '見に行けません: ' + e.message; }
     S.items = mergeCatalogs();
     go('#/places');
-  };
+  }
 }
 
 /* 調べた結果を端末に残す。**大きいので、入らなければ諦めて黙って続ける**
