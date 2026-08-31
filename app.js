@@ -971,8 +971,7 @@ function screenSet() {
       <div class="row"><span class="nm">棚にある分</span><span class="sub">${S.items.filter(gotIt).length} 本・すぐ遊べます</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
-      <button class="row" id="places"><span class="nm">倉庫の場所</span><span class="sub">${
-        1 + S.roots.length} か所・見直しもここ</span></button>
+      <button class="row" id="places"><span class="nm">棚と倉庫</span><span class="sub">棚の置き先と、見に行く場所 ${S.roots.length} か所</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
@@ -1895,22 +1894,36 @@ async function screenPlaces(folderid) {
   const browsing = folderid != null;
 
   if (!browsing) {
-    const places = [{ id: S.rootId, name: S.rootName || '（未選択）', main: true }, ...S.roots];
+    /* **棚と倉庫を同じ一覧に並べない。**
+       `/ゲーム棚` は倉庫の置き場ではなく**棚そのもの**（取り寄せ先）。
+       同じ表に混ぜたら「倉庫の場所が違う」と言われた。分けて出す。 */
     main().innerHTML = `
     <div class="card" style="max-width:640px">
-      <h2>倉庫の場所</h2>
-      <p>棚は<b>ここに挙げた場所ぜんぶ</b>を見て並べます。
-         ROM を1か所に集める必要はありません（整理したまま置いておけます）。<br>
-         <span class="sub">★ の場所が<b>上げ先</b>です。新しく上げるものと動きの記録はそこへ入ります。</span></p>
+      <h2>棚と倉庫</h2>
+
+      <h3>棚（取り寄せ先）</h3>
+      <p class="sub">遊ぶと決めた本が、周りのもの（箱絵・メモ・セーブ）ごとここに入ります。
+         下ろしたものは、この下の <code>書庫</code> へ移ります。</p>
       <div class="rowlist">
-        ${places.map((pl, i) => `<div class="row" style="align-items:center;gap:8px">
-          <span style="flex:0 0 16px;color:${pl.main ? 'var(--warn)' : 'var(--dim2)'}">${pl.main ? '★' : '・'}</span>
-          <span class="nm" style="text-align:left">${esc(pl.name)}
-            <span class="sub">${pl.main ? '上げ先' : '見に行くだけ'}</span></span>
-          ${pl.main ? '' : `<button class="hbtn sm" data-main="${i - 1}">上げ先にする</button>
-                            <button class="hbtn sm" data-off="${i - 1}">外す</button>`}
-        </div>`).join('')}
+        <div class="row">
+          <span class="nm" style="text-align:left">${esc(S.rootName || '（未選択）')}
+            <span class="sub">棚／書庫／記録の置き先</span></span>
+          <button class="hbtn sm" id="repick2">選び直す</button>
+        </div>
       </div>
+
+      <h3 style="margin-top:18px">倉庫の場所（見に行く所）</h3>
+      <p class="sub">棚は<b>ここに挙げた場所ぜんぶ</b>を見て並べます。
+         ROM を1か所に集める必要はありません（整理したまま置いておけます）。</p>
+      <div class="rowlist">
+        ${S.roots.length ? S.roots.map((pl, i) => `<div class="row">
+          <span class="nm" style="text-align:left">${esc(pl.name)}
+            <span class="sub">${esc(pl.path || '')}</span></span>
+          <button class="hbtn sm" data-off="${i}">外す</button>
+        </div>`).join('')
+        : '<div class="empty">まだ足していません。「よくある置き場を探す」から。</div>'}
+      </div>
+
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
         <button class="hbtn" id="auto">よくある置き場を探す</button>
         <button class="hbtn" id="add">場所を足す</button>
@@ -1922,6 +1935,7 @@ async function screenPlaces(folderid) {
     </div>`;
     $('#back').onclick = () => go('#/set');
     $('#add').onclick = () => go('#/places/0');
+    $('#repick2').onclick = () => go('#/pick/0');
     $('#auto').onclick = async () => {
       const m = $('#pm');
       m.textContent = '探しています…';
@@ -1948,19 +1962,6 @@ async function screenPlaces(folderid) {
           + '<br><span class="sub">' + r.report.join('　／　') + '</span>';
         m.innerHTML = S.lastScan;
       } catch (e) { m.textContent = '見られません: ' + e.message; }
-    };
-    /* 上げ先の付け替え。**場所の一覧の中で済ませる。**
-       別画面（「フォルダを選び直す」）に分けていたので、同じことを指す入口が
-       2つになって分かりにくかった。 */
-    for (const b of main().querySelectorAll('[data-main]')) b.onclick = () => {
-      const i = +b.dataset.main;
-      const next = S.roots[i];
-      const prev = { id: S.rootId, name: S.rootName };
-      S.roots.splice(i, 1);
-      if (prev.id) S.roots.push(prev);
-      S.rootId = next.id; S.rootName = next.name;
-      LS.set('rootId', S.rootId); LS.set('rootName', S.rootName); LS.set('roots', S.roots);
-      screenPlaces();
     };
     for (const b of main().querySelectorAll('[data-off]')) b.onclick = () => {
       S.roots.splice(+b.dataset.off, 1);
