@@ -1923,7 +1923,7 @@ const EXT_SYS = [
   /* **PC-98 の像は拡張子が多い。** NP2kai が読むのは
      FDI・FDD・HDM・TFD・XDF・DUP・2HD・D88・D98・88D・NFD・HDI・THD・NHD・VHD・SLH・HDD・DIP。
      `.d88` だけ見ていると取りこぼす（「ほぼ全てあるはず」の正体はこれ）。 */
-  [/\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$/i,
+  [/\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip|dcp|dcu|dd6|dd9|hd4|hd5|hdb|fim|flp)$/i,
                                     'PC-98',          '98',   null],
   [/\.(dsk|mx1|mx2|cas)$/i,        'MSX',            'MSX',  'bluemsx'],
   /* PSP と PS1 は像の形が同じ（.iso）で見分けられない。棚には出さない。 */

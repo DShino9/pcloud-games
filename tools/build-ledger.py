@@ -34,7 +34,7 @@ EXT_SYS = [
     (r"\.(ws|wsc)$", "ワンダースワン", "WS", "mednafen_wswan"),
     (r"\.(ngp|ngc)$", "ネオジオポケット", "NGP", "mednafen_ngp"),
     (r"\.vb$", "バーチャルボーイ", "VB", "beetle_vb"),
-    (r"\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$",
+    (r"\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip|dcp|dcu|dd6|dd9|hd4|hd5|hdb|fim|flp)$",
      "PC-98", "98", None),
     (r"\.(dsk|mx1|mx2|cas)$", "MSX", "MSX", "bluemsx"),
 ]

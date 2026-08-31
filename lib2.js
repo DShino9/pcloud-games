@@ -398,7 +398,7 @@ function l2bindCells() {
    rar/zip を libarchive の wasm でその場で開き、**素のディスクだけ**
    `/ゲーム棚/棚/<題名>/` に置く。倉庫の圧縮はそのまま（整理を崩さない）。
    lzh はこの部品が読めないので、いまは断りを出す。 */
-const DISK_EXT = /\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$/i;
+const DISK_EXT = /\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip|dcp|dcu|dd6|dd9|hd4|hd5|hdb|fim|flp)$/i;
 async function unpackStock(g, say = () => {}) {
   if (/\.lzh$/i.test(g.files[0])) throw new Error('lzh はまだ起こせません（rar/zip はできます）');
   say('圧縮を取り寄せています…');

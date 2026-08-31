@@ -24,7 +24,7 @@ TOKEN = Path.home() / ".config/pcloud-games/token"
 LEDGER = BASE / "covers-found" / "unpacked.json"
 CTX = ssl.create_default_context()
 NFC = lambda s: unicodedata.normalize("NFC", s or "")
-DISK = re.compile(r"\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$", re.I)
+DISK = re.compile(r"\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip|dcp|dcu|dd6|dd9|hd4|hd5|hdb|fim|flp)$", re.I)
 FMT = re.compile(r"\s*[([]\s*(FDI|FDD|HDM|HDI|DCP|DCU|DIP|D88|2HD|NFD|XDF|TFD|VHD|SLH|HDD|THD|NHD|88D|D98|FILES?)[^)\]]*[)\]]\s*$", re.I)
 SAFE = lambda n: re.sub(r'[\\/:*?"<>|]', "_", n).strip()[:90] or "名無し"
 
@@ -114,10 +114,12 @@ def main():
     limit = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 0
     emu = json.load(open(BASE / "emu-files.json"))["files"]
     led = json.loads(LEDGER.read_text(encoding="utf-8")) if LEDGER.exists() else {}
+    retry = "--retry" in sys.argv     # 駄目だった分をもう一度（拡張子を増やした後など）
     targets = [f for f in emu
                if "/PC98 Disk/" in f["path"] and "PC98 Collection" not in f["path"]
                and re.search(r"\.(rar|zip|lzh)$", f["name"], re.I)
-               and str(f["fileid"]) not in led]
+               and (str(f["fileid"]) not in led
+                    or (retry and led[str(f["fileid"])].get("status") == "fail"))]
     if limit:
         targets = targets[:limit]
     print(f"起こす対象: {len(targets)} 本（済 {len(led)}）", flush=True)
