@@ -282,6 +282,10 @@ function learnFrom(map, seen = []) {
     const name = f.name;
     const full = (f.path || '') + '/' + name;
     if (known.has(name) || have.has(full)) continue;
+    /* **複製の区画は本にしない。** `/PC-98/Collection/` はファミコン全集ごと入った
+       資料置き場、`PC98 Disk/PC98 Collection/` はメーカー別フォルダ一式の複製。
+       数えると同じ本が倍になる（FC 3380→6387 になって気づいた）。 */
+    if (/\/(PC-?98\/Collection|PC98 Collection)\//i.test(f.path || '')) continue;
     /* **圧縮のままの本。** PC-98 のメーカー別フォルダ（PC98 Disk/<メーカー>/）は
        1本＝1 rar/zip/lzh が数千本ある。素のディスクしか拾わないと丸ごと見えない
        （PC-98 が 595 本しか無かったもう一つの正体）。
