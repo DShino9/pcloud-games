@@ -1,0 +1,8 @@
+機種のロゴの出どころ。ウィキメディアの共有置き場（Commons）から。
+白抜きに直してあるので、元の色は残っていない。
+FC	Family Computer logo.svg	https://commons.wikimedia.org/wiki/File:Family%20Computer%20logo.svg
+SFC	Nintendo Super Famicom logo.svg	https://commons.wikimedia.org/wiki/File:Nintendo%20Super%20Famicom%20logo.svg
+N64	Nintendo 64 wordmark.svg	https://commons.wikimedia.org/wiki/File:Nintendo%2064%20wordmark.svg
+DS	Nintendo DS Logo.svg	https://commons.wikimedia.org/wiki/File:Nintendo%20DS%20Logo.svg
+PSP	PSP Logo.svg	https://commons.wikimedia.org/wiki/File:PSP%20Logo.svg
+98	PC9800 logo 1982.svg	https://commons.wikimedia.org/wiki/File:PC9800%20logo%201982.svg

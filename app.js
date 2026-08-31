@@ -18,6 +18,8 @@ const size = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'MB' : Math.max(1, Math.roun
 const LS  = P.store('pg');
 const log = P.logger(LS);
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
+/* ロゴを持っている機種。持っていないものは字の札のまま出す。 */
+const LOGOS = { FC: 1, SFC: 1, N64: 1, DS: 1, PSP: 1, '98': 1 };
 
 let toastTimer = null;
 function toast(msg, ms) {
@@ -342,7 +344,11 @@ function cellHtml(g) {
                       : `<div class="ph">${esc(nm)}</div>`;
   return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${has ? '' : ' data-no="1"'}>
     <div class="cov">${cov}
-      <span class="tag" data-s="${esc(g.short)}">${esc(g.short)}${g.kind === 'tool' ? ' 道具' : g.kind === 'save' ? ' セーブ' : ''}</span>
+      <span class="tag${LOGOS[g.short] ? ' logo' : ''}" data-s="${esc(g.short)}">${
+        LOGOS[g.short] ? `<img src="logos/${esc(g.short)}.png" alt="${esc(g.short)}"
+          onerror="this.remove();this.parentNode.classList.remove('logo')">` : ''
+      }<span>${esc(g.short)}</span>${g.kind === 'tool' ? '<span style="display:inline">道具</span>'
+        : g.kind === 'save' ? '<span style="display:inline">セーブ</span>' : ''}</span>
       ${S.here[g.id] ? '<span class="off">●</span>' : ''}
       ${has ? '' : '<span class="no">未アップ</span>'}
     </div>
@@ -885,14 +891,14 @@ function screenLog() {
 (async function start() {
   $('#hcell').textContent = { s: '小', m: '中', l: '大' }[S.cell] || '中';
   try {
-    S.cat = await (await fetch('./games.json?v=1', { cache: 'no-cache' })).json();
+    S.cat = await (await fetch('./games.json?v=20260831', { cache: 'no-cache' })).json();
   } catch (e) {
     main().innerHTML = '<div class="card"><h2>台帳が読めません</h2>' +
       '<div class="msg err">games.json を取ってこられませんでした</div></div>';
     return;
   }
   /* PC-98 の台帳は無くても棚は開く（コアを組んでいない環境もある）。 */
-  try { S.cat98 = await (await fetch('./pc98.json?v=1', { cache: 'no-cache' })).json(); }
+  try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
   await refreshHere();

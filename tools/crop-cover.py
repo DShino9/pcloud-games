@@ -50,7 +50,7 @@ def box_of(im):
 
     best = None
     # しきい値は1つに決めきれない（白い机・木目・黒い布で最適が違う）。
-    # 何通りか試して、**いちばん「箱らしい」塊**を採る。
+    # 何通りか試して、いちばん「箱らしい」塊を採る。
     for q in (55, 70, 82):
         thr = max(36, float(np.percentile(d, q)))
         m = d > thr
@@ -63,18 +63,31 @@ def box_of(im):
         if not cnt:
             continue
         sizes = ndimage.sum(m, lab, range(1, cnt + 1))
-        i = int(np.argmax(sizes)) + 1
-        ys, xs = np.where(lab == i)
-        y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
-        aw, ah = x1 - x0 + 1, y1 - y0 + 1
-        if aw < w * 0.15 or ah < h * 0.15:
-            continue
-        # 箱は四角い。囲みの中がどれだけ埋まっているかで良し悪しを見る。
-        fill = sizes[i - 1] / (aw * ah)
-        area = (aw * ah) / (w * h)
-        sc = fill * (0.35 + area)              # 埋まっていて、大きいものを好む
-        if not best or sc > best[0]:
-            best = (sc, x0, y0, x1, y1)
+        # **いちばん大きい塊が箱とは限らない。** 売り買いの写真は、
+        # 箱・ディスク・説明書を机に広げて撮ってあることが多い。
+        # 全部が一続きになると「机の上ぜんぶ」を切ってしまう（最初はそうなった）。
+        # 大きい順に幾つか見て、**四角くて・大きくて・色が濃い**ものを箱と見る。
+        for i in np.argsort(sizes)[::-1][:6] + 1:
+            i = int(i)
+            ys, xs = np.where(lab == i)
+            y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
+            aw, ah = x1 - x0 + 1, y1 - y0 + 1
+            area = (aw * ah) / (w * h)
+            if area < 0.07 or aw < w * 0.12 or ah < h * 0.12:
+                continue
+            ar = aw / ah
+            if not 0.45 <= ar <= 2.1:
+                continue
+            fill = sizes[i - 1] / (aw * ah)      # 囲みの中がどれだけ埋まっているか
+            if fill < 0.55:
+                continue
+            # 箱は刷り物なので色が濃い。説明書（白）やディスク（黒）と分かれる。
+            sub = a[y0:y1 + 1, x0:x1 + 1].astype(np.float32)
+            mx = sub.max(axis=2); mn = sub.min(axis=2)
+            sat = float(np.mean((mx - mn) / np.maximum(mx, 1)))
+            sc = (fill ** 1.5) * (0.30 + area) * (0.45 + sat)
+            if not best or sc > best[0]:
+                best = (sc, x0, y0, x1, y1)
 
     if not best:
         return None
