@@ -732,16 +732,13 @@ function screenSet() {
     <h2>設定</h2>
     <div class="rowlist" style="margin-bottom:14px">
       <div class="row"><span class="nm">pCloud</span><span class="sub">${S.auth ? esc(S.email) : '未接続'}</span></div>
-      <div class="row"><span class="nm">倉庫のフォルダ</span><span class="sub">${esc(S.rootName || '未選択')}</span></div>
+
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が倉庫にある</span></div>
       <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
-      <button class="row" id="edit"><span class="nm">Mac から上げる</span><span class="sub">手元のファイルを上げる・倉庫から下げる</span></button>
-      <button class="row" id="places"><span class="nm">見に行く場所</span><span class="sub">${
-        1 + S.roots.length} か所（倉庫のフォルダ＋足した場所）</span></button>
-      <button class="row" id="rescan"><span class="nm">倉庫を見直す</span><span class="sub">倉庫を見直して棚に並べ直す</span></button>
-      <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
+      <button class="row" id="places"><span class="nm">倉庫の場所</span><span class="sub">${
+        1 + S.roots.length} か所・見直しもここ</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
@@ -766,21 +763,6 @@ function screenSet() {
   $('#fixcov').onclick = () => go('#/covers');
   $('#gather').onclick = () => go('#/gather');
   $('#places').onclick = () => go('#/places');
-  $('#edit').onclick   = () => go('#/edit');
-  $('#repick').onclick = () => go('#/pick/0');
-  $('#rescan').onclick = async () => {
-    const m = $('#m');
-    if (!S.rootId) { m.textContent = '先にフォルダを選んでください'; return; }
-    m.textContent = '見ています…';
-    try {
-      const r = await scanAll(t => { m.textContent = t; });
-      toast(`${r.places} か所・${r.count} ファイル`
-        + (r.added ? `／${r.added} 本を新たに棚へ` : ''));
-      S.items = mergeCatalogs();
-      screenSet();
-    }
-    catch (e) { m.textContent = e.message; m.className = 'msg err'; }
-  };
   $('#clr').onclick = async () => {
     await ROMS.clear(); await refreshHere(); toast('消しました'); screenSet();
   };
@@ -1449,35 +1431,51 @@ async function screenPlaces(folderid) {
     const places = [{ id: S.rootId, name: S.rootName || '（未選択）', main: true }, ...S.roots];
     main().innerHTML = `
     <div class="card" style="max-width:640px">
-      <h2>見に行く場所</h2>
-      <p>棚は<b>倉庫のここに挙げた場所ぜんぶ</b>を見て、台帳の名前と突き合わせます。<br>
-         ROM を1か所に集める必要はありません。<b>整理したまま置いておけます。</b><br>
-         <span class="sub">上げ先と記録の置き先は、いちばん上の「倉庫のフォルダ」です。</span></p>
+      <h2>倉庫の場所</h2>
+      <p>棚は<b>ここに挙げた場所ぜんぶ</b>を見て並べます。
+         ROM を1か所に集める必要はありません（整理したまま置いておけます）。<br>
+         <span class="sub">★ の場所が<b>上げ先</b>です。新しく上げるものと動きの記録はそこへ入ります。</span></p>
       <div class="rowlist">
-        ${places.map((pl, i) => `<div class="row">
+        ${places.map((pl, i) => `<div class="row" style="align-items:center;gap:8px">
+          <span style="flex:0 0 16px;color:${pl.main ? 'var(--warn)' : 'var(--dim2)'}">${pl.main ? '★' : '・'}</span>
           <span class="nm" style="text-align:left">${esc(pl.name)}
-            <span class="sub">${pl.main ? '倉庫のフォルダ（上げ先）' : '足した場所'}</span></span>
-          ${pl.main ? '<button class="hbtn sm" id="repick2">選び直す</button>'
-                    : `<button class="hbtn sm" data-off="${i - 1}">外す</button>`}
+            <span class="sub">${pl.main ? '上げ先' : '見に行くだけ'}</span></span>
+          ${pl.main ? '' : `<button class="hbtn sm" data-main="${i - 1}">上げ先にする</button>
+                            <button class="hbtn sm" data-off="${i - 1}">外す</button>`}
         </div>`).join('')}
       </div>
-      <button class="hbtn" id="add" style="margin-top:12px">場所を足す</button>
-      <button class="hbtn" id="scan2" style="margin-left:6px">いま見直す</button>
-      <button class="hbtn" id="back" style="margin-left:6px">← 設定へ</button>
-      <div class="msg" id="pm"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+        <button class="hbtn" id="add">場所を足す</button>
+        <button class="hbtn" id="scan2">いま見直す</button>
+        <button class="hbtn" id="back">← 設定へ</button>
+      </div>
+      <div class="msg" id="pm">${S.lastScan ? S.lastScan : ''}</div>
     </div>`;
     $('#back').onclick = () => go('#/set');
     $('#add').onclick = () => go('#/places/0');
-    $('#repick2').onclick = () => go('#/pick/0');
     $('#scan2').onclick = async () => {
       const m = $('#pm');
       try {
         const r = await scanAll(t => { m.textContent = t; });
         S.items = mergeCatalogs();
-        m.innerHTML = `${r.places} か所・${r.count} ファイル。`
+        S.lastScan = `${r.places} か所・${r.count} ファイル。`
           + (r.added ? `台帳に無い本を <b>${r.added} 本</b>、棚に起こしました。` : '台帳に無い本はありませんでした。')
           + '<br><span class="sub">' + r.report.map(esc).join('　／　') + '</span>';
+        m.innerHTML = S.lastScan;
       } catch (e) { m.textContent = '見られません: ' + e.message; }
+    };
+    /* 上げ先の付け替え。**場所の一覧の中で済ませる。**
+       別画面（「フォルダを選び直す」）に分けていたので、同じことを指す入口が
+       2つになって分かりにくかった。 */
+    for (const b of main().querySelectorAll('[data-main]')) b.onclick = () => {
+      const i = +b.dataset.main;
+      const next = S.roots[i];
+      const prev = { id: S.rootId, name: S.rootName };
+      S.roots.splice(i, 1);
+      if (prev.id) S.roots.push(prev);
+      S.rootId = next.id; S.rootName = next.name;
+      LS.set('rootId', S.rootId); LS.set('rootName', S.rootName); LS.set('roots', S.roots);
+      screenPlaces();
     };
     for (const b of main().querySelectorAll('[data-off]')) b.onclick = () => {
       S.roots.splice(+b.dataset.off, 1);
