@@ -2792,7 +2792,7 @@ async function runHunt() {
       const am = (LS.get('artmap', {}) || {})[g.system + '|' + P.nfc((g.files || [])[0] || '')];
       if (am) {
         try {
-          const blob = await P.fetchFile(S.relay, { fileid: am, name: 'cover.jpg' });
+          const blob = await P.fetchFile(S.relay, { fileid: am, host: S.host, auth: S.auth });
           if (blob && blob.size > 1000) {
             await MYCOV.put(g.id, blob);
             S.covurl[g.id] = URL.createObjectURL(blob);
@@ -2805,7 +2805,7 @@ async function runHunt() {
       if (got) { await new Promise(r => setTimeout(r, 60)); continue; }
       if (g.pic) {
         try {
-          const blob = await P.fetchFile(S.relay, { fileid: g.pic, name: 'cover' });
+          const blob = await P.fetchFile(S.relay, { fileid: g.pic, host: S.host, auth: S.auth });
           if (blob && blob.size > 1000) {
             await MYCOV.put(g.id, blob);
             S.covurl[g.id] = URL.createObjectURL(blob);
