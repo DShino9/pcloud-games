@@ -351,7 +351,7 @@ async function grab(name, expectBytes, onProg) {
     return BLANKS[name];
   }
   const fid = fileidOf(name);
-  if (!fid) throw new Error(name + ' が pCloud の棚にありません');
+  if (!fid) throw new Error(name + ' が pCloud の倉庫にありません');
   const hit = await DISK.get(String(fid));
   if (hit) return new Uint8Array(await hit.arrayBuffer());
   /* 入口（ds9）の下では、中継所は入口の中に同居している。設定させない。
@@ -1000,7 +1000,7 @@ function askDisks() {
     } catch (e) {
       if (ROMS.includes(n) && n !== 'FONT.ROM' && n !== 'BIOS.ROM') { blobs[n] = null; continue; }
       return fail(e.message + '<br><br>PC-98 は BIOS と フォントの ROM が要ります。' +
-        '<code>tools/upload-to-pcloud.py --pc98</code> で棚へ上げてください。');
+        '<code>tools/upload-to-pcloud.py --pc98</code> で倉庫へ上げてください。');
     }
     bar(((i + 1) / total) * 100);
   }

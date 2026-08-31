@@ -1,5 +1,10 @@
 'use strict';
-/* ゲーム棚 — pCloud に預けた ROM を、ブラウザだけで遊ぶ。
+/* 言葉づかい（本人の指定・2026-08-31）
+     **倉庫** … pCloud。ROM の置き場。「ここを倉庫にする」「倉庫にある分だけ」
+     **棚**   … この画面。並べて遊ぶ所。「棚に上げる」＝棚に出るようにする
+   「棚のフォルダ」のような、どちらとも取れる言い方はしない。
+
+   ゲーム棚 — pCloud に預けた ROM を、ブラウザだけで遊ぶ。
    マウントは一切使わない。pCloud への入り方・取り方は共通部品（core/pcloud.js）に寄せてある。
 
    棚の中身（題名・機種・箱絵）は games.json。これは OpenEmu の台帳から
@@ -292,7 +297,7 @@ function screenLogin(keep) {
   main().innerHTML = `
   <div class="card">
     <h2>ゲーム棚</h2>
-    <p>pCloud に預けた ROM を、ブラウザだけで遊ぶ。<br>棚の中身は端末に入っているので、まず pCloud につなぐ。</p>
+    <p>pCloud の<b>倉庫</b>に預けた ROM を、ブラウザだけで遊ぶ。<br>棚（この画面）の中身は端末に入っているので、まず倉庫につなぐ。</p>
     <div class="field"><label>pCloud のメールアドレス</label>
       <input id="em" type="email" autocomplete="username" autocapitalize="off"
         autocorrect="off" spellcheck="false" value="${esc(S.email)}"></div>
@@ -332,7 +337,7 @@ function screenLogin(keep) {
 
 /* ============ フォルダを選ぶ ============ */
 async function screenPick(folderid) {
-  $('#title').textContent = '棚のフォルダを選ぶ';
+  $('#title').textContent = '倉庫のフォルダを選ぶ';
   main().innerHTML = '<div class="card"><p>見ています…</p></div>';
   let r;
   try { r = await call('listfolder', { folderid }); }
@@ -356,7 +361,7 @@ async function screenPick(folderid) {
   const dup = dirs.filter(d => seen[P.nfc(d.name)] > 1);
   main().innerHTML = `
   <div class="card" style="max-width:560px">
-    <h2>ROM を置いたフォルダ</h2>
+    <h2>ROM を置いた倉庫のフォルダ</h2>
     <p>この中を丸ごと見て、台帳の名前と突き合わせる。中の入れ子は問わない。</p>
     <div style="font-size:13px;color:var(--dim);margin-bottom:10px;word-break:break-all">
       ${esc(md.name || '/')}</div>
@@ -368,7 +373,7 @@ async function screenPick(folderid) {
         </button>`).join('')
         || '<div class="row"><span class="sub">フォルダはありません</span></div>'}
     </div>
-    <button class="primary" id="use">ここを棚にする</button>
+    <button class="primary" id="use">ここを倉庫にする</button>
     <div class="msg" id="m"></div>
     <div class="note">まだ ROM を上げていないなら、先に上げてから。<br>
       やり方は置き場の README（tools/upload-to-pcloud.py）に書いてある。</div>
@@ -470,7 +475,7 @@ function screenLib(sys) {
       <option value="last"${S.sort === 'last' ? ' selected' : ''}>最近遊んだ順</option>
       <option value="size"${S.sort === 'size' ? ' selected' : ''}>大きい順</option>
     </select>
-    <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">棚にある分だけ</button>
+    <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">倉庫にある分だけ</button>
     <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">手元にある分</button>
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
@@ -482,7 +487,7 @@ function screenLib(sys) {
     <button class="hbtn" id="addto">＋ 棚に上げる</button>
   </div></div>
   ${missing ? `<div class="msg warn" style="margin:0 0 10px">
-    まだ pCloud に上げていない本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
+    まだ倉庫に無い本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
   <div id="g">${gridHtml(list)}</div>`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
@@ -637,7 +642,7 @@ async function pushRuns(force) {
 function play(id) {
   const g = S.items.find(x => x.id === id);
   if (!g) return;
-  if (!hasAll(g)) return toast('この本は pCloud の棚にありません');
+  if (!hasAll(g)) return toast('この本は倉庫にありません');
   const p = S.plays[id] || { n: 0, last: 0 };
   p.n++; p.last = Date.now(); S.plays[id] = p; LS.set('plays', S.plays);
   log.note('遊ぶ: ' + g.short + ' ' + g.name);
@@ -727,15 +732,15 @@ function screenSet() {
     <h2>設定</h2>
     <div class="rowlist" style="margin-bottom:14px">
       <div class="row"><span class="nm">pCloud</span><span class="sub">${S.auth ? esc(S.email) : '未接続'}</span></div>
-      <div class="row"><span class="nm">棚のフォルダ</span><span class="sub">${esc(S.rootName || '未選択')}</span></div>
-      <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が棚にある</span></div>
+      <div class="row"><span class="nm">倉庫のフォルダ</span><span class="sub">${esc(S.rootName || '未選択')}</span></div>
+      <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が倉庫にある</span></div>
       <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
-      <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">pCloud の中から移す・上げ直さない</span></button>
-      <button class="row" id="edit"><span class="nm">Mac から上げる</span><span class="sub">手元のファイルを上げる・棚から下げる</span></button>
+      <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
+      <button class="row" id="edit"><span class="nm">Mac から上げる</span><span class="sub">手元のファイルを上げる・倉庫から下げる</span></button>
       <button class="row" id="places"><span class="nm">見に行く場所</span><span class="sub">${
-        1 + S.roots.length} か所（棚のフォルダ＋足した分）</span></button>
-      <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
+        1 + S.roots.length} か所（倉庫のフォルダ＋足した場所）</span></button>
+      <button class="row" id="rescan"><span class="nm">倉庫を見直す</span><span class="sub">倉庫を見直して棚に並べ直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
@@ -881,7 +886,7 @@ function screenEdit() {
   </div></div>
 
   <div class="msg" id="em" style="margin:0 0 8px">
-    ${esc(S.rootName || '棚のフォルダが未選択')} に ${have} / ${list.length} 本。
+    ${esc(S.rootName || '倉庫のフォルダが未選択')} に ${have} / ${list.length} 本が倉庫に。
     ${E.src ? '元: ' + esc(E.srcName) + '（' + Object.keys(E.src).length + ' ファイル）'
             : '上げるには、先に元のファイルを選んでください。'
               + '<br><span class="sub">iPhone・iPad はフォルダを選べないので（Safari が対応していない）、'
@@ -898,7 +903,7 @@ function screenEdit() {
         <span class="nm">${esc(nm)}</span>
         <span class="sub">${esc(i.short)}${i.files.length > 1 ? ' ' + i.files.length + '枚' : ''}
           ・${size(i.bytes)}
-          ・${here ? '<span style="color:var(--ok)">棚にある</span>' : '<span style="color:var(--warn)">無い</span>'}</span>
+          ・${here ? '<span style="color:var(--ok)">倉庫にある</span>' : '<span style="color:var(--warn)">無い</span>'}</span>
       </button>`;
     }).join('')}
   </div>
@@ -909,8 +914,8 @@ function screenEdit() {
       <span class="sub" style="flex:0 0 auto">${n} 本えらんだ</span>
       <button class="hbtn" id="esrc" style="flex:0 0 auto">元のフォルダを選ぶ</button>
       <button class="hbtn" id="esrcf" style="flex:0 0 auto">ファイルを選ぶ</button>
-      <button class="hbtn" id="eup" style="flex:0 0 auto"${n && E.src ? '' : ' disabled'}>pCloud へ上げる</button>
-      <button class="hbtn" id="edown" style="flex:0 0 auto"${n ? '' : ' disabled'}>pCloud から下げる</button>
+      <button class="hbtn" id="eup" style="flex:0 0 auto"${n && E.src ? '' : ' disabled'}>倉庫へ上げる</button>
+      <button class="hbtn" id="edown" style="flex:0 0 auto"${n ? '' : ' disabled'}>倉庫から下げる</button>
       <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>手元から消す</button>
     </div>
     <div class="msg" id="ep" style="min-height:0;margin-top:6px"></div>
@@ -970,7 +975,7 @@ async function doUpload() {
   for (const i of items) for (const f of i.files) {
     if (!S.files[P.nfc(f)]) need.push({ system: i.system, file: f });
   }
-  if (!need.length) return toast('選んだ本はすべて棚にあります');
+  if (!need.length) return toast('選んだ本はすべて倉庫にあります');
   const missing = need.filter(x => !srcOf(x.file));
   if (missing.length === need.length) {
     return prog('元のフォルダの中に、選んだ本のファイルが見つかりません（選び直してください）');
@@ -1005,9 +1010,9 @@ async function doDelete() {
     const fid = S.files[P.nfc(f)];
     if (fid) ids.push({ file: f, fid });
   }
-  if (!ids.length) return toast('選んだ本は棚にありません');
+  if (!ids.length) return toast('選んだ本は倉庫にありません');
   const names = items.slice(0, 5).map(i => i.name).join('、') + (items.length > 5 ? ' ほか' : '');
-  if (!confirm(`pCloud から ${ids.length} ファイルを消します。\n\n${names}\n\n戻せません。よろしいですか。`)) return;
+  if (!confirm(`倉庫から ${ids.length} ファイルを消します。\n\n${names}\n\n戻せません。よろしいですか。`)) return;
   E.busy = true;
   let ok = 0, ng = 0, n = 0;
   for (const x of ids) {
@@ -1097,7 +1102,7 @@ function screenRuns() {
       </div>`).join('')}</div>`
       : '<div class="empty">まだ記録がありません。PC-98 を少し動かすと残ります。</div>'}
     ${runs.length ? '<button class="hbtn" id="cp" style="margin-top:12px">写す</button>' : ''}
-    ${runs.length ? '<button class="hbtn" id="push" style="margin-top:12px;margin-left:6px">棚へ上げる</button>' : ''}
+    ${runs.length ? '<button class="hbtn" id="push" style="margin-top:12px;margin-left:6px">倉庫へ上げる</button>' : ''}
     <button class="hbtn" id="clr" style="margin-top:12px${runs.length ? ';margin-left:6px' : ''}">消す</button>
     <button class="hbtn" id="back" style="margin-left:6px">← 設定へ</button>
     <div class="msg" id="m"></div>
@@ -1338,7 +1343,7 @@ async function screenGather(browse) {
     <h2>棚に上げる</h2>
     <p><b>ふつうは移す必要がありません。</b>「見に行く場所」に ROM のフォルダを足せば、
        置いたまま棚に出ます（整理を崩さずに済みます）。<br>
-       ここは<b>棚のフォルダへ寄せたいとき</b>だけ使ってください。すでに pCloud にあるので
+       ここは<b>倉庫の中で1か所に寄せたいとき</b>だけ使ってください。すでに pCloud にあるので
        <b>上げ直しません</b>（向こう側で動かすだけ。一瞬で終わります）。</p>
     <div class="msg" style="margin:6px 0">探す場所: <b>${esc(G.where ? G.where.name : '未指定')}</b></div>
     <button class="hbtn" id="pickwhere">探す場所を選ぶ</button>
@@ -1368,7 +1373,7 @@ async function screenGather(browse) {
 
     <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
       <button class="hbtn" id="back">← 棚へ</button>
-      <button class="hbtn" id="fromMac">Mac から上げる・棚から下げる</button>
+      <button class="hbtn" id="fromMac">Mac から上げる・倉庫から下げる</button>
     </div>
   </div>`;
 
@@ -1445,13 +1450,13 @@ async function screenPlaces(folderid) {
     main().innerHTML = `
     <div class="card" style="max-width:640px">
       <h2>見に行く場所</h2>
-      <p>棚は<b>ここに挙げた場所ぜんぶ</b>を見て、台帳の名前と突き合わせます。<br>
+      <p>棚は<b>倉庫のここに挙げた場所ぜんぶ</b>を見て、台帳の名前と突き合わせます。<br>
          ROM を1か所に集める必要はありません。<b>整理したまま置いておけます。</b><br>
-         <span class="sub">上げ先と記録の置き先は、いちばん上の「棚のフォルダ」です。</span></p>
+         <span class="sub">上げ先と記録の置き先は、いちばん上の「倉庫のフォルダ」です。</span></p>
       <div class="rowlist">
         ${places.map((pl, i) => `<div class="row">
           <span class="nm" style="text-align:left">${esc(pl.name)}
-            <span class="sub">${pl.main ? '棚のフォルダ（上げ先）' : '足した場所'}</span></span>
+            <span class="sub">${pl.main ? '倉庫のフォルダ（上げ先）' : '足した場所'}</span></span>
           ${pl.main ? '<button class="hbtn sm" id="repick2">選び直す</button>'
                     : `<button class="hbtn sm" data-off="${i - 1}">外す</button>`}
         </div>`).join('')}
@@ -1550,7 +1555,7 @@ async function gatherPick(folderid, G) {
   main().innerHTML = `
   <div class="card" style="max-width:560px">
     <h2>探す場所を選ぶ</h2>
-    <p>ここから下を探して、棚のフォルダへ寄せられるものを並べます。<br>
+    <p>ここから下を探して、倉庫の中で寄せられるものを並べます。<br>
        <span class="sub">「見に行く場所」とは別です。あちらは<b>置いたまま棚に出す</b>登録、
        こちらは<b>寄せたいものを探す</b>ための一時の指定です。</span></p>
     <div style="font-size:13px;color:var(--dim);margin-bottom:10px">${esc(md.name || '/')}
