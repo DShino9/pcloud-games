@@ -187,7 +187,8 @@ function l2detail() {
     </div>
     <button class="primary l2play" id="dplay"${inWare && !g.arc ? '' : ' disabled'}>▶ 遊ぶ</button>
     <div class="l2acts">
-      ${onShelf ? '<button class="hbtn" id="ddown">書庫へ下ろす</button>'
+      ${g.arc ? '<button class="hbtn" id="dunpack">起こして棚に取り寄せる</button>'
+        : onShelf ? '<button class="hbtn" id="ddown">書庫へ下ろす</button>'
         : inWare ? '<button class="hbtn" id="dstock">棚に取り寄せる</button>' : ''}
       <button class="hbtn" id="dpage">本の頁</button>
     </div>
@@ -228,6 +229,15 @@ function l2bindDetail() {
   for (const r of main().querySelectorAll('[name="dver"]')) r.onchange = () => {
     S.ver[g.gkey] = r.value; LS.set('ver', S.ver);
     screenLibrary();
+  };
+  const du = $('#dunpack');
+  if (du) du.onclick = async () => {
+    du.disabled = true;
+    try {
+      const n = await unpackStock(g, t => { const m = $('#dm'); if (m) m.textContent = t; });
+      toast(`起こしました（${n}枚）。もう遊べます`);
+      screenLibrary();
+    } catch (e) { $('#dm').textContent = '起こせません: ' + e.message; du.disabled = false; }
   };
   const ds = $('#dstock');
   if (ds) ds.onclick = async () => {
@@ -382,6 +392,47 @@ function l2bindCells() {
     S.more.l2 = (S.more.l2 || STEP) + STEP * 3;
     l2redraw();
   };
+}
+
+/* ---- 圧縮のままの本を起こす（#81・本人の指定は案1＝ブラウザで展開）----
+   rar/zip を libarchive の wasm でその場で開き、**素のディスクだけ**
+   `/ゲーム棚/棚/<題名>/` に置く。倉庫の圧縮はそのまま（整理を崩さない）。
+   lzh はこの部品が読めないので、いまは断りを出す。 */
+const DISK_EXT = /\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$/i;
+async function unpackStock(g, say = () => {}) {
+  if (/\.lzh$/i.test(g.files[0])) throw new Error('lzh はまだ起こせません（rar/zip はできます）');
+  say('圧縮を取り寄せています…');
+  const blob = await P.fetchFile(S.relay, { fileid: g.fids[0], name: g.files[0] });
+  say('起こしています…（初回は部品の読み込みで少し待ちます）');
+  const { Archive } = await import('./vendor/libarchive/libarchive.js?v=1');
+  Archive.init({ workerUrl: './vendor/libarchive/worker-bundle.js' });
+  const a = await Archive.open(new File([blob], g.files[0]));
+  await a.extractFiles();
+  const arr = (await a.getFilesArray()).filter(x => DISK_EXT.test(x.file.name));
+  if (!arr.length) throw new Error('中にディスクの像が見つかりません');
+  arr.sort((p, q) => p.file.name.localeCompare(q.file.name, 'ja'));
+  const shelf = await shelfRoot('棚');
+  const dir = await P.ensureFolder(shelf, SAFE(g.name), { host: S.host, auth: S.auth });
+  const files = [], fids = [], paths = [];
+  for (const x of arr) {
+    say(`${x.file.name} を棚へ…（${files.length + 1}/${arr.length}）`);
+    const fid = await P.uploadFile(dir, x.file.name, x.file, { host: S.host, auth: S.auth });
+    files.push(x.file.name); fids.push(fid);
+    paths.push('/ゲーム棚/棚/' + SAFE(g.name));
+    S.files[P.nfc(x.file.name)] = fid;
+  }
+  LS.set('files', S.files);
+  /* 起こしたら、この本は素のディスクの本になる。 */
+  const extra = LS.get('extra', []);
+  const e = extra.find(x => x.id === g.id);
+  if (e) {
+    e.files = files; e.fids = fids; e.paths = paths; e.path = paths[0];
+    e.arc = false; e.sub = files.length > 1 ? files.length + '枚' : '起こした分';
+    LS.set('extra', extra);
+  }
+  S.items = mergeCatalogs();
+  log.note(`起こした: ${g.name}（${files.length}枚）`);
+  return files.length;
 }
 
 /* ---- 書庫（#75）。下ろした本を見る・棚へ戻す ---- */
