@@ -50,6 +50,7 @@ const S = {
   plays:    LS.get('plays', {}),      // id → {n, last}
   sys:      LS.get('sys', ''),
   sort:     LS.get('sort', 'name'),
+  fold:     LS.get('fold', 'sys'),   // 機種で畳む（既定）
   cell:     LS.get('cell', 'm'),
   onlyHere: LS.get('onlyHere', false),
   onlyHave: LS.get('onlyHave', true),   // 上げていないものを隠す。既定は隠す
@@ -74,6 +75,15 @@ function mergeCatalogs() {
       cover: g.cover, bytes: g.bytes, kind: 'game', pc98: false, genre: g.genre || '',
       files: [g.file],
     });
+  }
+  /* 台帳に無い本。**pCloud には台帳より多く入っている。**
+     台帳は Mac の中身から起こしたものなので、それ以外の道で pCloud に
+     入れた分は載っていない。棚に出せないと「無いもの」になってしまうので、
+     見つけた分を端末側で足す（置き場には触らない）。 */
+  for (const e of LS.get('extra', [])) {
+    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short,
+               cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
+               pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
   for (const t of ((S.cat98 && S.cat98.titles) || [])) {
     out.push({
@@ -326,28 +336,81 @@ function screenLib() {
     </select>
     <button class="hbtn${S.onlyHave ? ' on' : ''}" id="have">棚にある分だけ</button>
     <button class="hbtn${S.onlyHere ? ' on' : ''}" id="here">手元にある分</button>
+    <select id="fold">
+      <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>機種で畳む</option>
+      <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
+      <option value=""${S.fold ? '' : ' selected'}>畳まない</option>
+    </select>
     <button class="hbtn${S.tools ? ' on' : ''}" id="tools">道具ディスク</button>
+    <button class="hbtn" id="addto" style="margin-left:auto">＋ 棚に上げる</button>
   </div></div>
   ${missing ? `<div class="msg warn" style="margin:0 0 10px">
     まだ pCloud に上げていない本が ${missing} 本${S.onlyHave ? '（隠しています）' : '（押すと上げに行けます）'}。</div>` : ''}
-  ${list.length ? `<div class="grid" id="g">${list.map(cellHtml).join('')}</div>`
-    : `<div class="empty">${S.q || S.sys || S.genre || S.onlyHere ? '見つかりません' : '棚が空です'}</div>`}`;
+  <div id="g">${gridHtml(list)}</div>`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
   $('#sys').onchange  = e => { S.sys = e.target.value; LS.set('sys', S.sys); screenLib(); };
   $('#gen').onchange  = e => { S.genre = e.target.value; LS.set('genre', S.genre); screenLib(); };
   $('#sort').onchange = e => { S.sort = e.target.value; LS.set('sort', S.sort); screenLib(); };
+  $('#fold').onchange = e => { S.fold = e.target.value; LS.set('fold', S.fold); screenLib(); };
   $('#here').onclick  = () => { S.onlyHere = !S.onlyHere; LS.set('onlyHere', S.onlyHere); screenLib(); };
   $('#tools').onclick = () => { S.tools = !S.tools; LS.set('tools', S.tools); screenLib(); };
+  $('#addto').onclick = () => go('#/gather');
   $('#have').onclick  = () => { S.onlyHave = !S.onlyHave; LS.set('onlyHave', S.onlyHave); screenLib(); };
   bindCells();
+  bindFold();
 }
 
 function redrawGrid() {
   const g = $('#g');
   if (!g) return screenLib();
-  g.innerHTML = shelfList().map(cellHtml).join('');
+  g.innerHTML = gridHtml(shelfList());
   bindCells();
+  bindFold();
+}
+
+/* 畳んだ束は端末ごとに覚える。数が増えると一覧が長くなるので、
+   ふだん見ない機種は畳んだままにしておける。 */
+const shut = () => new Set(LS.get('shut', []));
+
+/* 一覧を組む。**探している最中は畳まない**（探した意味がなくなる）。 */
+function gridHtml(list) {
+  if (!list.length) {
+    return `<div class="empty">${S.q || S.sys || S.genre || S.onlyHere ? '見つかりません' : '棚が空です'}</div>`;
+  }
+  if (!S.fold || S.q.trim()) return `<div class="grid">${list.map(cellHtml).join('')}</div>`;
+
+  const key = i => S.fold === 'genre' ? (i.genre || 'ジャンル未設定') : i.system;
+  const box = new Map();
+  for (const i of list) {
+    if (!box.has(key(i))) box.set(key(i), []);
+    box.get(key(i)).push(i);
+  }
+  /* 機種は台帳の並び、ジャンルは多い順。どちらも「よく使う束が上」になる。 */
+  const names = [...box.keys()].sort((a, b) => S.fold === 'genre'
+    ? box.get(b).length - box.get(a).length || a.localeCompare(b, 'ja')
+    : a.localeCompare(b, 'ja'));
+  const cl = shut();
+  return names.map(nm => {
+    const open = !cl.has(nm);
+    return `<h2 class="fold" data-fold="${esc(nm)}">
+        <span class="tri">${open ? '▾' : '▸'}</span>${esc(nm)}
+        <span class="cnt">${box.get(nm).length}</span></h2>
+      <div class="grid" data-body="${esc(nm)}"${open ? '' : ' hidden'}>${
+        box.get(nm).map(cellHtml).join('')}</div>`;
+  }).join('');
+}
+
+function bindFold() {
+  for (const h of main().querySelectorAll('h2.fold')) h.onclick = () => {
+    const nm = h.dataset.fold, cl = shut();
+    cl.has(nm) ? cl.delete(nm) : cl.add(nm);
+    LS.set('shut', [...cl]);
+    const body = main().querySelector(`.grid[data-body="${CSS.escape(nm)}"]`);
+    const open = !cl.has(nm);
+    if (body) body.hidden = !open;
+    h.querySelector('.tri').textContent = open ? '▾' : '▸';
+  };
 }
 
 function cellHtml(g) {
@@ -527,8 +590,8 @@ function screenSet() {
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が棚にある</span></div>
       <div class="row"><span class="nm">手元に置いた分</span><span class="sub">${Object.keys(S.here).length} 本</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
-      <button class="row" id="gather"><span class="nm">pCloud から棚へ</span><span class="sub">棚の外にある分を移す・上げ直さない</span></button>
-      <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">Mac から上げる・棚から下げる</span></button>
+      <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">pCloud の中から移す・上げ直さない</span></button>
+      <button class="row" id="edit"><span class="nm">Mac から上げる</span><span class="sub">手元のファイルを上げる・棚から下げる</span></button>
       <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
@@ -645,7 +708,7 @@ function editList() {
 }
 
 function screenEdit() {
-  $('#title').textContent = '棚を編む';
+  $('#title').textContent = 'Mac から上げる';
   const list = list0();
   function list0() { return editList(); }
   const systems = [...new Set(S.items.map(i => i.system))].sort();
@@ -713,7 +776,7 @@ function screenEdit() {
   $('#esys').onchange = e => { E.sys = e.target.value; screenEdit(); };
   $('#eall').onclick  = () => { editList().forEach(i => E.pick[i.id] = 1); screenEdit(); };
   $('#enone').onclick = () => { E.pick = {}; screenEdit(); };
-  $('#eback').onclick = () => go('#/set');
+  $('#eback').onclick = () => go('#/gather');
 
   /* 元のフォルダ。中身は憶えるが、この画面を離れると消える（ブラウザの決まり）。 */
   /* 元の置き場。**iPhone・iPad はフォルダを選べない**（Safari が
@@ -1034,6 +1097,30 @@ function shrinkImage(file, width = 320) {
   });
 }
 
+/* 台帳に無い本を、この端末の棚に足す。**置き場（GitHub）には触らない。**
+   題名はファイル名から起こす。あとで「箱絵を直す」や題名の直しで整える。 */
+function addExtra(r, system, short) {
+  const extra = LS.get('extra', []);
+  if (extra.some(e => e.files.includes(r.name))) return;
+  extra.push({
+    id: 'X-' + r.fileid, name: r.name.replace(/\.[^.]+$/, ''), system, short,
+    bytes: r.size, files: [r.name], sub: '見つけた分',
+  });
+  LS.set('extra', extra);
+}
+
+/* 拡張子から機種を当てる。台帳に無いものを拾うときに要る。 */
+const EXT_SYS = [
+  [/\.(nes|fds)$/i,             'Famicom',        'FC'],
+  [/\.(smc|sfc|fig|swc)$/i,     'Super Famicom',  'SFC'],
+  [/\.(n64|v64|z64)$/i,         'Nintendo 64',    'N64'],
+  [/\.nds$/i,                   'Nintendo DS',    'DS'],
+  [/\.(iso|cso)$/i,             'Sony PSP',       'PSP'],
+  [/\.(fdi|hdi|d88|hdm|xdf|nfd)$/i, 'PC-98',      '98'],
+];
+const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || [])
+  .slice(1) || [];
+
 /* ============ pCloud から棚へ ============ */
 /* 耳読の書棚に倣った口。あちらは「pCloud にある本を並べて、その場でボタンを押す」だけで、
    **元のフォルダを選ばせない。** こちらの「棚を編む」は Mac の中から選ばせていたので、
@@ -1042,29 +1129,41 @@ function shrinkImage(file, width = 320) {
    すでに pCloud にあるものは、**上げ直す必要がない。**
    向こう側で動かせば一瞬で終わる（`renamefile` に行き先を渡す）。 */
 async function screenGather() {
-  $('#title').textContent = 'pCloud から棚へ';
+  $('#title').textContent = '棚に上げる';
   const G = S.gather || (S.gather = { files: null, pick: {}, busy: false });
 
   const known = new Map();          // 台帳にあるファイル名 → その本
   for (const i of S.items) for (const f of i.files) known.set(P.nfc(f), i);
   const inShelf = new Set(Object.values(S.files));
 
-  let rows = [];
+  let rows = [], news = [];
   if (G.files) {
     for (const f of G.files) {
       if (inShelf.has(f.fileid)) continue;          // すでに棚にある
-      const item = known.get(f.name);
-      if (!item) continue;                          // 台帳に無いものは出さない
       if (S.files[f.name]) continue;                // 同じ名前が棚にもうある
-      rows.push({ ...f, item });
+      const item = known.get(f.name);
+      /* **台帳に無いものも出す。** ここで捨てていたので「pCloud にはもっと
+         あるはずなのに出てこない」ことになっていた。台帳は Mac の中身から
+         起こしたものなので、それ以外の道で入れた分は載っていない。 */
+      (item ? rows : news).push({ ...f, item });
     }
     rows.sort((a, b) => a.item.name.localeCompare(b.item.name, 'ja'));
+    news.sort((a, b) => (a.path + a.name).localeCompare(b.path + b.name, 'ja'));
   }
   const n = Object.keys(G.pick).length;
+  const line = r => `
+    <button class="row" data-fid="${r.fileid}">
+      <span style="width:18px;flex:0 0 18px;color:${G.pick[r.fileid] ? 'var(--accent)' : 'var(--dim2)'}">${
+        G.pick[r.fileid] ? '☑' : '☐'}</span>
+      <span class="nm" style="text-align:left">${esc(r.name)}
+        <span class="sub">${r.item ? esc(r.item.name) + '・' + esc(r.item.short)
+                                   : '台帳に無い・' + esc((sysOf(r.name)[1]) || '機種不明')}</span></span>
+      <span class="sub" style="text-align:right">${size(r.size)}<br>${esc(r.path || '/')}</span>
+    </button>`;
 
   main().innerHTML = `
   <div class="card" style="max-width:720px">
-    <h2>pCloud から棚へ</h2>
+    <h2>棚に上げる</h2>
     <p>棚の外に置いてある ROM やディスクを、<b>棚のフォルダへ移します</b>。<br>
        すでに pCloud にあるので<b>上げ直しません</b>（向こう側で動かすだけ。一瞬で終わります）。
        Mac のフォルダを選ぶ必要が無いので、iPhone からもできます。</p>
@@ -1072,19 +1171,18 @@ async function screenGather() {
     ${G.files ? `<span class="sub" style="margin-left:8px">${G.files.length} ファイル見た</span>` : ''}
     <div class="msg" id="gm"></div>
 
-    ${G.files ? (rows.length ? `
+    ${G.files ? ((rows.length + news.length) ? `
       <div style="display:flex;gap:6px;margin:10px 0">
         <button class="hbtn sm" id="gall">全部選ぶ</button>
         <button class="hbtn sm" id="gnone">選び直す</button>
       </div>
-      <div class="rowlist">${rows.map(r => `
-        <button class="row" data-fid="${r.fileid}">
-          <span style="width:18px;flex:0 0 18px;color:${G.pick[r.fileid] ? 'var(--accent)' : 'var(--dim2)'}">${
-            G.pick[r.fileid] ? '☑' : '☐'}</span>
-          <span class="nm" style="text-align:left">${esc(r.name)}
-            <span class="sub">${esc(r.item.name)}・${esc(r.item.short)}</span></span>
-          <span class="sub" style="text-align:right">${size(r.size)}<br>${esc(r.path || '/')}</span>
-        </button>`).join('')}</div>
+      ${rows.length ? `<h3>台帳にある（${rows.length}）</h3>
+        <div class="rowlist">${rows.map(line).join('')}</div>` : ''}
+      ${news.length ? `<h3 style="margin-top:16px">台帳に無い（${news.length}）</h3>
+        <p class="sub">台帳は Mac の中身から起こしたものなので、それ以外の道で
+          pCloud に入れた分は載っていません。移すと<b>この端末の棚に足します</b>
+          （題名はファイル名から。あとで直せます）。</p>
+        <div class="rowlist">${news.map(line).join('')}</div>` : ''}
       <div style="display:flex;gap:6px;align-items:center;margin-top:12px">
         <span class="sub">${n} 件えらんだ</span>
         <button class="hbtn" id="gmove"${n && !G.busy ? '' : ' disabled'}>棚へ移す</button>
@@ -1093,10 +1191,14 @@ async function screenGather() {
       : '<div class="empty">棚の外に、台帳に載っているファイルは見つかりませんでした。</div>')
     : '<div class="empty">まだ探していません。</div>'}
 
-    <button class="hbtn" id="back" style="margin-top:14px">← 設定へ</button>
+    <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="hbtn" id="back">← 棚へ</button>
+      <button class="hbtn" id="fromMac">Mac から上げる・棚から下げる</button>
+    </div>
   </div>`;
 
-  $('#back').onclick = () => go('#/set');
+  $('#back').onclick = () => go('#/lib');
+  $('#fromMac').onclick = () => go('#/edit');
   $('#scan').onclick = async () => {
     G.busy = true; $('#gm').textContent = 'pCloud の中を探しています…（本数が多いと少しかかります）';
     try {
@@ -1108,7 +1210,7 @@ async function screenGather() {
     }
   };
   const gall = $('#gall'), gnone = $('#gnone');
-  if (gall)  gall.onclick  = () => { rows.forEach(r => G.pick[r.fileid] = 1); screenGather(); };
+  if (gall)  gall.onclick  = () => { [...rows, ...news].forEach(r => G.pick[r.fileid] = 1); screenGather(); };
   if (gnone) gnone.onclick = () => { G.pick = {}; screenGather(); };
   for (const b of main().querySelectorAll('[data-fid]')) b.onclick = () => {
     const k = b.dataset.fid;
@@ -1117,7 +1219,7 @@ async function screenGather() {
   };
   const run = async copy => {
     if (G.busy) return;
-    const todo = rows.filter(r => G.pick[r.fileid]);
+    const todo = [...rows, ...news].filter(r => G.pick[r.fileid]);
     if (!todo.length) return;
     G.busy = true;
     let ok = 0, ng = 0, i = 0;
@@ -1126,14 +1228,17 @@ async function screenGather() {
       i++;
       $('#gm').textContent = `${copy ? '写して' : '移して'}います… ${i}/${todo.length}　${r.name}`;
       try {
-        const sys = r.item.system;
-        if (!folders[sys]) folders[sys] = await folderFor(sys);
-        const fid = await P.moveFile(r.fileid, folders[sys], { host: S.host, auth: S.auth, copy });
+        const [system, short] = r.item ? [r.item.system, r.item.short] : sysOf(r.name);
+        if (!system) { ng++; continue; }
+        if (!folders[system]) folders[system] = await folderFor(system);
+        const fid = await P.moveFile(r.fileid, folders[system], { host: S.host, auth: S.auth, copy });
         S.files[r.name] = fid; ok++;
+        if (!r.item) addExtra(r, system, short);
         delete G.pick[r.fileid];
       } catch (e) { ng++; log.note('移し損ね: ' + r.name + ' — ' + e.message); }
     }
     LS.set('files', S.files);
+    S.items = mergeCatalogs();
     G.busy = false;
     G.files = G.files.filter(f => !S.files[f.name] || f.fileid === S.files[f.name]);
     screenGather();
