@@ -274,6 +274,24 @@ async function loadMyCovers() {
   }
 }
 
+/* **どの画面からでも戻れるようにする。**
+   奥まで潜ったとき、戻る道が画面ごとにばらばらだと迷う。
+   見出しに「←（一つ上）」と「棚（トップ）」を常に置く。 */
+const UP = {
+  '#/set': '#/lib', '#/log': '#/set', '#/runs': '#/set', '#/relay': '#/set',
+  '#/covers': '#/set', '#/disks': '#/set', '#/places': '#/set',
+  '#/dupes': '#/places', '#/gather': '#/lib', '#/edit': '#/gather',
+  '#/all': '#/lib',
+};
+function upOf(h) {
+  if (h.startsWith('#/sys/')) return '#/lib';
+  if (h.startsWith('#/places/')) return '#/places';
+  if (h.startsWith('#/gather/')) return '#/gather';
+  if (h.startsWith('#/dupes/')) return '#/dupes';
+  if (h.startsWith('#/pick')) return '#/set';
+  return UP[h] || '#/lib';
+}
+
 /* ============ 画面の振り分け ============ */
 /* ハッシュが同じだと hashchange が飛ばない。同じときは自分で描き直す。 */
 function go(h) { if (location.hash === h) render(); else location.hash = h; }
@@ -281,6 +299,14 @@ addEventListener('hashchange', render);
 
 function render() {
   const h = location.hash || '#/lib';
+  /* 見出しの戻り口。トップでは出さない（戻る先が無い）。 */
+  try {
+    const top = (h === '#/lib' || h === '');
+    $('#hback').classList.toggle('hide', top);
+    $('#hhome').classList.toggle('hide', top);
+    $('#hback').onclick = () => go(upOf(h));
+    $('#hhome').onclick = () => go('#/lib');
+  } catch (e) {}
   document.body.dataset.cell = S.cell;
   $('#hcell').classList.toggle('hide', !S.auth || !S.rootId);
   if (h === '#/log')   return screenLog();
@@ -680,7 +706,7 @@ function screenLib(sys) {
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
-      <option value="path"${S.fold === 'path' ? ' selected' : ''}>フォルダを掘る</option>
+      <option value="maker"${S.fold === 'maker' ? ' selected' : ''}>メーカーで畳む</option>
       <option value=""${S.fold ? '' : ' selected'}>畳まない</option>
     </select>
     <button class="hbtn${S.tools ? ' on' : ''}" id="tools">道具ディスク</button>
@@ -740,14 +766,16 @@ function gridHtml(list) {
   /* **掘っていく。** 倉庫はメーカー別に分けてある
      （`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。畳んで並べるのではなく、
      1階ずつ降りるほうが、その整理をそのまま辿れる。 */
-  if (S.fold === 'path') return digHtml(list);
+
 
   /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
      その場合はジャンルで畳む。 */
-  const by = (S.sys && S.fold === 'sys') ? 'genre' : S.fold;
+  /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
+     **メーカーで束ねる**（本人「フォルダの場所は選ぶ時はほとんどいらない」）。 */
+  const by = (S.sys && S.fold === 'sys') ? 'maker' : S.fold;
   /* 在処で畳むときは、深い順ではなく道の順に並べたほうが辿りやすい。 */
   const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定')
-                  : by === 'path'  ? (i.path || '（在処が分からない）')
+                  : by === 'maker' ? (Makers.makerOf(i.name, i.path) || 'その他')
                   : i.system;
   const box = new Map();
   for (const i of list) {
@@ -755,16 +783,20 @@ function gridHtml(list) {
     box.get(key(i)).push(i);
   }
   /* 機種は台帳の並び、ジャンルは多い順。どちらも「よく使う束が上」になる。 */
-  const names = [...box.keys()].sort((a, b) => by === 'genre'
-    ? box.get(b).length - box.get(a).length || a.localeCompare(b, 'ja')
-    : collator.compare(a, b));
+  const names = [...box.keys()].sort((a, b) => {
+    /* 「その他」は最後。中身が分からないものを先頭に置いても仕方がない。 */
+    if (a === 'その他') return 1;
+    if (b === 'その他') return -1;
+    return (by === 'genre' || by === 'maker')
+      ? box.get(b).length - box.get(a).length || collator.compare(a, b)
+      : collator.compare(a, b);
+  });
   const cl = shut();
   return names.map(nm => {
     const open = !cl.has(nm);
     /* 倉庫の道は深い（`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。
        見出しでは末尾だけ見せ、全体は当てれば出る。 */
-    const label = by === 'path' && nm.split('/').length > 3
-      ? '…/' + nm.split('/').slice(-2).join('/') : nm;
+    const label = nm;
     return `<h2 class="fold" data-fold="${esc(nm)}" title="${esc(nm)}">
         <span class="tri">${open ? '▾' : '▸'}</span>${esc(label)}
         <span class="cnt">${box.get(nm).length}</span></h2>
