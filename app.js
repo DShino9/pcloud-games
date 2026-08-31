@@ -751,10 +751,16 @@ function redrawGrid() {
 
 /* 畳んだ束は端末ごとに覚える。数が増えると一覧が長くなるので、
    ふだん見ない機種は畳んだままにしておける。 */
-const shut = () => new Set(LS.get('shut', []));
+/* 畳んだ束の覚え。**束ね方ごとに分ける**（`maker/光栄` のように）。
+   分けていなかったので、「ぜんぶ」の画面で畳んだ `PC-98` が、
+   機種の中の同じ名前の束まで隠していた（中身が丸ごと消えて見えた）。
+   古い形（`/` を含まない）は捨てる。 */
+const shut = () => new Set(LS.get('shut', []).filter(k => String(k).includes('/')));
 
 /* 一覧を組む。**探している最中は畳まない**（探した意味がなくなる）。 */
 function gridHtml(list) {
+  /* 何も出ないときに黙って白紙にしない。理由が分からないと直せない。 */
+  if (!window.Makers) log.note('makers.js が読めていない');
   if (!list.length) {
     return `<div class="empty">${S.q ? '見つかりません'
       : S.view === 'play' ? 'まだ棚に何も取り寄せていません。<br><span class="sub">「倉庫」の札から選んで遊ぶと、その本が棚に入ります。次からはすぐ遊べます（圏外でも）。</span>'
@@ -777,7 +783,7 @@ function gridHtml(list) {
   const by = (S.sys && S.fold === 'sys') ? 'maker' : S.fold;
   /* 在処で畳むときは、深い順ではなく道の順に並べたほうが辿りやすい。 */
   const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定')
-                  : by === 'maker' ? (Makers.makerOf(i.name, i.path) || 'その他')
+                  : by === 'maker' ? ((window.Makers ? Makers.makerOf(i.name, i.path) : '') || 'その他')
                   : i.system;
   const box = new Map();
   for (const i of list) {
@@ -795,14 +801,15 @@ function gridHtml(list) {
   });
   const cl = shut();
   return names.map(nm => {
-    const open = !cl.has(nm);
+    const fkey = by + '/' + nm;
+    const open = !cl.has(fkey);
     /* 倉庫の道は深い（`/ROM/パソコン/PC-98/PC98/PC98 Disk`）。
        見出しでは末尾だけ見せ、全体は当てれば出る。 */
     const label = nm;
-    return `<h2 class="fold" data-fold="${esc(nm)}" title="${esc(nm)}">
+    return `<h2 class="fold" data-fold="${esc(fkey)}" title="${esc(nm)}">
         <span class="tri">${open ? '▾' : '▸'}</span>${esc(label)}
         <span class="cnt">${box.get(nm).length}</span></h2>
-      <div data-body="${esc(nm)}"${open ? '' : ' hidden'}>${capped(box.get(nm), nm)}</div>`;
+      <div data-body="${esc(fkey)}"${open ? '' : ' hidden'}>${capped(box.get(nm), fkey)}</div>`;
   }).join('');
 }
 
