@@ -19,7 +19,9 @@
      "label": null,
      "hdd": true
     }
-   ]
+   ],
+   "cover": "covers/PC98-0004.jpg",
+   "csrc": "検索"
   },
   {
    "id": "PC98-0005",
@@ -45,7 +47,9 @@
      "label": "B",
      "hdd": false
     }
-   ]
+   ],
+   "cover": "covers/PC98-0005.jpg",
+   "csrc": "検索"
   },
   {
    "id": "PC98-0008",

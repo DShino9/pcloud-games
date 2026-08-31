@@ -18,6 +18,10 @@ const size = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'MB' : Math.max(1, Math.roun
 const LS  = P.store('pg');
 const log = P.logger(LS);
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
+/* 手で入れた箱絵。**置き場に入れずに端末の中に置く。**
+   探しても出てこない本（`Aya3` など3本）と、切り出しを外した本を、
+   本人がその場で直せるように。棚の絵より手で入れたほうを先に使う。 */
+const MYCOV = P.shelfCache('covers-v1', 'cover.local');
 /* ロゴを持っている機種。持っていないものは字の札のまま出す。 */
 const LOGOS = { FC: 1, SFC: 1, N64: 1, DS: 1, PSP: 1, '98': 1 };
 
@@ -54,7 +58,8 @@ const S = {
   cat:      null,                     // games.json
   cat98:    null,                     // pc98.json
   items:    [],                       // 2つの台帳を1つにまとめたもの
-  here:     {},                       // id → 1（手元に置いた分）
+  here:     {},
+  covurl:   {},                      // 手で入れた箱絵（id → 見かけの住所）                       // id → 1（手元に置いた分）
 };
 
 /* 台帳が2つあるのは、中身の作りが違うから。
@@ -104,6 +109,15 @@ async function scanFolder(folderid, say = () => {}) {
 
 async function refreshHere() { S.here = await ROMS.list(); }
 
+/* 手で入れた絵を読み戻す。見かけの住所（blob:）を作って札に渡す。 */
+async function loadMyCovers() {
+  S.covurl = {};
+  for (const id of Object.keys(await MYCOV.list())) {
+    const r = await MYCOV.get(id);
+    if (r) S.covurl[id] = URL.createObjectURL(await r.blob());
+  }
+}
+
 /* ============ 画面の振り分け ============ */
 /* ハッシュが同じだと hashchange が飛ばない。同じときは自分で描き直す。 */
 function go(h) { if (location.hash === h) render(); else location.hash = h; }
@@ -119,6 +133,7 @@ function render() {
   if (h === '#/edit')  return screenEdit();
   if (h === '#/runs')  return screenRuns();
   if (h === '#/disks') return screenDisks();
+  if (h === '#/covers') return screenCovers();
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
   if (!S.rootId)       return go('#/pick/0');
@@ -340,7 +355,8 @@ function cellHtml(g) {
      どのファイルかは分かるようにしておく（手で名前を直せるように）。 */
   const nm = g.garbled ? '名前が読めないディスク' : g.name;
   const sub = g.garbled ? g.files[0] : (g.sub || '');
-  const cov = g.cover ? `<img loading="lazy" src="${esc(g.cover)}" alt="">`
+  const cov = (S.covurl[g.id] || g.cover)
+    ? `<img loading="lazy" src="${esc(S.covurl[g.id] || g.cover)}" alt="">`
                       : `<div class="ph">${esc(nm)}</div>`;
   return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${has ? '' : ' data-no="1"'}>
     <div class="cov">${cov}
@@ -513,6 +529,7 @@ function screenSet() {
       <button class="row" id="edit"><span class="nm">棚を編む</span><span class="sub">選んで上げる・下げる</span></button>
       <button class="row" id="rescan"><span class="nm">棚を見直す</span><span class="sub">pCloud を走査し直す</span></button>
       <button class="row" id="repick"><span class="nm">フォルダを選び直す</span><span class="sub">→</span></button>
+      <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
@@ -533,6 +550,7 @@ function screenSet() {
   $('#runs').onclick   = () => go('#/runs');
   $('#relay').onclick  = () => go('#/relay');
   $('#disks').onclick  = () => go('#/disks');
+  $('#fixcov').onclick = () => go('#/covers');
   $('#edit').onclick   = () => go('#/edit');
   $('#repick').onclick = () => go('#/pick/0');
   $('#rescan').onclick = async () => {
@@ -901,9 +919,101 @@ function screenLog() {
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
+  await loadMyCovers();
   await refreshHere();
   render();
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 })();
+
+/* ============ 箱絵を直す ============ */
+/* 探しても出てこない本（`Aya3` など）と、切り出しを外した本を、その場で直す。
+   **置き場（GitHub）には触らない。** 入れた絵は端末の中に置き、棚の絵より先に使う。
+   だから直しても押し出す手間が要らないし、他の端末には影響しない。 */
+function screenCovers() {
+  $('#title').textContent = '箱絵を直す';
+  /* 絵の無い**遊ぶ本**を先に。道具ディスクやセーブディスクに箱絵は無いので後ろへ。 */
+  const rank = g => ((S.covurl[g.id] || g.cover) ? 2 : 0)
+                  + (g.kind === 'tool' || g.kind === 'save' ? 1 : 0);
+  const list = S.items.slice().sort((a, b) =>
+    rank(a) - rank(b) || a.name.localeCompare(b.name, 'ja'));
+  const q = (S.covq || '').trim();
+  const show = q ? list.filter(g => g.name.includes(q)) : list;
+
+  main().innerHTML = `
+  <div class="card" style="max-width:720px">
+    <h2>箱絵を直す</h2>
+    <p>絵が無い本と、切り出しがうまくいかなかった本を、自分の絵で差し替えられます。<br>
+       入れた絵は<b>この端末の中だけ</b>に残ります（置き場には送りません）。
+       絵の無いものを先に並べています。</p>
+    <div class="field"><input id="q" placeholder="題名で絞る" value="${esc(q)}"
+      autocapitalize="off" autocorrect="off"></div>
+    <div class="rowlist" style="margin-top:10px">
+      ${show.slice(0, 60).map(g => {
+        const url = S.covurl[g.id] || g.cover;
+        return `<div class="row" style="align-items:center;gap:10px">
+          <span style="flex:0 0 40px;height:52px;background:#000;border-radius:4px;overflow:hidden;
+                       display:flex;align-items:center;justify-content:center">
+            ${url ? `<img src="${esc(url)}" style="max-width:100%;max-height:100%;object-fit:contain">`
+                  : '<span class="sub" style="font-size:9px">無し</span>'}</span>
+          <span class="nm" style="text-align:left;font-size:13px">${esc(g.name)}
+            <span class="sub">${esc(g.short)}${
+              g.kind === 'tool' ? '・道具' : g.kind === 'save' ? '・セーブ' : ''
+            }${S.covurl[g.id] ? '・手で入れた' : ''}</span></span>
+          <button class="hbtn sm" data-pick="${esc(g.id)}">絵を選ぶ</button>
+          ${S.covurl[g.id] ? `<button class="hbtn sm" data-drop="${esc(g.id)}">戻す</button>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    ${show.length > 60 ? `<div class="sub" style="margin-top:8px">ほか ${show.length - 60} 本。題名で絞ってください</div>` : ''}
+    <input type="file" id="pf" accept="image/*" style="display:none">
+    <button class="hbtn" id="back" style="margin-top:14px">← 設定へ</button>
+    <div class="msg" id="m"></div>
+  </div>`;
+
+  $('#back').onclick = () => go('#/set');
+  const qi = $('#q');
+  qi.oninput = () => { S.covq = qi.value; clearTimeout(S.covt);
+                       S.covt = setTimeout(() => { screenCovers(); $('#q').focus(); }, 300); };
+  for (const b of main().querySelectorAll('[data-pick]')) b.onclick = () => {
+    const f = $('#pf');
+    f.onchange = async () => {
+      const file = f.files && f.files[0];
+      f.value = '';
+      if (!file) return;
+      try {
+        await MYCOV.put(b.dataset.pick, await shrinkImage(file));
+        await loadMyCovers();
+        toast('入れました');
+        screenCovers();
+      } catch (e) { $('#m').textContent = '入れられません: ' + e.message; }
+    };
+    f.click();
+  };
+  for (const b of main().querySelectorAll('[data-drop]')) b.onclick = async () => {
+    await MYCOV.del(b.dataset.drop);
+    delete S.covurl[b.dataset.drop];
+    toast('棚の絵に戻しました');
+    screenCovers();
+  };
+}
+
+/* 入れる絵は棚に合わせて縮める。**そのまま置くと端末の置き場を食う**
+   （写真は1枚で数MB、棚の絵は320px で数十KB）。 */
+function shrinkImage(file, width = 320) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(width, img.naturalWidth);
+      const h = Math.round(img.naturalHeight * w / img.naturalWidth);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b => b ? res(b) : rej(new Error('絵にできません')), 'image/jpeg', 0.86);
+    };
+    img.onerror = () => rej(new Error('絵として読めません'));
+    img.src = URL.createObjectURL(file);
+  });
+}
