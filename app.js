@@ -1116,7 +1116,7 @@ function play(id) {
   $('#pname').textContent = g.name;
   /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
-    ? './play98.html?id=' + encodeURIComponent(id) + '&v=27'
+    ? './play98.html?id=' + encodeURIComponent(id) + '&v=28'
     : './play.html?id=' + encodeURIComponent(id) +
       '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=11';
   $('#play').classList.remove('hide');
