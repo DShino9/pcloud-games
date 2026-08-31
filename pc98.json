@@ -356,7 +356,9 @@
      "label": null,
      "hdd": true
     }
-   ]
+   ],
+   "cover": "covers/PC98-0033.jpg",
+   "csrc": "合成"
   },
   {
    "id": "PC98-0034",
@@ -3150,7 +3152,9 @@
      "label": null,
      "hdd": true
     }
-   ]
+   ],
+   "cover": "covers/PC98-0057.jpg",
+   "csrc": "合成"
   },
   {
    "id": "PC98-0069",
