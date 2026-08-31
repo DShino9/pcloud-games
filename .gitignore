@@ -1,17 +1,4 @@
-# 組み立ての作業場（コアの素）。出来上がりの np2/ だけを持つ。
-.build/
-# 確かめ用に一時的に置くもの。ROM・ディスク・BIOS は絶対に入れない。
-_t*/
-*.nes
-*.smc
-*.sfc
-*.fdi
-*.hdi
-*.fdd
-*.d88
-*.ROM
-*.rom
-.DS_Store
-_sheet.html
-_rom/
-_crashtest.html
+棚.json
+emu-files.json
+covers-found/
+pc98-catalog/
