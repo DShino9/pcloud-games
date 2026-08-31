@@ -32,9 +32,16 @@ function l2head(items) {
 }
 function l2maker(i, head) {
   const pp = i.path || '';
+  /* **メーカーの階を直に取る。** PC-98 は `PC98 Disk/<メーカー>/…` の形なので、
+     その直後の一節がメーカー（473社）。「共通の頭の次の一節」では、
+     枝分かれ（PC98/select/FDD）で止まってしまい9行しか出なかった。 */
+  const m = pp.match(/\/PC98 (?:Disk|HDD)\/([^/]+)/i);
+  if (m) return m[1];
   if (pp && pp.length > head.length) {
     const seg = pp.slice(head.length).replace(/^\//, '').split('/')[0];
-    if (seg) return seg;
+    /* 器の名前（機種や整理の区画）はメーカーではない。 */
+    if (seg && !/^(PC-?98|PC98.*|select|fdd|collection|rom|disk|games?|パソコン|家庭用ゲーム機|その他|整理隔離|重複|削除待ち)$/i.test(seg))
+      return seg;
   }
   return (window.Makers ? Makers.makerOf(i.name, pp) : '') || 'その他';
 }
