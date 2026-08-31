@@ -510,6 +510,14 @@ function baseName(n) {
 }
 
 /* 表に出す単位。同じ機種・同じ base で束ねる。 */
+/* その版を見分ける印だけ抜く（`いっき [!]` → `[!]`）。
+   棚に入れた版がどれかを、短く添えるために使う。 */
+function verTag(name) {
+  const base = baseName(name);
+  const rest = String(name).replace(/\.[^.]+$/, '').replace(base, '').trim();
+  return rest ? '棚: ' + rest : '棚にある';
+}
+
 function grouped(list) {
   const box = new Map();
   for (const i of list) {
@@ -522,10 +530,19 @@ function grouped(list) {
   for (const [key, vs] of box) {
     /* 代表は「素の名前に近いもの」。付け足しが少ない＝短いものを採る。 */
     vs.sort((a, b) => a.name.length - b.name.length || collator.compare(a.name, b.name));
-    const chosen = vs.find(v => v.id === (S.ver[key] || '')) || vs[0];
+    /* **棚に入れた版があれば、それが「正」。**
+       取り寄せた時点で「どれを使うか」は決まっているので、
+       倉庫側の版違いをもう並べる必要はない（本人の気づき）。
+       次に選んだ版、それも無ければ素の名前に近いもの。 */
+    const onShelf = vs.find(gotIt);
+    const chosen = onShelf || vs.find(v => v.id === (S.ver[key] || '')) || vs[0];
     out.push(vs.length === 1 ? chosen
-      : (S.gmap[key] = vs, { ...chosen, name: baseName(chosen.name) || chosen.name,
-          gkey: key, vers: vs, sub: '' }));
+      : (S.gmap[key] = vs, { ...chosen,
+          name: baseName(chosen.name) || chosen.name,
+          gkey: key, vers: vs,
+          /* 棚に入っていれば、どの版かを添える（決まっているので数は出さない）。 */
+          settled: !!onShelf,
+          sub: onShelf ? verTag(onShelf.name) : '' }));
   }
   return out;
 }
@@ -741,7 +758,7 @@ function cellHtml(g) {
     </div>
     <div class="t">${esc(nm)}</div>
     <div class="s">${esc(sub || g.genre || '')}${
-      g.vers ? `<span class="vers">${g.vers.length}版</span>` : ''}</div>
+      g.vers && !g.settled ? `<span class="vers">${g.vers.length}版</span>` : ''}</div>
   </button>`;
 }
 
@@ -751,7 +768,9 @@ function bindCells() {
        選んだ版）。一度選べば覚えるので、次からは黙って同じ版で始まる。 */
     if (b.dataset.g && !b.dataset.no) {
       const vs = (S.gmap || {})[b.dataset.g];
-      if (vs && vs.length > 1 && !S.ver[b.dataset.g]) return pickVer(b.dataset.g, vs);
+      const settled = vs && vs.some(gotIt);
+      if (vs && vs.length > 1 && !settled && !S.ver[b.dataset.g])
+        return pickVer(b.dataset.g, vs);
     }
     /* まだ上げていない本は遊べない。行き止まりにせず、上げる画面へ連れて行く。 */
     if (b.dataset.no) {
