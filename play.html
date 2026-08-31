@@ -98,7 +98,15 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   let cat;
   try { cat = await (await fetch('./games.json?v=1', { cache: 'no-cache' })).json(); }
   catch (e) { return fail('台帳が読めません'); }
-  const g = (cat.games || []).find(x => x.id === id);
+  /* 台帳に無い本は、棚が見つけて端末に足した分（`pg.extra`）から引く。
+     台帳は Mac の中身から作ったものなので、pCloud にしか無い本は載っていない。 */
+  let g = (cat.games || []).find(x => x.id === id);
+  if (!g) {
+    try {
+      const e = JSON.parse(localStorage.getItem('pg.extra') || '[]').find(x => x.id === id);
+      if (e) g = { ...e, file: e.files[0] };
+    } catch (err) {}
+  }
   if (!g)      return fail('台帳にありません');
   if (!g.core) return fail(g.system + ' はブラウザでは動きません');
   GAME = g;

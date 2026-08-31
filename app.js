@@ -86,7 +86,7 @@ function mergeCatalogs() {
      入れた分は載っていない。棚に出せないと「無いもの」になってしまうので、
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
-    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short,
+    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short, core: e.core,
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -141,7 +141,46 @@ async function scanAll(say = () => {}) {
     }
   }
   S.files = map; LS.set('files', map);
-  return { count, kinds: Object.keys(map).length, places: places.length };
+  const added = learnFrom(map);
+  return { count, kinds: Object.keys(map).length, places: places.length, added };
+}
+
+/* 見に行った場所で見つけた ROM のうち、**台帳に無いものを棚に起こす。**
+   台帳は Mac の中身から作ったものなので、pCloud にしか無い分は載っていない。
+   移させるのではなく、見つけた時点で棚に出す。置き場（GitHub）には触らない。 */
+function learnFrom(map) {
+  const known = new Set();
+  for (const g of ((S.cat && S.cat.games) || [])) known.add(P.nfc(g.file));
+  for (const t of ((S.cat98 && S.cat98.titles) || []))
+    for (const d of t.disks) known.add(P.nfc(d.file));
+
+  const extra = LS.get('extra', []);
+  const have = new Set(extra.flatMap(e => e.files));
+  /* PC-98 は1本＝複数枚。`X_A.fdi` `X_B.fdi` のように末尾が1文字違いなら
+     同じ本と見て束ねる（外れることもあるが、バラバラに並ぶよりは読める）。 */
+  const group = new Map();
+  for (const name of Object.keys(map)) {
+    if (known.has(name) || have.has(name)) continue;
+    const sys = sysOf(name);
+    if (!sys.length) continue;
+    if (/\b(bios|BIOS|font|sound)\b/i.test(name)) continue;
+    const base = name.replace(/\.[^.]+$/, '');
+    const key = sys[0] === 'PC-98'
+      ? base.replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
+      : base;
+    if (!group.has(key)) group.set(key, { system: sys[0], short: sys[1], core: sys[2], files: [], base });
+    group.get(key).files.push(name);
+  }
+  let n = 0;
+  for (const [key, g] of group) {
+    g.files.sort((a, b) => a.localeCompare(b, 'ja'));
+    extra.push({ id: 'X-' + key, name: key, system: g.system, short: g.short,
+                 core: g.core, bytes: 0, files: g.files,
+                 sub: g.files.length > 1 ? g.files.length + '枚' : '見つけた分' });
+    n++;
+  }
+  if (n) { LS.set('extra', extra); S.items = mergeCatalogs(); }
+  return n;
 }
 
 async function refreshHere() { S.here = await ROMS.list(); }
@@ -534,7 +573,7 @@ function play(id) {
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=26'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=9';
+      '&fid=' + S.files[P.nfc(g.files[0])] + '&v=10';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
@@ -657,7 +696,9 @@ function screenSet() {
     m.textContent = '見ています…';
     try {
       const r = await scanAll(t => { m.textContent = t; });
-      toast(`${r.places} か所・${r.count} ファイルを見ました`);
+      toast(`${r.places} か所・${r.count} ファイル`
+        + (r.added ? `／${r.added} 本を新たに棚へ` : ''));
+      S.items = mergeCatalogs();
       screenSet();
     }
     catch (e) { m.textContent = e.message; m.className = 'msg err'; }
@@ -1135,27 +1176,38 @@ function shrinkImage(file, width = 320) {
 
 /* 台帳に無い本を、この端末の棚に足す。**置き場（GitHub）には触らない。**
    題名はファイル名から起こす。あとで「箱絵を直す」や題名の直しで整える。 */
-function addExtra(r, system, short) {
+function addExtra(r, system, short, core) {
   const extra = LS.get('extra', []);
   if (extra.some(e => e.files.includes(r.name))) return;
   extra.push({
-    id: 'X-' + r.fileid, name: r.name.replace(/\.[^.]+$/, ''), system, short,
+    id: 'X-' + r.fileid, name: r.name.replace(/\.[^.]+$/, ''), system, short, core,
     bytes: r.size, files: [r.name], sub: '見つけた分',
   });
   LS.set('extra', extra);
 }
 
-/* 拡張子から機種を当てる。台帳に無いものを拾うときに要る。 */
+/* 拡張子から機種を当てる。台帳に無いものを拾うときに要る。
+   **台帳に載っているのは Mac にあった5機種だけ**だが、pCloud には
+   セガ・NEC・SNK・MSX なども置いてある。動かせるものは動かす。
+   [拡張子, 機種, 短い名, コア]。コアが null のものは棚に出すが遊べない。 */
 const EXT_SYS = [
-  [/\.(nes|fds)$/i,             'Famicom',        'FC'],
-  [/\.(smc|sfc|fig|swc)$/i,     'Super Famicom',  'SFC'],
-  [/\.(n64|v64|z64)$/i,         'Nintendo 64',    'N64'],
-  [/\.nds$/i,                   'Nintendo DS',    'DS'],
-  [/\.(iso|cso)$/i,             'Sony PSP',       'PSP'],
-  [/\.(fdi|hdi|d88|hdm|xdf|nfd)$/i, 'PC-98',      '98'],
+  [/\.(nes|fds|unf)$/i,            'Famicom',        'FC',   'fceumm'],
+  [/\.(smc|sfc|fig|swc)$/i,        'Super Famicom',  'SFC',  'snes9x'],
+  [/\.(n64|v64|z64)$/i,            'Nintendo 64',    'N64',  'mupen64plus_next'],
+  [/\.nds$/i,                      'Nintendo DS',    'DS',   'melonds'],
+  [/\.(gbc|gb)$/i,                 'ゲームボーイ',    'GB',   'gambatte'],
+  [/\.gba$/i,                      'ゲームボーイアドバンス', 'GBA', 'mgba'],
+  [/\.(md|gen|smd)$/i,             'メガドライブ',    'MD',   'genesis_plus_gx'],
+  [/\.sms$/i,                      'マスターシステム', 'SMS',  'genesis_plus_gx'],
+  [/\.gg$/i,                       'ゲームギア',      'GG',   'genesis_plus_gx'],
+  [/\.pce$/i,                      'PCエンジン',      'PCE',  'mednafen_pce'],
+  [/\.(ws|wsc)$/i,                 'ワンダースワン',  'WS',   'mednafen_wswan'],
+  [/\.(ngp|ngc)$/i,                'ネオジオポケット', 'NGP',  'mednafen_ngp'],
+  [/\.vb$/i,                       'バーチャルボーイ', 'VB',   'beetle_vb'],
+  [/\.(fdi|hdi|d88|hdm|xdf|nfd)$/i, 'PC-98',         '98',   null],
+  /* PSP と PS1 は像の形が同じ（.iso）で見分けられない。棚には出さない。 */
 ];
-const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || [])
-  .slice(1) || [];
+const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || []).slice(1);
 
 /* ============ pCloud から棚へ ============ */
 /* 耳読の書棚に倣った口。あちらは「pCloud にある本を並べて、その場でボタンを押す」だけで、
@@ -1281,12 +1333,12 @@ async function screenGather() {
       i++;
       $('#gm').textContent = `${copy ? '写して' : '移して'}います… ${i}/${todo.length}　${r.name}`;
       try {
-        const [system, short] = r.item ? [r.item.system, r.item.short] : sysOf(r.name);
+        const [system] = r.item ? [r.item.system] : sysOf(r.name);
         if (!system) { ng++; continue; }
         if (!folders[system]) folders[system] = await folderFor(system);
         const fid = await P.moveFile(r.fileid, folders[system], { host: S.host, auth: S.auth, copy });
         S.files[r.name] = fid; ok++;
-        if (!r.item) addExtra(r, system, short);
+        if (!r.item) addExtra(r, system, (sysOf(r.name)[1] || ''), (sysOf(r.name)[2] || null));
         delete G.pick[r.fileid];
       } catch (e) { ng++; log.note('移し損ね: ' + r.name + ' — ' + e.message); }
     }
@@ -1339,8 +1391,9 @@ async function screenPlaces(folderid) {
       const m = $('#pm');
       try {
         const r = await scanAll(t => { m.textContent = t; });
-        m.textContent = `${r.places} か所・${r.count} ファイル。棚と合った名前 ${r.kinds} 件。`;
         S.items = mergeCatalogs();
+        m.textContent = `${r.places} か所・${r.count} ファイル。`
+          + (r.added ? `台帳に無い本を ${r.added} 本、棚に起こしました。` : '台帳に無い本はありませんでした。');
       } catch (e) { m.textContent = '見られません: ' + e.message; }
     };
     for (const b of main().querySelectorAll('[data-off]')) b.onclick = () => {
