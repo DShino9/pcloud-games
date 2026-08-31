@@ -182,6 +182,9 @@ async function scanAll(say = () => {}) {
     }
   }
   S.files = map; LS.set('files', map);
+  /* **走ったことを残す。** 見えないと「スキャンしているか」が分からない。 */
+  LS.set('scan', { at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                   places: report, count });
   /* 「棚に上げる」がそのまま使えるように、在処つきの一覧を渡しておく。 */
   S.gather = Object.assign(S.gather || { pick: {}, busy: false },
     { files: seen, where: { id: places[0] && places[0].id, name: '見に行く場所ぜんぶ' },
@@ -321,12 +324,34 @@ function screenHome() {
           b.got ? ` ・<span style="color:var(--ok)">棚に ${b.got}</span>` : ''}</div>
       </button>`).join('')}
   </div>
-  <div class="sub" style="margin-top:14px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を棚に取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
+  <div class="sub" style="margin-top:14px" id="scanline">${(() => {
+    const sc = LS.get('scan', null);
+    return sc
+      ? `倉庫を見たのは <b>${esc(sc.at)}</b>（${esc(String(sc.count))} ファイル）　`
+        + sc.places.join('　／　')
+        + ' <button class="hbtn sm" id="rescan2">いま見直す</button>'
+      : '<b>まだ倉庫を見ていません。</b> <button class="hbtn sm" id="rescan2">いま見直す</button>';
+  })()}</div>
+  <div class="sub" style="margin-top:6px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を棚に取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
 
   for (const b of main().querySelectorAll('[data-sys]'))
     b.onclick = () => go('#/sys/' + encodeURIComponent(b.dataset.sys));
   $('#hall').onclick = () => go('#/all');
   $('#haddto').onclick = () => go('#/gather');
+  const rs = $('#rescan2');
+  if (rs) rs.onclick = async () => {
+    const line = $('#scanline');
+    rs.disabled = true;
+    try {
+      const r = await scanAll(t => { line.textContent = t; });
+      S.items = mergeCatalogs();
+      screenHome();
+      const l2 = $('#scanline');
+      if (l2) l2.innerHTML = `見直しました: ${r.places} か所・${r.count} ファイル`
+        + (r.added ? `／<b>${r.added} 本</b>を新たに棚へ` : '／新しい本はありませんでした')
+        + '<br>' + r.report.join('　／　');
+    } catch (e) { line.textContent = '見られません: ' + e.message; rs.disabled = false; }
+  };
   /* 探すのは機種をまたぐ。打ち始めたら一覧へ移る。 */
   $('#hq').oninput = e => {
     const v = e.target.value;
@@ -1359,8 +1384,10 @@ function screenLog() {
   render();
   /* **一度だけ、よくある置き場を自分で探す。** 見つかれば見に行って棚を埋める。
      本人に登録させない（「場所も分かってるんだから読んどきなよ」）。 */
-  if (S.auth && S.rootId && !LS.get('autoDone', false)) {
-    LS.set('autoDone', true);
+  /* **探し方を変えたら、もう一度探す。** `autoDone` を立てっぱなしにしていたので、
+     広い場所（`/EMU`）を見に行くようにした後も走らなかった。版を添えて覚える。 */
+  if (S.auth && S.rootId && LS.get('autoDone', '') !== 'v3-emu') {
+    LS.set('autoDone', 'v3-emu');
     const found = await autoPlaces(t => toast(t));
     if (found.length) {
       toast(`置き場を見つけました: ${found.join('・')}`);
