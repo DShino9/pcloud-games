@@ -140,7 +140,15 @@ function mergeCatalogs() {
       garbled: !!t.garbled,
     });
   }
-  /* 手で付けたジャンル（選ぶ画面の「＋ ジャンルを付ける」）。台帳より本人が正。 */
+  /* 大捜索（ハッシュ照合）で分かったジャンル。台帳に無い分だけ埋める。 */
+  const GM = LS.get('genremap', {});
+  for (const o of out) {
+    if (!o.genre) {
+      const g = GM[o.system + '|' + P.nfc((o.files || [])[0] || '')];
+      if (g) o.genre = g;
+    }
+  }
+  /* 手で付けたジャンル（選ぶ画面の「＋ ジャンルを付ける」）。何より本人が正。 */
   const G2 = LS.get('genre2', {});
   for (const o of out) if (G2[o.id]) o.genre = G2[o.id];
   return out;
