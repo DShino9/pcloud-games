@@ -15,6 +15,14 @@
 <!-- 共通の見た目。正本は ~/claude code/shelf-core/shelf.css -->
 <link rel="stylesheet" href="./core/shelf.css?v=2">
 <style>
+/* 版の数。札の隅に小さく。 */
+.item .vers{display:inline-block;margin-left:6px;font-size:10px;padding:1px 5px;
+  border-radius:5px;background:rgba(255,255,255,.10);color:var(--dim)}
+/* 選ばせる覆い。 */
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.sheetbox{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:18px;max-width:520px;width:100%;max-height:80vh;overflow:auto}
 /* 3つの見方の札。耳読の書棚と同じ作り —— 名前と数が並び、いま見ているものが塗られる。
    説明文をいくら足すより、これ1つのほうが分かる。 */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;
@@ -170,6 +178,6 @@ body{--ratio:3/4; --fit:contain}
 <script src="./core/pcloud.js?v=5"></script>
 <script src="./pc98disk.js?v=3"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=66"></script>
+<script src="./app.js?v=69"></script>
 </body>
 </html>

@@ -80,6 +80,7 @@ const S = {
      意味を変えたら鍵も変える。 */
   view:     LS.get('view2', 'all'),   // 遊べる / ぜんぶ / 倉庫に無い
   more:     {},                       // 束ごとに、いくつまで出したか
+  ver:      LS.get('ver', {}),        // 束 → 選んだ版の id
   q:        '',
   tools:    LS.get('tools', false),   // PC-98 の道具ディスクも並べるか
   cat:      null,                     // games.json
@@ -107,7 +108,8 @@ function mergeCatalogs() {
      入れた分は載っていない。棚に出せないと「無いもの」になってしまうので、
      見つけた分を端末側で足す（置き場には触らない）。 */
   for (const e of LS.get('extra', [])) {
-    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short, core: e.core,
+    out.push({ id: e.id, name: e.name, sub: e.sub || '', system: e.system, short: e.short,
+               core: e.core, path: e.path || '',
                cover: e.cover || null, bytes: e.bytes || 0, kind: 'game',
                pc98: e.system === 'PC-98', genre: e.genre || '', files: e.files, extra: true });
   }
@@ -184,7 +186,7 @@ async function scanAll(say = () => {}) {
     { files: seen, where: { id: places[0] && places[0].id, name: '見に行く場所ぜんぶ' },
       at: new Date().toISOString().slice(0, 16).replace('T', ' ') });
   keepGather(S.gather);
-  const added = learnFrom(map);
+  const added = learnFrom(map, seen);
   pushCatalog();          // 絵の捜索の続きは Mac 側がやる。題名を渡しておく
   return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
@@ -192,7 +194,11 @@ async function scanAll(say = () => {}) {
 /* 見に行った場所で見つけた ROM のうち、**台帳に無いものを棚に起こす。**
    台帳は Mac の中身から作ったものなので、pCloud にしか無い分は載っていない。
    移させるのではなく、見つけた時点で棚に出す。置き場（GitHub）には触らない。 */
-function learnFrom(map) {
+function learnFrom(map, seen = []) {
+  /* **在処も持たせる。** 倉庫はメーカー別に分けてあるので
+     （`/ROM/パソコン/PC-98/光栄`）、選ぶときもその形で見たい。 */
+  const where = {};
+  for (const f of seen) where[f.name] = f.path || '';
   const known = new Set();
   for (const g of ((S.cat && S.cat.games) || [])) known.add(P.nfc(g.file));
   for (const t of ((S.cat98 && S.cat98.titles) || []))
@@ -220,6 +226,7 @@ function learnFrom(map) {
     g.files.sort((a, b) => a.localeCompare(b, 'ja'));
     extra.push({ id: 'X-' + key, name: key, system: g.system, short: g.short,
                  core: g.core, bytes: 0, files: g.files,
+                 path: where[g.files[0]] || '',
                  sub: g.files.length > 1 ? g.files.length + '枚' : '見つけた分' });
     n++;
   }
@@ -483,9 +490,48 @@ async function screenPick(folderid) {
   };
 }
 
+/* ============ 版違いをまとめる ============ */
+/* 倉庫には同じ本の版がいくつも入っている
+   （`4人打ち麻雀` `4人打ち麻雀 [a1][b1]` `4人打ち麻雀 (FMG Pirate) [p1]` …）。
+   **棚では1冊に見せる。** 版は取り寄せるとき・起動するときに選ぶ。
+   3380本の多くはこれで、並べたままでは探せない。 */
+const DUMP_TAG = /\[(a|b|o|p|t|h|f|!|hM|hI|hFFE)\d*\]|\[!\]|\[[a-z]\]/gi;
+
+function baseName(n) {
+  return String(n)
+    .replace(/\.[^.]+$/, '')
+    .replace(DUMP_TAG, ' ')
+    .replace(/\((FMG[^)]*|Pirate|Hack[^)]*|Rev\s*\w+|V\d[\d.]*|PRG\d|MODE7|WRG\w*)\)/gi, ' ')
+    .replace(/\((JU|J|U|E|UE|JE|W|Japan|USA|Europe|World)\)/gi, ' ')
+    .replace(/^\d{3,4}\s*-\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* 表に出す単位。同じ機種・同じ base で束ねる。 */
+function grouped(list) {
+  const box = new Map();
+  for (const i of list) {
+    const key = i.system + '|' + baseName(i.name);
+    if (!box.has(key)) box.set(key, []);
+    box.get(key).push(i);
+  }
+  const out = [];
+  S.gmap = {};
+  for (const [key, vs] of box) {
+    /* 代表は「素の名前に近いもの」。付け足しが少ない＝短いものを採る。 */
+    vs.sort((a, b) => a.name.length - b.name.length || collator.compare(a.name, b.name));
+    const chosen = vs.find(v => v.id === (S.ver[key] || '')) || vs[0];
+    out.push(vs.length === 1 ? chosen
+      : (S.gmap[key] = vs, { ...chosen, name: baseName(chosen.name) || chosen.name,
+          gkey: key, vers: vs, sub: '' }));
+  }
+  return out;
+}
+
 /* ============ 棚 ============ */
 function shelfList() {
-  let list = S.items.slice();
+  let list = grouped(S.items);
   /* 3つの見方。遊べる＝倉庫にある。倉庫に無いものは遊べないので分けて置く。 */
   if (S.view === 'play') list = list.filter(gotIt);
   else if (S.view === 'all') list = list.filter(hasAll);
@@ -559,6 +605,7 @@ function screenLib(sys) {
     <select id="fold">
       <option value="sys"${S.fold === 'sys' ? ' selected' : ''}>${S.sys ? 'ジャンルで畳む' : '機種で畳む'}</option>
       <option value="genre"${S.fold === 'genre' ? ' selected' : ''}>ジャンルで畳む</option>
+      <option value="path"${S.fold === 'path' ? ' selected' : ''}>倉庫のフォルダで畳む</option>
       <option value=""${S.fold ? '' : ' selected'}>畳まない</option>
     </select>
     <button class="hbtn${S.tools ? ' on' : ''}" id="tools">道具ディスク</button>
@@ -613,7 +660,10 @@ function gridHtml(list) {
   /* 機種を選んで入っているときに「機種で畳む」は意味がない（束が1つ）。
      その場合はジャンルで畳む。 */
   const by = (S.sys && S.fold === 'sys') ? 'genre' : S.fold;
-  const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定') : i.system;
+  /* 在処で畳むときは、深い順ではなく道の順に並べたほうが辿りやすい。 */
+  const key = i => by === 'genre' ? (i.genre || 'ジャンル未設定')
+                  : by === 'path'  ? (i.path || '（在処が分からない）')
+                  : i.system;
   const box = new Map();
   for (const i of list) {
     if (!box.has(key(i))) box.set(key(i), []);
@@ -622,7 +672,7 @@ function gridHtml(list) {
   /* 機種は台帳の並び、ジャンルは多い順。どちらも「よく使う束が上」になる。 */
   const names = [...box.keys()].sort((a, b) => by === 'genre'
     ? box.get(b).length - box.get(a).length || a.localeCompare(b, 'ja')
-    : a.localeCompare(b, 'ja'));
+    : collator.compare(a, b));
   const cl = shut();
   return names.map(nm => {
     const open = !cl.has(nm);
@@ -673,7 +723,8 @@ function cellHtml(g) {
   const cov = (S.covurl[g.id] || g.cover)
     ? `<img loading="lazy" src="${esc(S.covurl[g.id] || g.cover)}" alt="">`
                       : `<div class="ph">${esc(nm)}</div>`;
-  return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${has ? '' : ' data-no="1"'}>
+  return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${
+    g.gkey ? ` data-g="${esc(g.gkey)}"` : ''}${has ? '' : ' data-no="1"'}>
     <div class="cov">${cov}
       <span class="tag${LOGOS[g.short] ? ' logo' : ''}" data-s="${esc(g.short)}">${
         LOGOS[g.short] ? `<img src="logos/${esc(g.short)}.png" alt="${esc(g.short)}"
@@ -684,12 +735,19 @@ function cellHtml(g) {
       ${has ? '' : '<span class="no">倉庫に無い</span>'}
     </div>
     <div class="t">${esc(nm)}</div>
-    <div class="s">${esc(sub || g.genre || '')}</div>
+    <div class="s">${esc(sub || g.genre || '')}${
+      g.vers ? `<span class="vers">${g.vers.length}版</span>` : ''}</div>
   </button>`;
 }
 
 function bindCells() {
   main().querySelectorAll('.item').forEach(b => b.onclick = () => {
+    /* 版がいくつもある本は、**遊ぶ前に選ばせる**（取り寄せるのも起動するのも
+       選んだ版）。一度選べば覚えるので、次からは黙って同じ版で始まる。 */
+    if (b.dataset.g && !b.dataset.no) {
+      const vs = (S.gmap || {})[b.dataset.g];
+      if (vs && vs.length > 1 && !S.ver[b.dataset.g]) return pickVer(b.dataset.g, vs);
+    }
     /* まだ上げていない本は遊べない。行き止まりにせず、上げる画面へ連れて行く。 */
     if (b.dataset.no) {
       const g = S.items.find(x => x.id === b.dataset.id);
@@ -1696,11 +1754,22 @@ async function screenGather(browse) {
    置き場が分かっているのに本人に登録させるのは、ただの手間。
    道で直に聞けば1回で済む（`listfolder?path=…`）。
    見つからない道は黙って飛ばす。 */
-const LIKELY = ['/EMU/ROM', '/EMU/BIOS', '/ROM', '/roms', '/Games', '/ゲーム棚'];
+/* **広いほうから試す。** `/EMU/ROM` だけ見ていると、
+   `/EMU/その他/…` に置いてある分を取りこぼす（PC-98 がそうだった）。
+   広いものが見つかったら、その下は足さない（二度歩く意味がない）。 */
+const LIKELY = [
+  ['/EMU', '/EMU/ROM', '/EMU/BIOS'],
+  ['/ROM', '/roms'],
+  ['/Games'],
+  ['/ゲーム棚'],
+];
 
 async function autoPlaces(say = () => {}) {
   const found = [];
-  for (const path of LIKELY) {
+  for (const group of LIKELY) {
+   let tookBroad = false;
+   for (const path of group) {
+    if (tookBroad) break;
     const have = [...S.roots, { id: S.rootId }].some(x => String(x.path || '') === path);
     if (have) continue;
     say(`${path} を見ています…`);
@@ -1709,10 +1778,20 @@ async function autoPlaces(say = () => {}) {
       const id = r.metadata.folderid;
       if (String(id) === String(S.rootId)) continue;
       if (S.roots.some(x => String(x.id) === String(id))) continue;
+      /* すでに**その下**が登録されているなら外す。
+         `/EMU` を足したのに `/EMU/ROM` も残っていると、同じ所を二度歩く。 */
+      const drop = S.roots.filter(x => x.path && x.path !== path
+        && x.path.startsWith(path + '/'));
+      if (drop.length) {
+        S.roots = S.roots.filter(x => !drop.includes(x));
+        log.note(`重なるので外した: ${drop.map(x => x.path).join('・')}`);
+      }
       S.roots.push({ id, name: path, path });
       found.push(path);
+      tookBroad = true;          // 広いほうが見つかった。その下は足さない
       log.note(`置き場を見つけた: ${path} → folderid=${id}`);
     } catch (e) { /* 無い道は飛ばす */ }
+   }
   }
   if (found.length) LS.set('roots', S.roots);
   return found;
@@ -2348,4 +2427,34 @@ async function archive(item, say = () => {}) {
   await P.moveFolder(dir.folderid, store, { host: S.host, auth: S.auth });
   log.note(`棚から下ろした: ${item.name} → 書庫`);
   return true;
+}
+
+/* 版を選ぶ。**どれが「当たり」かは中を見ないと分からない**ので、
+   名前と大きさを並べて本人に選ばせる。選んだ版は覚える（設定から選び直せる）。 */
+function pickVer(gkey, vs) {
+  const box = document.createElement('div');
+  box.className = 'sheet';
+  box.innerHTML = `
+    <div class="sheetbox">
+      <h3>どの版で遊びますか</h3>
+      <p class="sub">同じ本が ${vs.length} 版あります。選んだ版を覚えます
+        （あとで「版を選び直す」から変えられます）。</p>
+      <div class="rowlist">
+        ${vs.map(v => `<button class="row" data-v="${esc(v.id)}">
+          <span class="nm" style="text-align:left">${esc(v.name)}</span>
+          <span class="sub">${size(v.bytes || 0)}${
+            hasAll(v) ? '' : ' <span style="color:var(--danger)">倉庫に無い</span>'}</span>
+        </button>`).join('')}
+      </div>
+      <button class="hbtn" id="vclose" style="margin-top:12px">やめる</button>
+    </div>`;
+  document.body.appendChild(box);
+  box.querySelector('#vclose').onclick = () => box.remove();
+  box.onclick = e => { if (e.target === box) box.remove(); };
+  for (const b of box.querySelectorAll('[data-v]')) b.onclick = () => {
+    S.ver[gkey] = b.dataset.v;
+    LS.set('ver', S.ver);
+    box.remove();
+    play(b.dataset.v);
+  };
 }
