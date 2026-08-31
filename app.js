@@ -127,22 +127,27 @@ async function scanFolder(folderid, say = () => {}) {
 async function scanAll(say = () => {}) {
   const map = {};
   let count = 0;
+  const report = [];
   const places = [...S.roots, ...(S.rootId ? [{ id: S.rootId, name: S.rootName }] : [])];
   for (const pl of places) {
     say(`${pl.name} を見ています…`);
     try {
-      const r = await P.indexFolder(pl.id, { host: S.host, auth: S.auth });
+      const r = await P.indexFolder(pl.id, { host: S.host, auth: S.auth,
+        onStep: (n, left) => say(`${pl.name} を歩いています… ${n} ファイル・残り ${left} 部屋`) });
       Object.assign(map, r.map);            // 後に来る棚のフォルダが勝つ
       count += r.count;
+      report.push(`${pl.name}: ${r.count}`);
       log.note(`走査: ${pl.name} ${r.count} ファイル`);
     } catch (e) {
+      /* **黙って落とさない。** 1か所が駄目でも他は続けるが、
+         どこが駄目だったかは必ず出す（棚が空の理由が分からなくなる）。 */
+      report.push(`${pl.name}: 見られません（${e.message}）`);
       log.note(`走査できない: ${pl.name} — ${e.message}`);
-      say(`${pl.name} は見られません（${e.message}）`);
     }
   }
   S.files = map; LS.set('files', map);
   const added = learnFrom(map);
-  return { count, kinds: Object.keys(map).length, places: places.length, added };
+  return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
 
 /* 見に行った場所で見つけた ROM のうち、**台帳に無いものを棚に起こす。**
@@ -210,6 +215,7 @@ function render() {
   if (h === '#/runs')  return screenRuns();
   if (h === '#/disks') return screenDisks();
   if (h === '#/covers') return screenCovers();
+  if (h.startsWith('#/gather/')) return screenGather(h.slice(9));
   if (h === '#/gather') return screenGather();
   if (h.startsWith('#/places/')) return screenPlaces(h.slice(9));
   if (h === '#/places') return screenPlaces();
@@ -1271,7 +1277,12 @@ const EXT_SYS = [
   [/\.(ws|wsc)$/i,                 'ワンダースワン',  'WS',   'mednafen_wswan'],
   [/\.(ngp|ngc)$/i,                'ネオジオポケット', 'NGP',  'mednafen_ngp'],
   [/\.vb$/i,                       'バーチャルボーイ', 'VB',   'beetle_vb'],
-  [/\.(fdi|hdi|d88|hdm|xdf|nfd)$/i, 'PC-98',         '98',   null],
+  /* **PC-98 の像は拡張子が多い。** NP2kai が読むのは
+     FDI・FDD・HDM・TFD・XDF・DUP・2HD・D88・D98・88D・NFD・HDI・THD・NHD・VHD・SLH・HDD・DIP。
+     `.d88` だけ見ていると取りこぼす（「ほぼ全てあるはず」の正体はこれ）。 */
+  [/\.(fdi|fdd|hdm|tfd|xdf|dup|2hd|d88|d98|88d|nfd|hdi|thd|nhd|vhd|slh|hdd|dip)$/i,
+                                    'PC-98',          '98',   null],
+  [/\.(dsk|mx1|mx2|cas)$/i,        'MSX',            'MSX',  'bluemsx'],
   /* PSP と PS1 は像の形が同じ（.iso）で見分けられない。棚には出さない。 */
 ];
 const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || []).slice(1);
@@ -1283,9 +1294,15 @@ const sysOf = name => (EXT_SYS.find(([re]) => re.test(name)) || []).slice(1);
 
    すでに pCloud にあるものは、**上げ直す必要がない。**
    向こう側で動かせば一瞬で終わる（`renamefile` に行き先を渡す）。 */
-async function screenGather() {
+async function screenGather(browse) {
   $('#title').textContent = '棚に上げる';
-  const G = S.gather || (S.gather = { files: null, pick: {}, busy: false });
+  const G = S.gather || (S.gather = { files: null, pick: {}, busy: false, where: null });
+
+  /* **探す場所は「見に行く場所」とは別に決める。**
+     見に行く場所は「置いたまま棚に出す」ための登録で、
+     こちらは「棚のフォルダへ寄せたいものを探す」ための一時の指定。
+     同じにすると、寄せたくない置き場まで巻き込む。 */
+  if (browse != null) return gatherPick(browse, G);
 
   const known = new Map();          // 台帳にあるファイル名 → その本
   for (const i of S.items) for (const f of i.files) known.set(P.nfc(f), i);
@@ -1323,8 +1340,9 @@ async function screenGather() {
        置いたまま棚に出ます（整理を崩さずに済みます）。<br>
        ここは<b>棚のフォルダへ寄せたいとき</b>だけ使ってください。すでに pCloud にあるので
        <b>上げ直しません</b>（向こう側で動かすだけ。一瞬で終わります）。</p>
-    <button class="hbtn" id="scan"${G.busy ? ' disabled' : ''}>見に行く場所を探す</button>
-    <button class="hbtn" id="toPlaces">場所を決める</button>
+    <div class="msg" style="margin:6px 0">探す場所: <b>${esc(G.where ? G.where.name : '未指定')}</b></div>
+    <button class="hbtn" id="pickwhere">探す場所を選ぶ</button>
+    <button class="hbtn" id="scan"${G.busy || !G.where ? ' disabled' : ''}>ここを探す</button>
     ${G.files ? `<span class="sub" style="margin-left:8px">${G.files.length} ファイル見た</span>` : ''}
     <div class="msg" id="gm"></div>
 
@@ -1356,26 +1374,18 @@ async function screenGather() {
 
   $('#back').onclick = () => go('#/lib');
   $('#fromMac').onclick = () => go('#/edit');
-  $('#toPlaces').onclick = () => go('#/places');
+  $('#pickwhere').onclick = () => go('#/gather/0');
   $('#scan').onclick = async () => {
     G.busy = true; $('#gm').textContent = 'pCloud の中を探しています…（本数が多いと少しかかります）';
     try {
       /* **根っこから歩かせない。** 全部を見に行くと、書類も控えも巻き込んで
-         5万ファイルを数える羽目になる（実際にそうなった）。
-         「見に行く場所」に挙げた所だけを見る。 */
-      const places = [...S.roots, ...(S.rootId ? [{ id: S.rootId, name: S.rootName }] : [])];
-      if (!places.length) {
-        G.busy = false;
-        $('#gm').textContent = '先に「見に行く場所」で ROM のあるフォルダを足してください。';
-        return;
-      }
-      const all = [];
-      for (const pl of places) {
-        const r = await P.scanFolder(pl.id, { host: S.host, auth: S.auth,
-          onStep: (n, left) => { $('#gm').textContent = `${pl.name} を見ています… ${n} ファイル・残り ${left} 部屋`; } });
-        all.push(...r.files);
-      }
-      G.files = all.filter(f => /\.(nes|fds|smc|sfc|fig|swc|n64|v64|z64|nds|iso|cso|fdi|hdi|d88|hdm|xdf|nfd)$/i.test(f.name));
+         5万ファイルを数える羽目になる（実際にそうなった）。指定した1か所だけ見る。 */
+      if (!G.where) { G.busy = false; return; }
+      const r = await P.scanFolder(G.where.id, { host: S.host, auth: S.auth,
+        onStep: (n, left) => { $('#gm').textContent = `${G.where.name} を見ています… ${n} ファイル・残り ${left} 部屋`; } });
+      const all = r.files;
+      /* 拾う拡張子は EXT_SYS と揃える（別々に書くと必ずずれる）。 */
+      G.files = all.filter(f => sysOf(f.name).length);
       G.busy = false; screenGather();
     } catch (e) {
       G.busy = false; $('#gm').textContent = '探せません: ' + e.message;
@@ -1459,8 +1469,9 @@ async function screenPlaces(folderid) {
       try {
         const r = await scanAll(t => { m.textContent = t; });
         S.items = mergeCatalogs();
-        m.textContent = `${r.places} か所・${r.count} ファイル。`
-          + (r.added ? `台帳に無い本を ${r.added} 本、棚に起こしました。` : '台帳に無い本はありませんでした。');
+        m.innerHTML = `${r.places} か所・${r.count} ファイル。`
+          + (r.added ? `台帳に無い本を <b>${r.added} 本</b>、棚に起こしました。` : '台帳に無い本はありませんでした。')
+          + '<br><span class="sub">' + r.report.map(esc).join('　／　') + '</span>';
       } catch (e) { m.textContent = '見られません: ' + e.message; }
     };
     for (const b of main().querySelectorAll('[data-off]')) b.onclick = () => {
@@ -1517,5 +1528,47 @@ async function screenPlaces(folderid) {
     } catch (e) {}
     S.items = mergeCatalogs();
     go('#/places');
+  };
+}
+
+/* 「棚に上げる」で探す場所を選ぶ。1階ずつ降りる（棚のフォルダ選びと同じ呼び方）。 */
+async function gatherPick(folderid, G) {
+  main().innerHTML = '<div class="card"><p>見ています…</p></div>';
+  let r;
+  try { r = await call('listfolder', { folderid }); }
+  catch (e) {
+    main().innerHTML = `<div class="card"><div class="msg err">${esc(e.message)}</div>
+      <button class="hbtn" id="back">← 戻る</button></div>`;
+    $('#back').onclick = () => go('#/gather');
+    return;
+  }
+  const md = r.metadata;
+  const dirs = (md.contents || []).filter(c => c.isfolder)
+    .sort((a, b) => collator.compare(a.name, b.name));
+  const files = (md.contents || []).filter(c => !c.isfolder && sysOf(P.nfc(c.name)).length).length;
+  const up = md.parentfolderid != null && String(folderid) !== '0';
+  main().innerHTML = `
+  <div class="card" style="max-width:560px">
+    <h2>探す場所を選ぶ</h2>
+    <p>ここから下を探して、棚のフォルダへ寄せられるものを並べます。<br>
+       <span class="sub">「見に行く場所」とは別です。あちらは<b>置いたまま棚に出す</b>登録、
+       こちらは<b>寄せたいものを探す</b>ための一時の指定です。</span></p>
+    <div style="font-size:13px;color:var(--dim);margin-bottom:10px">${esc(md.name || '/')}
+      ${files ? `<span class="sub">・この階に ROM が ${files} 個</span>` : ''}</div>
+    <div class="rowlist">
+      ${up ? `<button class="row" data-go="${md.parentfolderid}"><span class="nm">← 上へ</span></button>` : ''}
+      ${dirs.map(d => `<button class="row" data-go="${d.folderid}">
+        <span class="nm">📁 ${esc(d.name)}</span></button>`).join('')}
+    </div>
+    <button class="hbtn" id="use3" style="margin-top:12px"${String(folderid) === '0' ? ' disabled' : ''}>
+      ここを探す場所にする</button>
+    <button class="hbtn" id="back" style="margin-left:6px">← 棚に上げるへ</button>
+  </div>`;
+  $('#back').onclick = () => go('#/gather');
+  for (const b of main().querySelectorAll('[data-go]')) b.onclick = () => go('#/gather/' + b.dataset.go);
+  $('#use3').onclick = () => {
+    G.where = { id: folderid, name: md.name || '/' };
+    G.files = null; G.pick = {};
+    go('#/gather');
   };
 }
