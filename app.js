@@ -158,6 +158,7 @@ async function scanFolder(folderid, say = () => {}) {
 async function scanAll(say = () => {}) {
   const map = {};
   const seen = [];
+  const ext = {};
   let count = 0;
   const report = [];
   const places = [...S.roots, ...(S.rootId ? [{ id: S.rootId, name: S.rootName }] : [])];
@@ -170,6 +171,13 @@ async function scanAll(say = () => {}) {
       /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
       seen.push(...r.files.filter(f => sysOf(f.name).length));
+      /* **何を拾って何を捨てたかを数える。** 「ROM は終わったのか?」に
+         数字で答えられるように。拾っていない拡張子が大量にあれば、
+         それは取りこぼしの手がかりになる。 */
+      for (const f of r.files) {
+        const e = (f.name.match(/\.([^.]{1,6})$/) || ['', '(拡張子なし)'])[1].toLowerCase();
+        ext[e] = (ext[e] || 0) + 1;
+      }
       count += r.files.length;
       report.push(`${pl.name}: ${r.files.length}`
         + (r.truncated ? `（<b style="color:var(--danger)">途中で打ち切り・残り ${r.left} 部屋</b>）` : ''));
@@ -183,8 +191,10 @@ async function scanAll(say = () => {}) {
   }
   S.files = map; LS.set('files', map);
   /* **走ったことを残す。** 見えないと「スキャンしているか」が分からない。 */
+  const top = Object.entries(ext).sort((a, b) => b[1] - a[1]).slice(0, 24)
+    .map(([e, n]) => ({ e, n, 拾う: !!sysOf('x.' + e).length }));
   LS.set('scan', { at: new Date().toISOString().slice(0, 16).replace('T', ' '),
-                   places: report, count });
+                   places: report, count, ext: top });
   /* 「棚に上げる」がそのまま使えるように、在処つきの一覧を渡しておく。 */
   S.gather = Object.assign(S.gather || { pick: {}, busy: false },
     { files: seen, where: { id: places[0] && places[0].id, name: '見に行く場所ぜんぶ' },
@@ -655,6 +665,7 @@ function screenLib(sys) {
     <button class="hbtn" id="home" style="margin-left:auto">← 機種へ</button>
     <button class="hbtn" id="addto">＋ 棚に上げる</button>
   </div></div>
+  <div class="sub" id="huntline" style="margin:0 0 8px;display:none"></div>
   <div id="g">${gridHtml(list)}</div>`;
 
   $('#q').oninput    = e => { S.q = e.target.value; redrawGrid(); };
@@ -671,6 +682,7 @@ function screenLib(sys) {
   bindFold();
   bindMore();
   huntCovers(shelfList().slice(0, 200));   // 裏で箱絵を探す
+  huntLine();
 }
 
 function redrawGrid() {
@@ -1932,6 +1944,18 @@ async function screenPlaces(folderid) {
         <button class="hbtn" id="back">← 設定へ</button>
       </div>
       <div class="msg" id="pm">${S.lastScan ? S.lastScan : ''}</div>
+      ${(() => {
+        const sc = LS.get('scan', null);
+        if (!sc || !sc.ext) return '';
+        const got = sc.ext.filter(x => x.拾う), no = sc.ext.filter(x => !x.拾う);
+        return `<h3 style="margin-top:18px">倉庫の中身（${esc(String(sc.count))} ファイル）</h3>
+          <p class="sub">${esc(sc.at)} に見た分。<b>拾っている</b>のは棚に出る拡張子です。</p>
+          <div class="sub" style="line-height:1.9">
+            <b>拾っている</b>　${got.map(x => `${esc(x.e)} <b>${x.n}</b>`).join('　') || 'なし'}<br>
+            <span style="color:var(--dim2)">拾っていない　${
+              no.map(x => `${esc(x.e)} ${x.n}`).join('　') || 'なし'}</span>
+          </div>`;
+      })()}
     </div>`;
     $('#back').onclick = () => go('#/set');
     $('#add').onclick = () => go('#/places/0');
@@ -2326,7 +2350,26 @@ function lrNames(g) {
   return out.slice(0, 6);
 }
 
-const HUNT = { tried: null, busy: false, queue: [], found: 0 };
+const HUNT = { tried: null, busy: false, queue: [], found: 0, done: 0, miss: 0 };
+
+/* **裏で動いているものは、見えるようにする。**
+   黙って探していると「捜査状況がみえない」ことになる。 */
+function huntLine() {
+  const e = $('#huntline');
+  if (!e) return;
+  if (HUNT.busy || HUNT.queue.length) {
+    e.innerHTML = `箱絵を探しています… 残り <b>${HUNT.queue.length}</b>`
+      + `（見つけた <b style="color:var(--ok)">${HUNT.found}</b>`
+      + `・無かった ${HUNT.miss}）`;
+    e.style.display = '';
+  } else if (HUNT.done) {
+    e.innerHTML = `箱絵の捜索: 見つけた <b style="color:var(--ok)">${HUNT.found}</b>`
+      + `／探した ${HUNT.done}　<span class="sub">この画面に出ている本から順に探します</span>`;
+    e.style.display = '';
+  } else {
+    e.style.display = 'none';
+  }
+}
 
 function huntTried() {
   if (!HUNT.tried) HUNT.tried = new Set(LS.get('hunted', []));
@@ -2345,12 +2388,14 @@ function huntCovers(items) {
 async function runHunt() {
   if (HUNT.busy || document.hidden) return;
   HUNT.busy = true;
+  huntLine();
   const t = huntTried();
   try {
     while (HUNT.queue.length && !document.hidden) {
       const g = HUNT.queue.shift();
       if (t.has(g.id)) continue;
       t.add(g.id);
+      HUNT.done++;
       let got = false;
       for (const nm of lrNames(g)) {
         const url = 'https://raw.githubusercontent.com/libretro-thumbnails/'
@@ -2362,7 +2407,7 @@ async function runHunt() {
           if (blob.size < 1000) continue;
           await MYCOV.put(g.id, blob);
           S.covurl[g.id] = URL.createObjectURL(blob);
-          got = true; HUNT.found++;
+          got = true; HUNT.found++; huntLine();
           /* いま出ている札に、その場で貼る。描き直さない（探している間ずっと
              画面が跳ねると鬱陶しい）。 */
           const cell = main().querySelector(`.item[data-id="${CSS.escape(g.id)}"] .cov`);
@@ -2371,12 +2416,14 @@ async function runHunt() {
           break;
         } catch (e) { /* 次の形を試す */ }
       }
-      if (!got) { /* 見つからなかったことも覚える（二度探さない） */ }
+      if (!got) HUNT.miss++;
+      huntLine();
       await new Promise(r => setTimeout(r, 120));   // 置き場に優しく
       if (HUNT.found % 10 === 3) LS.set('hunted', [...t].slice(-9000));
     }
   } finally {
     HUNT.busy = false;
+    huntLine();
     LS.set('hunted', [...t].slice(-9000));
   }
 }
