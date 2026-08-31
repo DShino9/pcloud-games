@@ -100,7 +100,7 @@ def main():
         e = (re.search(r"\.([^.]{1,6})$", f["name"]) or [None, "(拡張子なし)"])[1].lower()
         ext[e] = ext.get(e, 0) + 1
     seen = [f for f in allf
-            if sys_of(f["name"]) or re.search(r"\.(rar|zip|lzh)$", f["name"], re.I)]
+            if sys_of(f["name"]) or re.search(r"\.(rar|zip|lzh|7z)$", f["name"], re.I)]
     top = sorted(ext.items(), key=lambda x: -x[1])[:24]
     scan = {"at": time.strftime("%Y-%m-%d %H:%M"),
             "places": [f"EMU: {len(emu)}", f"ゲーム棚: {len(dfiles)}"],
@@ -135,7 +135,15 @@ def main():
         # 複製の区画は本にしない（app.js learnFrom と揃える）
         if DUMPDIR.search(dirp + "/"):
             continue
-        if re.search(r"\.(rar|zip|lzh)$", name, re.I):
+        if re.search(r"\.(rar|zip|lzh|7z)$", name, re.I):
+            # zip のままでも遊べる区画（EmulatorJS が zip を直接読む）
+            zarea = (["ゲームボーイ", "GB", "gambatte"] if "/任天堂/ゲームボーイ/" in dirp + "/"
+                     else ["MSX", "MSX", "bluemsx"] if "/パソコン/MSX/" in dirp + "/" else None)
+            if zarea and re.search(r"\.(zip|7z)$", name, re.I):
+                group[dirp + "|" + name] = {"system": zarea[0], "short": zarea[1],
+                    "core": zarea[2], "files": [name], "paths": [dirp],
+                    "fids": [f["fileid"]], "base": re.sub(r"\.[^.]+$", "", name)}
+                continue
             if not re.search(r"PC-?98", dirp, re.I):
                 continue
             akey = dirp + "|" + name
