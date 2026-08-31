@@ -34,7 +34,7 @@ async function screenDisks() {
 
   const keys  = Object.keys(S.here);
   const mine  = keys.filter(isMine).sort();
-  /* 本のディスクで、すでに取り寄せ済みのもの。取り寄せ済みなら中が見られる。 */
+  /* 本のディスクで、すでに棚にあるもの。棚にあれば中が見られる。 */
   const held  = keys.filter(k => !isMine(k) && isImage(k)).sort();
   /* 棚にはあるが、まだまだ取り寄せていないもの。 */
   const away  = [];

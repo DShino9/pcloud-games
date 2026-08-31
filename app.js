@@ -185,6 +185,7 @@ async function scanAll(say = () => {}) {
       at: new Date().toISOString().slice(0, 16).replace('T', ' ') });
   keepGather(S.gather);
   const added = learnFrom(map);
+  pushCatalog();          // 絵の捜索の続きは Mac 側がやる。題名を渡しておく
   return { count, kinds: Object.keys(map).length, places: places.length, added, report };
 }
 
@@ -309,10 +310,10 @@ function screenHome() {
           <span class="sysname">${esc(name)}</span>
         </div>
         <div class="syscnt">倉庫 <b>${b.have}</b> 本${
-          b.got ? ` ・<span style="color:var(--ok)">遊べる ${b.got}</span>` : ''}</div>
+          b.got ? ` ・<span style="color:var(--ok)">棚に ${b.got}</span>` : ''}</div>
       </button>`).join('')}
   </div>
-  <div class="sub" style="margin-top:14px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
+  <div class="sub" style="margin-top:14px">全部で ${total} 本。うち <b>${held} 本</b>が倉庫にあり、<b>${S.items.filter(gotIt).length} 本</b>を棚に取り寄せ済みです。<br>倉庫に無い本は遊べません。設定 →「倉庫の場所」で置き場を足すか、「＋ 棚に上げる」から。</div>`;
 
   for (const b of main().querySelectorAll('[data-sys]'))
     b.onclick = () => go('#/sys/' + encodeURIComponent(b.dataset.sys));
@@ -534,7 +535,7 @@ function screenLib(sys) {
   main().innerHTML = `
   <div class="bar"><div class="row1">
     <div class="seg">
-      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>すぐ遊べる (${nPlay})</button>
+      <button data-view="play"${S.view === 'play' ? ' class="on"' : ''}>遊べる (${nPlay})</button>
       <button data-view="all"${S.view === 'all' ? ' class="on"' : ''}>倉庫 (${nWare})</button>
       ${nNone ? `<button data-view="none"${S.view === 'none' ? ' class="on"' : ''}>倉庫に無い (${nNone})</button>` : ''}
     </div>
@@ -579,6 +580,7 @@ function screenLib(sys) {
   bindCells();
   bindFold();
   bindMore();
+  huntCovers(shelfList().slice(0, 200));   // 裏で箱絵を探す
 }
 
 function redrawGrid() {
@@ -588,6 +590,7 @@ function redrawGrid() {
   bindCells();
   bindFold();
   bindMore();
+  huntCovers(shelfList().slice(0, 200));   // 裏で箱絵を探す
 }
 
 /* 畳んだ束は端末ごとに覚える。数が増えると一覧が長くなるので、
@@ -598,7 +601,7 @@ const shut = () => new Set(LS.get('shut', []));
 function gridHtml(list) {
   if (!list.length) {
     return `<div class="empty">${S.q ? '見つかりません'
-      : S.view === 'play' ? 'まだ1本も取り寄せていません。<br><span class="sub">「倉庫」の札から選んで遊ぶと、取り寄せた分がここに残ります（次からは圏外でも遊べます）。</span>'
+      : S.view === 'play' ? 'まだ棚に何も取り寄せていません。<br><span class="sub">「倉庫」の札から選んで遊ぶと、その本が棚に入ります。次からはすぐ遊べます（圏外でも）。</span>'
       : S.view === 'none' ? '倉庫に無い本はありません。'
       : '棚が空です'}</div>`;
   }
@@ -740,6 +743,24 @@ async function pushRuns(force) {
   } catch (e) { RUNPUSH = 0; }      // 駄目なら次の機会にすぐ試す
 }
 
+/* 棚の題名を倉庫へ書き出す。**ブラウザからは画像検索ができない**（CORS）ので、
+   絵の捜索の続きは Mac 側の道具（`tools/fetch-covers.py`）がやる。
+   そのための題名の一覧を、倉庫の `_記録/棚.json` に置いておく。 */
+async function pushCatalog() {
+  if (!S.auth || !S.rootId) return;
+  try {
+    const fid = await P.ensureFolder(S.rootId, '_記録', { auth: S.auth });
+    const list = S.items.filter(i => i.kind === 'game').map(i => ({
+      id: i.id, name: i.name, system: i.system, files: i.files,
+      cover: !!(i.cover || S.covurl[i.id]),
+    }));
+    const body = JSON.stringify({ 書いた: new Date().toISOString(), 本数: list.length, 本: list });
+    await P.uploadFile(fid, '棚.json', new Blob([body], { type: 'application/json' }),
+                       { auth: S.auth });
+    log.note(`題名の一覧を倉庫へ: ${list.length} 本`);
+  } catch (e) { log.note('題名の一覧を書き出せない: ' + e.message); }
+}
+
 /* ============ 遊ぶ ============ */
 function play(id) {
   const g = S.items.find(x => x.id === id);
@@ -837,7 +858,7 @@ function screenSet() {
       <div class="row"><span class="nm">pCloud</span><span class="sub">${S.auth ? esc(S.email) : '未接続'}</span></div>
 
       <div class="row"><span class="nm">台帳</span><span class="sub">${playable.length} 本中 ${found} 本が倉庫にある</span></div>
-      <div class="row"><span class="nm">取り寄せた分</span><span class="sub">${S.items.filter(gotIt).length} 本</span></div>
+      <div class="row"><span class="nm">棚にある分</span><span class="sub">${S.items.filter(gotIt).length} 本・すぐ遊べます</span></div>
       <button class="row" id="relay"><span class="nm">中継所</span><span class="sub">${S.relay ? '設定済み' : '未設定（無くても遊べます・あると速い）'}</span></button>
       <button class="row" id="gather"><span class="nm">棚に上げる</span><span class="sub">倉庫の中から移す・上げ直さない</span></button>
       <button class="row" id="places"><span class="nm">倉庫の場所</span><span class="sub">${
@@ -848,7 +869,7 @@ function screenSet() {
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
     </div>
     <button class="hbtn" id="fdclr">ディスクの組み合わせを忘れる</button>
-    <button class="hbtn" id="clr" style="margin-left:6px">取り寄せた分を消す</button>
+    <button class="hbtn" id="clr" style="margin-left:6px">棚から下ろす</button>
     <button class="hbtn" id="out" style="margin-left:6px">つなぎを切る</button>
     <div class="msg" id="m"></div>
     <div class="note">
@@ -1001,7 +1022,7 @@ function screenEdit() {
       <button class="hbtn" id="esrcf" style="flex:0 0 auto">ファイルを選ぶ</button>
       <button class="hbtn" id="eup" style="flex:0 0 auto"${n && E.src ? '' : ' disabled'}>倉庫へ上げる</button>
       <button class="hbtn" id="edown" style="flex:0 0 auto"${n ? '' : ' disabled'}>倉庫から下げる</button>
-      <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>取り寄せた分を消す</button>
+      <button class="hbtn" id="ecache" style="flex:0 0 auto"${n ? '' : ' disabled'}>棚から下ろす</button>
     </div>
     <div class="msg" id="ep" style="min-height:0;margin-top:6px"></div>
   </div>
@@ -1113,7 +1134,7 @@ async function doDelete() {
   screenEdit();
 }
 
-/* 取り寄せた分だけ消す。倉庫には触らない。 */
+/* 棚から下ろすだけ。倉庫には触らない。 */
 async function doUncache() {
   const items = picked();
   let n = 0;
@@ -1125,7 +1146,7 @@ async function doUncache() {
     }
   }
   await refreshHere();
-  prog(`取り寄せた分を ${n} 件消しました（倉庫はそのまま）`);
+  prog(`棚から ${n} 件下ろしました（倉庫はそのまま）`);
   screenEdit();
 }
 
@@ -2116,3 +2137,103 @@ async function dupesPick(folderid) {
     go('#/dupes');
   };
 }
+
+/* ============ 箱絵の捜索（裏で） ============ */
+/* 倉庫が見えるようになって 7171 本。**台帳に絵は用意できない。**
+   そこで、**いま画面に出ている本の絵を、裏で探して埋める。**
+
+   ブラウザから叩けるのは libretro の置き場だけ。画像検索は CORS で塞がれている
+   （そちらは Mac 側の `tools/fetch-covers.py` の担当）。
+   探した結果は端末に残すので、二度同じ本を探さない。 */
+const LR_REPO = {
+  'Famicom':        'Nintendo_-_Nintendo_Entertainment_System',
+  'Super Famicom':  'Nintendo_-_Super_Nintendo_Entertainment_System',
+  'Nintendo 64':    'Nintendo_-_Nintendo_64',
+  'Nintendo DS':    'Nintendo_-_Nintendo_DS',
+  'ゲームボーイ':      'Nintendo_-_Game_Boy',
+  'ゲームボーイアドバンス': 'Nintendo_-_Game_Boy_Advance',
+  'メガドライブ':      'Sega_-_Mega_Drive_-_Genesis',
+  'マスターシステム':   'Sega_-_Master_System_-_Mark_III',
+  'ゲームギア':       'Sega_-_Game_Gear',
+  'PCエンジン':      'NEC_-_PC_Engine_-_TurboGrafx-16',
+  'ワンダースワン':    'Bandai_-_WonderSwan',
+  'ネオジオポケット':   'SNK_-_Neo_Geo_Pocket',
+  'バーチャルボーイ':   'Nintendo_-_Virtual_Boy',
+  'MSX':            'Microsoft_-_MSX',
+  'PC-98':          'NEC_-_PC-98',
+};
+
+/* 置き場の名前は No-Intro の書き方。手元の名前には配り手の付け足しが多いので、
+   いくつかの形に均して当てる。 */
+function lrNames(g) {
+  const raw = (g.name || '').replace(/\.[^.]+$/, '');
+  let n = raw
+    .replace(/^\d{3,4}\s*-\s*/, '')          // `0228 - Mario Kart DS`
+    .replace(/\[[^\]]*\]/g, '')              // `[b1]` `[!]` `[N64 Jap]`
+    .replace(/\((FMG[^)]*|Pirate|MODE7|WRG\w*|V\d[\d.]*)\)/gi, '')
+    .replace(/\s+/g, ' ').trim();
+  const out = [];
+  const push = v => { if (v && !out.includes(v)) out.push(v); };
+  push(n);
+  const bare = n.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  for (const tag of ['(Japan)', '(Japan, USA)', '(USA)', '(World)', '(Japan) (Rev 1)']) push(bare + ' ' + tag);
+  push(bare);
+  if (g.sub) { push(g.sub); push(g.sub + ' (Japan)'); push(g.sub + ' (USA)'); }
+  return out.slice(0, 6);
+}
+
+const HUNT = { tried: null, busy: false, queue: [], found: 0 };
+
+function huntTried() {
+  if (!HUNT.tried) HUNT.tried = new Set(LS.get('hunted', []));
+  return HUNT.tried;
+}
+
+/* 画面に出ている本のうち、絵の無いものを裏で探す。
+   **見えている分だけ。** 7171本を総当たりしたら、置き場にも端末にも悪い。 */
+function huntCovers(items) {
+  const t = huntTried();
+  const add = items.filter(g => !g.cover && !S.covurl[g.id] && !t.has(g.id) && LR_REPO[g.system]);
+  for (const g of add) if (!HUNT.queue.some(x => x.id === g.id)) HUNT.queue.push(g);
+  runHunt();
+}
+
+async function runHunt() {
+  if (HUNT.busy || document.hidden) return;
+  HUNT.busy = true;
+  const t = huntTried();
+  try {
+    while (HUNT.queue.length && !document.hidden) {
+      const g = HUNT.queue.shift();
+      if (t.has(g.id)) continue;
+      t.add(g.id);
+      let got = false;
+      for (const nm of lrNames(g)) {
+        const url = 'https://raw.githubusercontent.com/libretro-thumbnails/'
+          + LR_REPO[g.system] + '/master/Named_Boxarts/' + encodeURIComponent(nm) + '.png';
+        try {
+          const r = await fetch(url, { cache: 'force-cache' });
+          if (!r.ok) continue;
+          const blob = await r.blob();
+          if (blob.size < 1000) continue;
+          await MYCOV.put(g.id, blob);
+          S.covurl[g.id] = URL.createObjectURL(blob);
+          got = true; HUNT.found++;
+          /* いま出ている札に、その場で貼る。描き直さない（探している間ずっと
+             画面が跳ねると鬱陶しい）。 */
+          const cell = main().querySelector(`.item[data-id="${CSS.escape(g.id)}"] .cov`);
+          if (cell) cell.innerHTML = `<img src="${S.covurl[g.id]}" alt="">`
+            + cell.innerHTML.replace(/^<img[^>]*>|<div class="ph">.*?<\/div>/, '');
+          break;
+        } catch (e) { /* 次の形を試す */ }
+      }
+      if (!got) { /* 見つからなかったことも覚える（二度探さない） */ }
+      await new Promise(r => setTimeout(r, 120));   // 置き場に優しく
+      if (HUNT.found % 10 === 3) LS.set('hunted', [...t].slice(-9000));
+    }
+  } finally {
+    HUNT.busy = false;
+    LS.set('hunted', [...t].slice(-9000));
+  }
+}
+addEventListener('visibilitychange', () => { if (!document.hidden) runHunt(); });
