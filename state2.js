@@ -1,23 +1,22 @@
 'use strict';
-/* 状態の一本化（#75）。**端末には入れない** —— ブラウザを開けばどこでも同じ棚。
+/* 状態の一本化（#75）——**2冊に分けた版**。
 
-   これまで走査の結果（見つけた本 7,000冊・名前→fileid）や、目録で直した題名、
-   ディスクの組み合わせ、選んだ版が**全部 localStorage にだけ**あった。
-   別のブラウザで開くと空っぽになる（未達の最大項目だった）。
+   最初は1冊（台帳.json・丸ごと後勝ち）にしたら、端末が遊んだ記録を書くついでに
+   **古い走査結果を新しい時刻で押し返し、Mac が組んだ 9,980 冊を上書き**した
+   （2026-08-31 の夜に実際に起きた）。書く人が違うものは、冊を分けるしかない。
 
-   → 倉庫の `/ゲーム棚/_台帳/台帳.json` に1つにまとめて置く。
-     ・書くとき: 対象の鍵が変わったら、8秒まとめて1回上げる
-     ・開くとき: 倉庫の台帳のほうが新しければ、端末に取り込んで描き直す
-     ・新しい端末: つないだ瞬間に 7,000冊が揃う（走査し直さない）
+     /ゲーム棚/_台帳/走査.json   extra・files・pics・scan
+         …… **Mac の道具と「いま見直す」だけ**が書く
+     /ゲーム棚/_台帳/手元.json   renamed・genre2・fdpick・ver・plays・roots
+         …… 端末が書く（8秒まとめて）
 
-   同期するのは**端末をまたぐ意味のあるものだけ**。
-   見た目の好み（畳み・並び・札の大きさ）と合鍵は端末に残す。 */
+   開いたとき・画面に戻ったときに両方を見て、新しければ取り込む。
+   見た目の好み（畳み・並び）と合鍵は端末に残す。 */
 
 const S2 = {
-  /* 走査系 ／ 題名とジャンル ／ 遊び方 ／ 倉庫の場所 */
-  KEYS: ['extra', 'files', 'pics', 'itempath', 'scan',
-         'renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots'],
-  applying: false,   // 取り込み中の書き込みで、また上げ直さないための旗
+  SCAN: ['extra', 'files', 'pics', 'scan'],
+  HAND: ['renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots'],
+  applying: false,
   timer: 0,
   busy: false,
   dirty: false,
@@ -27,23 +26,72 @@ async function s2folder() {
   return P.ensureFolder(S.rootId, '_台帳', { host: S.host, auth: S.auth });
 }
 
-/* ---- 上げる ---- */
+async function s2read(fname) {
+  const fid = await s2folder();
+  const r = await call('listfolder', { folderid: fid });
+  const f = (r.metadata.contents || []).find(x => P.nfc(x.name) === fname);
+  if (!f) return null;
+  /* 配信元は CORS を返さないので、file_read の道で読む。 */
+  const blob = await P.readFile(f.fileid, { host: S.host, auth: S.auth });
+  return JSON.parse(await blob.text());
+}
+
+async function s2write(fname, keys) {
+  const body = { 書いた: new Date().toISOString(), 端末: deviceTag(), keys: {} };
+  for (const k of keys) body.keys[k] = LS.get(k, null);
+  const fid = await s2folder();
+  const text = JSON.stringify(body);
+  await P.uploadFile(fid, fname,
+    new Blob([text], { type: 'application/json' }), { host: S.host, auth: S.auth });
+  return body.書いた;
+}
+
+function s2apply(d, keys, stampKey) {
+  S2.applying = true;
+  try {
+    for (const k of keys) if (d.keys && d.keys[k] != null) LS.set(k, d.keys[k]);
+    LS.set(stampKey, d.書いた);
+  } finally { S2.applying = false; }
+}
+
+function s2rebuild() {
+  S.files = LS.get('files', {});
+  S.roots = LS.get('roots', S.roots || []);
+  S.ver = LS.get('ver', {});
+  S.plays = LS.get('plays', {});
+  S.items = mergeCatalogs();
+}
+
+/* ---- 取り込む ---- */
+async function s2pull() {
+  if (!S.auth || !S.rootId) return false;
+  let changed = false;
+  try {
+    const sc = await s2read('走査.json');
+    if (sc && sc.書いた && sc.書いた > LS.get('scanAt2', '')) {
+      s2apply(sc, S2.SCAN, 'scanAt2');
+      changed = true;
+      log.note(`走査の台帳を取り込んだ（${sc.端末 || '?'}・${String(sc.書いた).slice(0, 16)}）`);
+    }
+    const hd = await s2read('手元.json');
+    if (hd && hd.書いた && hd.書いた > LS.get('handAt2', '')) {
+      s2apply(hd, S2.HAND, 'handAt2');
+      changed = true;
+    }
+  } catch (e) { log.note('台帳を読めない: ' + e.message); }
+  if (changed) s2rebuild();
+  return changed;
+}
+
+/* ---- 端末の分（手元.json）を上げる ---- */
 async function s2push() {
   if (!S.auth || !S.rootId || S2.busy) { S2.dirty = true; return; }
   S2.busy = true; S2.dirty = false;
   try {
-    const keys = {};
-    for (const k of S2.KEYS) keys[k] = LS.get(k, null);
-    const at = new Date().toISOString();
-    const body = JSON.stringify({ 書いた: at, 端末: deviceTag(), keys });
-    const fid = await s2folder();
-    await P.uploadFile(fid, '台帳.json',
-      new Blob([body], { type: 'application/json' }), { host: S.host, auth: S.auth });
-    LS.set('syncAt', at);
-    log.note('台帳を倉庫へ（' + Math.round(body.length / 1024) + 'KB）');
+    LS.set('handAt2', await s2write('手元.json', S2.HAND));
   } catch (e) {
-    S2.dirty = true;               // 駄目なら次の変更のときにまた試す
-    log.note('台帳を上げられない: ' + e.message);
+    S2.dirty = true;
+    log.note('手元の台帳を上げられない: ' + e.message);
   } finally {
     S2.busy = false;
     if (S2.dirty) s2schedule();
@@ -55,38 +103,13 @@ function s2schedule() {
   S2.timer = setTimeout(s2push, 8000);
 }
 
-/* ---- 取り込む ---- */
-async function s2pull() {
-  if (!S.auth || !S.rootId) return false;
+/* ---- 走査の分（走査.json）。**「いま見直す」が走ったときだけ**上げる ---- */
+async function s2pushScan() {
+  if (!S.auth || !S.rootId) return;
   try {
-    const fid = await s2folder();
-    const r = await call('listfolder', { folderid: fid });
-    const f = (r.metadata.contents || []).find(x => x.name === '台帳.json');
-    if (!f) return false;
-    /* 配信元（getfilelink の先）は CORS を返さないので、file_read の道で読む。 */
-    const blob = await P.readFile(f.fileid, { host: S.host, auth: S.auth });
-    const d = JSON.parse(await blob.text());
-    const mine = LS.get('syncAt', '');
-    if (!d.書いた || d.書いた <= mine) return false;   // 端末のほうが新しい
-    S2.applying = true;
-    try {
-      for (const k of S2.KEYS) {
-        if (d.keys && d.keys[k] != null) LS.set(k, d.keys[k]);
-      }
-      LS.set('syncAt', d.書いた);
-    } finally { S2.applying = false; }
-    /* 取り込んだら組み立て直す。 */
-    S.files = LS.get('files', {});
-    S.roots = LS.get('roots', S.roots || []);
-    S.ver = LS.get('ver', {});
-    S.plays = LS.get('plays', {});
-    S.items = mergeCatalogs();
-    log.note(`台帳を取り込んだ（${d.端末 || '?'} が ${String(d.書いた).slice(0, 16)} に書いた分）`);
-    return true;
-  } catch (e) {
-    log.note('台帳を読めない: ' + e.message);
-    return false;
-  }
+    LS.set('scanAt2', await s2write('走査.json', S2.SCAN));
+    log.note('走査の台帳を倉庫へ');
+  } catch (e) { log.note('走査の台帳を上げられない: ' + e.message); }
 }
 
 /* ---- 箱絵の索引（`/ゲーム棚/_絵/絵.json`。Mac 側の大捜索が書く）---- */
@@ -110,22 +133,36 @@ async function s2art() {
 }
 
 /* ---- 配線 ---- */
-/* 書き込みに割り込む。同じ LS を app.js も見ているので、ここで1回だけ包む。 */
+/* 書き込みに割り込む。**手元の鍵だけ**が押し上げの引き金になる。
+   走査の鍵（extra など）を書いても上げない —— ここが1冊時代の穴だった。 */
 (() => {
   const raw = LS.set.bind(LS);
   LS.set = (k, v) => {
     raw(k, v);
-    if (!S2.applying && S2.KEYS.includes(k)) s2schedule();
+    if (!S2.applying && S2.HAND.includes(k)) s2schedule();
   };
 })();
 
-/* 開いたとき: 倉庫の台帳が新しければ取り込む。start() の描画と競わないよう、
-   取り込めたら自分で描き直す。 */
+/* 「いま見直す」（scanAll）が終わったら、走査の分を上げる。 */
+addEventListener('load', () => {
+  if (typeof scanAll === 'function') {
+    const orig = scanAll;
+    // eslint-disable-next-line no-global-assign
+    scanAll = async function (...a) {
+      const r = await orig.apply(this, a);
+      s2pushScan();
+      return r;
+    };
+  }
+});
+
 addEventListener('load', async () => {
   if (await s2pull()) render();
-  /* 倉庫にまだ台帳が無い初回は、この端末の分を種として上げる。 */
-  else if (S.auth && S.rootId && !LS.get('syncAt', '')) s2schedule();
+  /* 手元の分がまだ倉庫に無い初回は、この端末の分を種として上げる。 */
+  else if (S.auth && S.rootId && !LS.get('handAt2', '')) s2schedule();
   s2art();
 });
-/* 画面に戻ってきたときも見る（別の端末で進めた分を拾う）。 */
-addEventListener('visibilitychange', () => { if (!document.hidden) s2pull().then(ch => ch && render()); });
+/* 画面に戻ってきたときも見る（別の端末や Mac が進めた分を拾う）。 */
+addEventListener('visibilitychange', () => {
+  if (!document.hidden) s2pull().then(ch => { if (ch) render(); s2art(); });
+});
