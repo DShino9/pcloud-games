@@ -538,7 +538,10 @@ function screenLogin(keep) {
       S.host = r.host; S.auth = r.auth; S.email = r.email;
       LS.set('host', r.host); LS.set('auth', r.auth); LS.set('email', r.email);
       say('つながりました', 'ok');
-      go('#/pick/0');
+      /* 棚を選ばせる前に控えを見る。場所が書いてあれば選ばずに済む。 */
+      say('前の続きを探しています…');
+      try { await loadIndex(); } catch (e) { log.note('控えを見に行けません: ' + (e.message || e)); }
+      go(S.rootId ? '#/lib' : '#/pick/0');
     } catch (e) {
       log.note('失敗: ' + e.code + ' ' + e.message);
       say(e.message + '（記録は「押した記録」から読めます）', 'err');
@@ -1143,6 +1146,80 @@ async function pushCatalog() {
   } catch (e) { log.note('題名の一覧を書き出せない: ' + e.message); }
 }
 
+/* ============ 控え（決まった場所）============
+   棚の場所を「棚のフォルダの中」に書いていると、在り処を知るのに
+   先に棚を選ばせるしかない。**新しい機器では毎回フォルダを選ばされ、
+   選ぶまで箱絵も遊んだ回数も出てこない。**（音楽棚で同じ形を踏んだ）
+   決まった場所に置けば、ログインした瞬間に読める。 */
+const IDX_DIR = '/棚もの';
+const IDX_NAME = 'ゲーム棚.json';
+
+async function saveIndex() {
+  if (!S.auth || !S.rootId) return;
+  try {
+    await call('createfolderifnotexists', { path: IDX_DIR });
+    const body = JSON.stringify({
+      v: 1, rootId: S.rootId, rootName: S.rootName, roots: S.roots,
+      plays: S.plays,
+      view: { sys: S.sys, sort: S.sort },
+      at: new Date().toISOString() });
+    const u = new URL('https://' + S.host + '/uploadfile');
+    u.searchParams.set('auth', S.auth);
+    u.searchParams.set('path', IDX_DIR);
+    u.searchParams.set('filename', IDX_NAME);
+    u.searchParams.set('nopartial', 1);
+    const fd = new FormData();
+    fd.append('file', new Blob([body], { type: 'application/json' }), IDX_NAME);
+    const r = await fetch(u, { method: 'POST', body: fd });
+    const j = await r.json();
+    if (j.result !== 0) throw new Error(j.error || ('result ' + j.result));
+    log.note('控えを置いた');
+  } catch (e) { log.note('控えを置けない: ' + (e.message || e)); }
+}
+
+/* 上げるのは一拍おいてから。遊ぶたびに書きに行かない。 */
+let idxT = 0, idxReady = false;
+function saveIndexSoon(ms = 8000) {
+  if (!S.auth || !S.rootId || !idxReady) return;
+  clearTimeout(idxT); idxT = setTimeout(saveIndex, ms);
+}
+addEventListener('pagehide', () => { if (idxT) { clearTimeout(idxT); saveIndex(); } });
+
+async function loadIndex() {
+  if (!S.auth) return false;
+  let f = null;
+  try {
+    const st = await call('stat', { path: IDX_DIR + '/' + IDX_NAME });
+    if (st.metadata && !st.metadata.isfolder) f = st.metadata;
+  } catch (e) { return false; }
+  if (!f) return false;
+  let j;
+  try {
+    const lk = await call('getfilelink', { fileid: f.fileid });
+    const r = await fetch('https://' + lk.hosts[0] + lk.path);
+    j = await r.json();
+  } catch (e) { return false; }
+  if (!j) return false;
+  /* 手元の直近の操作は消さない。どちらにもあるものは手元が勝つ。 */
+  if (!S.rootId && j.rootId) {
+    S.rootId = j.rootId; LS.set('rootId', S.rootId);
+    S.rootName = j.rootName || ''; LS.set('rootName', S.rootName);
+    if (Array.isArray(j.roots) && !S.roots.length) { S.roots = j.roots; LS.set('roots', S.roots); }
+    log.note('棚の場所を控えから引き継いだ');
+  }
+  if (j.plays) {
+    for (const [k, v] of Object.entries(j.plays)) {
+      const mine = S.plays[k] || { n: 0, last: 0 };
+      S.plays[k] = { n: Math.max(mine.n || 0, v.n || 0),
+                     last: Math.max(mine.last || 0, v.last || 0) };
+    }
+    LS.set('plays', S.plays);
+  }
+  /* 箱絵の住所（covurl）は端末の中に作った一時的なもの。同期しても意味がない。 */
+  idxReady = true;
+  return true;
+}
+
 /* ============ 遊ぶ ============ */
 function play(id) {
   const g = S.items.find(x => x.id === id);
@@ -1151,6 +1228,7 @@ function play(id) {
   if (g.arc) return toast('この本は圧縮のまま（rar/zip/lzh）。起こす仕組みは準備中です');
   const p = S.plays[id] || { n: 0, last: 0 };
   p.n++; p.last = Date.now(); S.plays[id] = p; LS.set('plays', S.plays);
+  saveIndexSoon();
   log.note('遊ぶ: ' + g.short + ' ' + g.name);
   $('#pname').textContent = g.name;
   /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
@@ -1665,6 +1743,13 @@ function screenLog() {
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
+  /* 開くたびに控えを取り込む。**棚を選んでいなくても読める**ので、
+     ここで場所が分かれば、フォルダを選ばせる画面に飛ばずに済む。
+     取り込みが済むまでは上げない（失敗した回に空で上書きしないため）。 */
+  if (S.auth) {
+    try { await loadIndex(); } catch (e) { log.note('控えを取り込めません: ' + (e.message || e)); }
+    idxReady = true;
+  }
   await loadMyCovers();
   await refreshHere();
   render();
