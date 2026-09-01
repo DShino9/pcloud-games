@@ -941,13 +941,25 @@ function askDisks() {
   });
 }
 
+/* 大きい控え（台帳・fileid表）は Cache API に移った（v118）。
+   ここも同じ置き場を読む —— localStorage だけ見ていると、
+   引っ越し後の端末で「台帳にありません」「BIOS が無い」になる（実際になった）。 */
+async function bigGet(k, d) {
+  try {
+    const c = await caches.open('pg-big-v1');
+    const r = await c.match('/big/' + encodeURIComponent(k));
+    if (r) return await r.json();
+  } catch (e) {}
+  try { const v = localStorage.getItem('pg.' + k); if (v != null) return JSON.parse(v); } catch (e) {}
+  return d;
+}
 (async function start() {
   if (!id) return fail('どの本かが分かりません');
   let cat;
   try { cat = await (await fetch('./pc98.json?v=1', { cache: 'no-cache' })).json(); }
   catch (e) { return fail('PC-98 の台帳が読めません'); }
   title = (cat.titles || []).find(t => t.id === id);
-  files = LS.get('files', {});
+  files = await bigGet('files', {});
   /* **台帳に無い本は、棚が走査で見つけた分から作る。**
      台帳（`pc98.json`）は Mac にあった42本しか載っていない。
      倉庫から見つけた何百本はここに来ないので、`台帳にありません` で
@@ -955,7 +967,7 @@ function askDisks() {
      見つけた本は在処つきの fileid を持っているので、名前ではなくそれで取る。 */
   if (!title) {
     try {
-      const e = JSON.parse(localStorage.getItem('pg.extra') || '[]').find(x => x.id === id);
+      const e = (await bigGet('extra', [])).find(x => x.id === id);
       if (e) {
         title = {
           id: e.id, name: e.name, kind: 'game', boot: e.files[0],

@@ -1272,9 +1272,9 @@ function play(id) {
   $('#pname').textContent = g.name;
   /* PC-98 はコアが別（自分で組んだ NP2kai）。画面も別立てにしてある。 */
   $('#pframe').src = g.pc98
-    ? './play98.html?id=' + encodeURIComponent(id) + '&v=29'
+    ? './play98.html?id=' + encodeURIComponent(id) + '&v=30'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=11';
+      '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=12';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
