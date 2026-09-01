@@ -422,7 +422,17 @@ function render() {
   if (h === '#/places') return screenPlaces();
   if (!S.auth)         return screenLogin();
   if (h.startsWith('#/pick')) return screenPick(h.slice(7) || '0');
-  if (!S.rootId)       return go('#/pick/0');
+  if (!S.rootId) {
+    /* **登録させない（#45 の続き）。** 棚の置き先（/ゲーム棚）は名前で決まって
+       いるので、新しい端末でもこちらから探す。見つからないときだけ選ばせる。 */
+    if (!S._rootHunt) {
+      S._rootHunt = 1;
+      main().innerHTML = '<div class="sub" style="padding:30px">棚の置き先（/ゲーム棚）を探しています…</div>';
+      autoRoot().then(ok => ok ? render() : go('#/pick/0'));
+      return;
+    }
+    return go('#/pick/0');
+  }
   if (h.startsWith('#/t/'))   return screenTitle(decodeURIComponent(h.slice(4)));
   /* 選ぶ画面（#74）。左＝機種→メーカー/ジャンル、中央＝一覧、右＝選んだ本の札。
      昔の道（#/sys/… #/all）もここへ流す。 */
@@ -432,6 +442,18 @@ function render() {
   }
   if (h === '#/all') { L.sys = ''; L.maker = ''; L.genre = ''; l2save(); return screenLibrary(); }
   return screenLibrary();
+}
+
+async function autoRoot() {
+  try {
+    const r = await call('listfolder', { folderid: 0 });
+    const d = (r.metadata.contents || []).find(c => c.isfolder && P.nfc(c.name) === 'ゲーム棚');
+    if (!d) return false;
+    S.rootId = d.folderid; S.rootName = 'ゲーム棚';
+    LS.set('rootId', d.folderid); LS.set('rootName', 'ゲーム棚');
+    log.note('棚の置き先を自分で見つけた: /ゲーム棚');
+    return true;
+  } catch (e) { log.note('棚の置き先を探せない: ' + e.message); return false; }
 }
 
 /* ============ 入口（機種を選ぶ） ============ */

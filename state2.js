@@ -15,7 +15,7 @@
 
 const S2 = {
   SCAN: ['extra', 'files', 'pics', 'scan'],
-  HAND: ['renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots'],
+  HAND: ['renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots', 'rootId', 'rootName'],
   applying: false,
   timer: 0,
   busy: false,
@@ -68,6 +68,8 @@ function s2apply(d, keys, stampKey) {
 }
 
 function s2rebuild() {
+  S.rootId = LS.get('rootId', S.rootId);
+  S.rootName = LS.get('rootName', S.rootName);
   S.files = LS.get('files', {});
   S.roots = LS.get('roots', S.roots || []);
   S.ver = LS.get('ver', {});
