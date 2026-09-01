@@ -186,16 +186,21 @@ function l2rail() {
       const grp = (kind, label, rows, cur) => {
         const key = nm + '/' + kind;
         const open = op.has(key);
+        /* **多いときは上位だけ**（Amazon の絞り込み式）。12件を超える分は
+           「すべて…」→ 検索＋頭文字見出しの選択シートで選ぶ。431行を並べない。 */
+        const shown = rows.length > 15 ? rows.slice(0, 12) : rows;
+        const cut = rows.length - shown.length;
         return `<button class="l2grp" data-grp="${esc(key)}">
             <span class="tri">${open ? '▾' : '▸'}</span>${label}
             <span class="c">${rows.length}</span></button>`
-          /* 25社を超えたら、頭に検索ボックス（Steam のタグ検索と同じ）。 */
-          + (open && rows.length > 25
-              ? `<input class="l2mkq" data-mkq="${kind}" placeholder="打って絞る（${rows.length}件）"
-                   autocapitalize="off" autocorrect="off" spellcheck="false">` : '')
-          + (open ? rows.map(([m, c]) => `
+          + (open ? shown.map(([m, c]) => `
             <button class="l2mk${cur === m ? ' on' : ''}" data-${kind}="${esc(m)}">
-              <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('') : '');
+              <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('') : '')
+          + (open && cur && !shown.some(([m]) => m === cur)
+              ? `<button class="l2mk on" data-${kind}="${esc(cur)}">
+                  <span>${esc(cur)}</span></button>` : '')
+          + (open && cut > 0
+              ? `<button class="l2mk l2all" data-pick="${kind}">すべての${label}（${rows.length}）…</button>` : '');
       };
       sub = `<div class="l2sub">${grp('maker', 'メーカー', mrows, L.maker)}${
         grp('genre', 'ジャンル', grows, L.genre)}</div>`
@@ -451,14 +456,6 @@ function screenLibrary() {
   };
   for (const b of main().querySelectorAll('[data-pick]')) b.onclick = () =>
     l2sheet(b.dataset.pick, l2facets(b.dataset.pick));
-  for (const q of main().querySelectorAll('[data-mkq]')) q.oninput = () => {
-    const t = q.value.trim().toLowerCase();
-    let el = q.nextElementSibling;
-    while (el && el.classList.contains('l2mk')) {
-      el.style.display = !t || (el.dataset.maker || el.dataset.genre || '').toLowerCase().includes(t) ? '' : 'none';
-      el = el.nextElementSibling;
-    }
-  };
   for (const b of main().querySelectorAll('[data-grp]')) b.onclick = () => {
     const op = l2open();
     op.has(b.dataset.grp) ? op.delete(b.dataset.grp) : op.add(b.dataset.grp);
