@@ -93,6 +93,18 @@ const say = t => { $('#st').textContent = t; };
 const bar = p => { $('#bar i').style.width = Math.max(0, Math.min(100, p)) + '%'; };
 function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; }
 
+/* 大きい控え（台帳・fileid表）は Cache API に移った（v118）。
+   ここも同じ置き場を読む —— localStorage だけ見ていると、
+   引っ越し後の端末で「台帳にありません」「BIOS が無い」になる（実際になった）。 */
+async function bigGet(k, d) {
+  try {
+    const c = await caches.open('pg-big-v1');
+    const r = await c.match('/big/' + encodeURIComponent(k));
+    if (r) return await r.json();
+  } catch (e) {}
+  try { const v = localStorage.getItem('pg.' + k); if (v != null) return JSON.parse(v); } catch (e) {}
+  return d;
+}
 (async function start() {
   if (!id || !fid) return fail('どの本かが分かりません');
   let cat;
@@ -103,7 +115,7 @@ function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerH
   let g = (cat.games || []).find(x => x.id === id);
   if (!g) {
     try {
-      const e = JSON.parse(localStorage.getItem('pg.extra') || '[]').find(x => x.id === id);
+      const e = (await bigGet('extra', [])).find(x => x.id === id);
       if (e) g = { ...e, file: e.files[0] };
     } catch (err) {}
   }
