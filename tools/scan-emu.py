@@ -41,7 +41,7 @@ def main():
 
     # ROM の無い区画は歩かない（エミュレータはアプリの束＝フォルダの塊で、
     # 降りると何百部屋も空回りする）
-    SKIP = {"エミュレータ", "BIOS", "資料", "System Volume Information"}
+    SKIP = {"エミュレータ", "資料", "System Volume Information"}
 
     files = []
     queue = [(emu["folderid"], "/EMU")]
