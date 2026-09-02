@@ -57,6 +57,12 @@ function l2items() {
 }
 
 function l2list() {
+  /* **最近遊んだ**は機種もメーカーもまたぐ（本人の指定）。 */
+  if (L.recent) {
+    return grouped(S.items)
+      .filter(g => g.kind === 'game' && (S.plays[g.id] || {}).last)
+      .sort((a, b) => (S.plays[b.id].last || 0) - (S.plays[a.id].last || 0));
+  }
   let list = l2items();
   if (L.maker) list = list.filter(g => g._maker === L.maker);
   if (L.genre) list = list.filter(g => L.genre === 'ジャンル未設定'
@@ -134,7 +140,7 @@ function l2sheet(kind, rows) {
   };
   for (const b of box.querySelectorAll('.l2shrow')) b.onclick = () => {
     const v = b.dataset.v;
-    if (kind === 'maker') L.maker = (L.maker === v ? '' : v);
+    if (kind === 'maker') { L.maker = (L.maker === v ? '' : v); if (L.maker) mkRemember(v); }
     else L.genre = (L.genre === v ? '' : v);
     L.page = 1; l2save(); close(); screenLibrary();
   };
@@ -167,6 +173,14 @@ function l2facets(kind) {
     : b[1] - a[1] || collator.compare(a[0], b[0]));
 }
 
+function mkRemember(m) {
+  const all = LS.get('mkRecent', {});
+  const a = (all[L.sys] || []).filter(x => x !== m);
+  a.unshift(m);
+  all[L.sys] = a.slice(0, 12);
+  LS.set('mkRecent', all);
+}
+
 /* ---- 左レール ---- */
 function l2rail() {
   const bySys = new Map();
@@ -176,7 +190,11 @@ function l2rail() {
   }
   const order = [...bySys.entries()].sort((a, b) => b[1] - a[1]);
   const op = l2open();
-  let html = '<h2 class="l2h">機種</h2>';
+  const nRec = grouped(S.items).filter(g => g.kind === 'game' && (S.plays[g.id] || {}).last).length;
+  let html = `<button class="l2sys${L.recent ? ' on' : ''}" id="l2recent">
+      <span class="tri"></span><span class="n">🕒 最近遊んだ</span>
+      <span class="c">${nRec}</span></button>`;
+  html += '<h2 class="l2h">機種</h2>';
   html += order.map(([nm, n]) => {
     const openSys = L.sys === nm;
     let sub = '';
@@ -187,8 +205,16 @@ function l2rail() {
         const key = nm + '/' + kind;
         const open = op.has(key);
         /* **多いときは上位だけ**（Amazon の絞り込み式）。12件を超える分は
-           「すべて…」→ 検索＋頭文字見出しの選択シートで選ぶ。431行を並べない。 */
-        const shown = rows.length > 15 ? rows.slice(0, 12) : rows;
+           「すべて…」→ 検索＋頭文字見出しの選択シートで選ぶ。431行を並べない。
+           並びは**直近開いたメーカーが先**（本人の指定）、残りは数の順。 */
+        let rows2 = rows;
+        if (kind === 'maker') {
+          const rec = (LS.get('mkRecent', {})[nm] || []);
+          const bag = new Map(rows);
+          rows2 = rec.filter(m => bag.has(m)).map(m => [m, bag.get(m)])
+            .concat(rows.filter(([m]) => !rec.includes(m)));
+        }
+        const shown = rows2.length > 15 ? rows2.slice(0, 12) : rows2;
         const cut = rows.length - shown.length;
         return `<button class="l2grp" data-grp="${esc(key)}">
             <span class="tri">${open ? '▾' : '▸'}</span>${label}
@@ -398,7 +424,8 @@ function screenLibrary() {
   const nAll = scope.filter(hasAll).length;
   const nNone = scope.length - nAll;
   const crumbs = ['<b>棚</b>']
-    .concat(L.sys ? [esc(L.sys)] : [])
+    .concat(L.recent ? ['🕒 最近遊んだ'] : [])
+    .concat(!L.recent && L.sys ? [esc(L.sys)] : [])
     .concat(L.maker ? [esc(L.maker)] : [])
     .concat(L.genre ? [esc(L.genre)] : [])
     .concat(S.q.trim() ? [`「${esc(S.q.trim())}」で探した分`] : [])
@@ -447,7 +474,10 @@ function screenLibrary() {
   </div>`;
 
   /* レール */
+  const rc = $('#l2recent');
+  if (rc) rc.onclick = () => { L.recent = !L.recent; L.page = 1; screenLibrary(); };
   for (const b of main().querySelectorAll('[data-sys]')) b.onclick = () => {
+    L.recent = false;
     const s = b.dataset.sys;
     if (L.sys === s && s) { L.sys = ''; }        // もう一度押すと枝ごと畳む
     else { L.sys = s; }
@@ -464,6 +494,7 @@ function screenLibrary() {
   };
   for (const b of main().querySelectorAll('[data-maker]')) b.onclick = () => {
     L.maker = (L.maker === b.dataset.maker) ? '' : b.dataset.maker;
+    if (L.maker) mkRemember(L.maker);
     L.page = 1; l2save(); screenLibrary();
   };
   for (const b of main().querySelectorAll('[data-genre]')) b.onclick = () => {

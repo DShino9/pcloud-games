@@ -321,8 +321,14 @@ function learnFrom(map, seen = []) {
        倉庫は `【PC98】天下統一/` のように**1本＝1フォルダ**なので、
        同じフォルダの中だけで束ねる。 */
     const dir = f.path || '';
+    /* **Disk を含む括弧書きは束ねる前に落とす。** 展開した本は
+       `〜(Disk 1 of 3)(Disk A).hdm` の形で、末尾1文字の規則をすり抜けて
+       1枚ずつ別の本になっていた（サムネイルがディスクごとに割れた正体）。 */
     const key = sys[0] === 'PC-98'
-      ? dir + '|' + base.replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
+      ? dir + '|' + base
+        .replace(/\s*[([][^)\]]*disk[^)\]]*[)\]]/gi, '')
+        .replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
+        .trim()
       : dir + '|' + base;
     if (!group.has(key)) group.set(key, { system: sys[0], short: sys[1], core: sys[2],
                                           files: [], paths: [], fids: [], base });

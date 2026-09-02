@@ -158,7 +158,9 @@ def main():
             continue
         base = re.sub(r"\.[^.]+$", "", name)
         if s2[0] == "PC-98":
-            key = dirp + "|" + re.sub(r"[ _-]?(disk)?[ _-]?[A-Da-d1-9]$", "", base, flags=re.I)
+            b2 = re.sub(r"\s*[([][^)\]]*disk[^)\]]*[)\]]", "", base, flags=re.I)
+            b2 = re.sub(r"[ _-]?(disk)?[ _-]?[A-Da-d1-9]$", "", b2, flags=re.I).strip()
+            key = dirp + "|" + b2
         else:
             key = dirp + "|" + base
         g = group.setdefault(key, {"system": s2[0], "short": s2[1], "core": s2[2],
