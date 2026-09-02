@@ -208,7 +208,23 @@ function np(tag, t) {
   if (box && !box.classList.contains('hide')) box.textContent = NPLOG.join('\n');
 }
 const bar  = p => { $('#bar i').style.width = Math.max(0, Math.min(100, p)) + '%'; };
-function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; }
+
+/* **しくじりの、のろし。** 画面の文言を写してもらわなくても、
+   何で止まったかを倉庫の _記録 に送っておき、Mac 側から読めるようにする。 */
+async function failBeacon(msg) {
+  try {
+    const g = k => { try { return JSON.parse(localStorage.getItem('pg.' + k)); } catch (e) { return null; } };
+    const auth = g('auth'), rootId = g('rootId'), host = g('host') || 'api.pcloud.com';
+    if (!auth || !rootId) return;
+    const fid = await P.ensureFolder(rootId, '_記録', { host, auth });
+    const body = JSON.stringify({
+      at: new Date().toISOString(), 画面: location.pathname + '?' + location.search.slice(1, 90),
+      ua: navigator.userAgent.slice(0, 160), msg: String(msg).slice(0, 400) });
+    await P.uploadFile(fid, 'しくじり-' + Date.now() + '.json',
+      new Blob([body], { type: 'application/json' }), { host, auth });
+  } catch (e) {}
+}
+function fail(msg) { failBeacon(msg); $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; }
 
 /* PC-98 を動かすのに要る、ディスク以外のもの。棚と同じフォルダに置いてある前提。 */
 const ROMS = ['BIOS.ROM', 'FONT.ROM', 'sound.rom', 'itf.rom', 'font.bmp'];

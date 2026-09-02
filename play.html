@@ -91,7 +91,23 @@ const fid = qs.get('fid');
 
 const say = t => { $('#st').textContent = t; };
 const bar = p => { $('#bar i').style.width = Math.max(0, Math.min(100, p)) + '%'; };
-function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; }
+function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; failBeacon(msg); }
+/* **しくじりの、のろし。** 画面の文言を写してもらわなくても、
+   何で止まったかを倉庫の _記録 に送っておき、Mac 側から読めるようにする。 */
+async function failBeacon(msg) {
+  try {
+    const g = k => { try { return JSON.parse(localStorage.getItem('pg.' + k)); } catch (e) { return null; } };
+    const auth = g('auth'), rootId = g('rootId'), host = g('host') || 'api.pcloud.com';
+    if (!auth || !rootId) return;
+    const fid = await P.ensureFolder(rootId, '_記録', { host, auth });
+    const body = JSON.stringify({
+      at: new Date().toISOString(), 画面: location.pathname + '?' + location.search.slice(1, 90),
+      ua: navigator.userAgent.slice(0, 160), msg: String(msg).slice(0, 400) });
+    await P.uploadFile(fid, 'しくじり-' + Date.now() + '.json',
+      new Blob([body], { type: 'application/json' }), { host, auth });
+  } catch (e) {}
+}
+
 
 /* 大きい控え（台帳・fileid表）は Cache API に移った（v118）。
    ここも同じ置き場を読む —— localStorage だけ見ていると、
