@@ -1900,8 +1900,10 @@ function screenLog() {
      判定は Mac 側の `tools/arcade-check.py` が zip の目録だけ読んで作る。 */
   try {
     const a = await (await fetch('./arcade.json', { cache: 'no-cache' })).json();
-    S.arc98 = new Map((a.本 || []).filter(b => b.状態 === '動く')
-      .map(b => [P.nfc(b.名前.toLowerCase()), b]));
+    /* `本` は「動く本」だけを並べた表（状態の欄は無くてよい）。
+       道具が作った生の表をそのまま置いたときのために、状態も見る。 */
+    S.arc98 = new Map((a.本 || []).filter(b => !b.状態 || b.状態 === '動く')
+      .map(b => [P.nfc(String(b.名前).toLowerCase()), b]));
   } catch (e) { S.arc98 = new Map(); }
   S.items = mergeCatalogs();
   /* **束ね方を直したら、一度だけ黙って束ね直す（#91）。**

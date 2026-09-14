@@ -1,0 +1,5457 @@
+{
+ "書いた": "2026-09-15T08:39:36",
+ "コア": "fbneo",
+ "本数": 1397,
+ "動く": 374,
+ "足りない": 640,
+ "対応表に無い": 375,
+ "注": "動く本だけ棚に出す。判定は tools/arcade-check.py（zip の目録の CRC と FBNeo の dat）",
+ "本": [
+  {
+   "名前": "3stooges.zip",
+   "題名": "The Three Stooges In Brides Is Brides (set 1)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "4dwarrio.zip",
+   "題名": "4-D Warriors (315-5162)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "800fath.zip",
+   "題名": "800 Fathoms",
+   "枚数": 10,
+   "親": "mariner"
+  },
+  {
+   "名前": "88games.zip",
+   "題名": "'88 Games",
+   "枚数": 36,
+   "親": null
+  },
+  {
+   "名前": "aburner2.zip",
+   "題名": "After Burner II (VER 2.00, deluxe/upright)",
+   "枚数": 28,
+   "親": null
+  },
+  {
+   "名前": "aerofgt.zip",
+   "題名": "Aero Fighters (World / USA + Canada / Korea / Hong Kong / Taiwan) (newer hardware)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "aerofgtb.zip",
+   "題名": "Aero Fighters (Taiwan / Japan, set 1)",
+   "枚数": 11,
+   "親": "aerofgt"
+  },
+  {
+   "名前": "aerofgtc.zip",
+   "題名": "Aero Fighters (Taiwan / Japan, set 2)",
+   "枚数": 11,
+   "親": "aerofgt"
+  },
+  {
+   "名前": "ajaxj.zip",
+   "題名": "Ajax (Japan)",
+   "枚数": 14,
+   "親": "ajax"
+  },
+  {
+   "名前": "akkanvdr.zip",
+   "題名": "Akkanbeder (Ver 2.5J 1995/06/14)",
+   "枚数": 14,
+   "親": "spcinv95"
+  },
+  {
+   "名前": "aliens.zip",
+   "題名": "Aliens (World set 1)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "aliens2.zip",
+   "題名": "Aliens (World set 2)",
+   "枚数": 13,
+   "親": "aliens"
+  },
+  {
+   "名前": "aliensj.zip",
+   "題名": "Aliens (Japan set 1)",
+   "枚数": 13,
+   "親": "aliens"
+  },
+  {
+   "名前": "aliensu.zip",
+   "題名": "Aliens (US, set 1)",
+   "枚数": 13,
+   "親": "aliens"
+  },
+  {
+   "名前": "aliensyn.zip",
+   "題名": "Alien Syndrome (set 4, System 16B, unprotected)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "amidaro.zip",
+   "題名": "Amidar (Olympia)",
+   "枚数": 10,
+   "親": "amidar"
+  },
+  {
+   "名前": "amidars.zip",
+   "題名": "Amidar (Scramble hardware)",
+   "枚数": 13,
+   "親": "amidar"
+  },
+  {
+   "名前": "amidaru.zip",
+   "題名": "Amidar (Stern Electronics)",
+   "枚数": 10,
+   "親": "amidar"
+  },
+  {
+   "名前": "AMIGO.zip",
+   "題名": "Amigo (bootleg of Amidar, set 1)",
+   "枚数": 9,
+   "親": "amidar"
+  },
+  {
+   "名前": "amspdwy.zip",
+   "題名": "American Speedway (set 1)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "amspdwya.zip",
+   "題名": "American Speedway (set 2)",
+   "枚数": 7,
+   "親": "amspdwy"
+  },
+  {
+   "名前": "anteater.zip",
+   "題名": "Anteater",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "appoooh.zip",
+   "題名": "Appoooh",
+   "枚数": 23,
+   "親": null
+  },
+  {
+   "名前": "arcadecl.zip",
+   "題名": "Arcade Classics (prototype)",
+   "枚数": 4,
+   "親": null
+  },
+  {
+   "名前": "argus.zip",
+   "題名": "Argus",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "arkangc.zip",
+   "題名": "Arkanoid (Game Corporation bootleg, set 1)",
+   "枚数": 8,
+   "親": "arkanoid"
+  },
+  {
+   "名前": "arkarea.zip",
+   "題名": "Ark Area",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "arknoid2.zip",
+   "題名": "Arkanoid - Revenge of DOH (World)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "assault.zip",
+   "題名": "Assault (Rev B)",
+   "枚数": 29,
+   "親": null
+  },
+  {
+   "名前": "assaultj.zip",
+   "題名": "Assault (Japan)",
+   "枚数": 29,
+   "親": "assault"
+  },
+  {
+   "名前": "assaultp.zip",
+   "題名": "Assault Plus (Japan)",
+   "枚数": 29,
+   "親": "assault"
+  },
+  {
+   "名前": "astrofl.zip",
+   "題名": "Astro Flash (Japan)",
+   "枚数": 5,
+   "親": "transfrm"
+  },
+  {
+   "名前": "atetris.zip",
+   "題名": "Tetris (set 1)",
+   "枚数": 2,
+   "親": null
+  },
+  {
+   "名前": "baluba.zip",
+   "題名": "Baluba-louk no Densetsu (Japan)",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "batman2.zip",
+   "題名": "Batman Part 2",
+   "枚数": 13,
+   "親": "phoenix"
+  },
+  {
+   "名前": "bbmanw.zip",
+   "題名": "Bomber Man World / New Dyna Blaster - Global Quest",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "bbros.zip",
+   "題名": "Buster Bros. (USA)",
+   "枚数": 9,
+   "親": "pang"
+  },
+  {
+   "名前": "blastoff.zip",
+   "題名": "Blast Off (Japan)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "blazer.zip",
+   "題名": "Blazer (Japan)",
+   "枚数": 28,
+   "親": null
+  },
+  {
+   "名前": "blockbl.zip",
+   "題名": "Block Block (bootleg)",
+   "枚数": 12,
+   "親": "block"
+  },
+  {
+   "名前": "blocken.zip",
+   "題名": "Blocken (Japan)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "blockj.zip",
+   "題名": "Block Block (Japan 910910)",
+   "枚数": 10,
+   "親": "block"
+  },
+  {
+   "名前": "blockout.zip",
+   "題名": "Block Out (set 1)",
+   "枚数": 5,
+   "親": null
+  },
+  {
+   "名前": "bombrman.zip",
+   "題名": "Bomber Man (Japan)",
+   "枚数": 8,
+   "親": "dynablst"
+  },
+  {
+   "名前": "brubber.zip",
+   "題名": "Burnin' Rubber",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "btime.zip",
+   "題名": "Burger Time (Data East set 1)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "btlfield.zip",
+   "題名": "Battle Field (Japan)",
+   "枚数": 21,
+   "親": "timesold"
+  },
+  {
+   "名前": "burnforc.zip",
+   "題名": "Burning Force (Japan, new version (Rev C))",
+   "枚数": 28,
+   "親": null
+  },
+  {
+   "名前": "calibr50.zip",
+   "題名": "Caliber 50 (Ver. 1.01)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "calipso.zip",
+   "題名": "Calipso",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "cavelon.zip",
+   "題名": "Cavelon",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "cclimbr2.zip",
+   "題名": "Crazy Climber 2 (Japan)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "chinagat.zip",
+   "題名": "China Gate (US)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "circusc.zip",
+   "題名": "Circus Charlie (level select, set 1)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "citybomb.zip",
+   "題名": "City Bomber (World)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "citycon.zip",
+   "題名": "City Connection (set 1)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "ckongalc.zip",
+   "題名": "Crazy Kong (Alca bootleg)",
+   "枚数": 16,
+   "親": "ckong"
+  },
+  {
+   "名前": "ckongo.zip",
+   "題名": "Crazy Kong (Orca bootleg)",
+   "枚数": 16,
+   "親": "ckong"
+  },
+  {
+   "名前": "ckongs.zip",
+   "題名": "Crazy Kong (bootleg on Scramble hardware)",
+   "枚数": 11,
+   "親": "ckong"
+  },
+  {
+   "名前": "commando.zip",
+   "題名": "Commando (World)",
+   "枚数": 22,
+   "親": null
+  },
+  {
+   "名前": "congo.zip",
+   "題名": "Congo Bongo (Rev C, 2 board stack)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "contraj.zip",
+   "題名": "Contra (Japan, set 1)",
+   "枚数": 11,
+   "親": "contra"
+  },
+  {
+   "名前": "crbaloon.zip",
+   "題名": "Crazy Balloon (set 1)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "cruisin.zip",
+   "題名": "Cruisin",
+   "枚数": 13,
+   "親": "citycon"
+  },
+  {
+   "名前": "cutieq.zip",
+   "題名": "Cutie Q",
+   "枚数": 2,
+   "親": null
+  },
+  {
+   "名前": "cworld.zip",
+   "題名": "Capcom World (Japan)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "daisenpu.zip",
+   "題名": "Daisenpu (Japan)",
+   "枚数": 7,
+   "親": "twinhawk"
+  },
+  {
+   "名前": "dangseed.zip",
+   "題名": "Dangerous Seed (Japan)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "darkseal.zip",
+   "題名": "Dark Seal (World revision 3)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "demonwld.zip",
+   "題名": "Demon's World (World) / Horror Story (Japan) (set 1)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "devilw.zip",
+   "題名": "Devil World",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "dkong.zip",
+   "題名": "Donkey Kong (US set 1)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "dkongjo.zip",
+   "題名": "Donkey Kong (Japan set 2)",
+   "枚数": 15,
+   "親": "dkong"
+  },
+  {
+   "名前": "dkongjo1.zip",
+   "題名": "Donkey Kong (Japan set 3)",
+   "枚数": 15,
+   "親": "dkong"
+  },
+  {
+   "名前": "dkongjr.zip",
+   "題名": "Donkey Kong Junior (US set F-2)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "dkongjrb.zip",
+   "題名": "Donkey Kong Jr. (bootleg)",
+   "枚数": 13,
+   "親": "dkongjr"
+  },
+  {
+   "名前": "dkongjrj.zip",
+   "題名": "Donkey Kong Jr. (Japan)",
+   "枚数": 13,
+   "親": "dkongjr"
+  },
+  {
+   "名前": "docastle.zip",
+   "題名": "Mr. Do's Castle (set 1)",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "dokaben.zip",
+   "題名": "Dokaben (Japan)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "dondokod.zip",
+   "題名": "Don Doko Don (World, rev 1)",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "dorunrun.zip",
+   "題名": "Do! Run Run (set 1)",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "dotrikun.zip",
+   "題名": "Dottori Kun (new version)",
+   "枚数": 1,
+   "親": null
+  },
+  {
+   "名前": "douni.zip",
+   "題名": "Mr. Do! vs. Unicorns (Japan)",
+   "枚数": 12,
+   "親": "docastle"
+  },
+  {
+   "名前": "dspirit.zip",
+   "題名": "Dragon Spirit (new version (DS3))",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "dumpmtmt.zip",
+   "題名": "Dump Matsumoto (Japan, 8751 317-0011a)",
+   "枚数": 23,
+   "親": "bodyslam"
+  },
+  {
+   "名前": "eagle.zip",
+   "題名": "Eagle (set 1)",
+   "枚数": 13,
+   "親": "mooncrst"
+  },
+  {
+   "名前": "eagle2.zip",
+   "題名": "Eagle (set 2)",
+   "枚数": 13,
+   "親": "mooncrst"
+  },
+  {
+   "名前": "eggs.zip",
+   "題名": "Eggs (USA)",
+   "枚数": 13,
+   "親": "scregg"
+  },
+  {
+   "名前": "elecyoyo.zip",
+   "題名": "The Electric Yo-Yo (rev 1)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "eswatbl.zip",
+   "題名": "Cyber Police ESWAT (bootleg, set 1)",
+   "枚数": 17,
+   "親": "eswat"
+  },
+  {
+   "名前": "eyes.zip",
+   "題名": "Eyes (US, set 1)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "eyes2.zip",
+   "題名": "Eyes (US, set 2)",
+   "枚数": 10,
+   "親": "eyes"
+  },
+  {
+   "名前": "faceoff.zip",
+   "題名": "Face Off (Japan 2 Players)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "fightrol.zip",
+   "題名": "Fighting Roller",
+   "枚数": 27,
+   "親": null
+  },
+  {
+   "名前": "finehour.zip",
+   "題名": "Finest Hour (Japan)",
+   "枚数": 29,
+   "親": null
+  },
+  {
+   "名前": "fitter.zip",
+   "題名": "Fitter",
+   "枚数": 10,
+   "親": "roundup"
+  },
+  {
+   "名前": "flyboy.zip",
+   "題名": "Fly-Boy",
+   "枚数": 22,
+   "親": null
+  },
+  {
+   "名前": "froggers.zip",
+   "題名": "Frog",
+   "枚数": 12,
+   "親": "frogger"
+  },
+  {
+   "名前": "fstarfrc.zip",
+   "題名": "Final Star Force (US)",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "gaiden.zip",
+   "題名": "Ninja Gaiden (US)",
+   "枚数": 21,
+   "親": "shadoww"
+  },
+  {
+   "名前": "galap4.zip",
+   "題名": "Galaxian Part 4 (hack)",
+   "枚数": 8,
+   "親": "galaxian"
+  },
+  {
+   "名前": "galapx.zip",
+   "題名": "Galaxian Part X (hack of 'Moon Alien')",
+   "枚数": 8,
+   "親": "galaxian"
+  },
+  {
+   "名前": "galaxian.zip",
+   "題名": "Galaxian (Namco set 1)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "galturbo.zip",
+   "題名": "Galaxian Turbo (hack of 'Super Galaxians')",
+   "枚数": 8,
+   "親": "galaxian"
+  },
+  {
+   "名前": "geebeeg.zip",
+   "題名": "Gee Bee (US)",
+   "枚数": 2,
+   "親": "geebee"
+  },
+  {
+   "名前": "gensitou.zip",
+   "題名": "Genshitou 1930's (Japan)",
+   "枚数": 10,
+   "親": "prehisle"
+  },
+  {
+   "名前": "gforce2j.zip",
+   "題名": "Galaxy Force 2 (Japan)",
+   "枚数": 46,
+   "親": "gforce2"
+  },
+  {
+   "名前": "ginganin.zip",
+   "題名": "Ginga Ninkyouden (set 1)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "gorfpgm1.zip",
+   "題名": "Gorf (program 1)",
+   "枚数": 8,
+   "親": "gorf"
+  },
+  {
+   "名前": "gradius.zip",
+   "題名": "Gradius (Japan, ROM version)",
+   "枚数": 7,
+   "親": "nemesis"
+  },
+  {
+   "名前": "gridlee.zip",
+   "題名": "Gridlee",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "grobda2.zip",
+   "題名": "Grobda (Old Ver. set 1)",
+   "枚数": 11,
+   "親": "grobda"
+  },
+  {
+   "名前": "grobda3.zip",
+   "題名": "Grobda (Old Ver. set 2)",
+   "枚数": 11,
+   "親": "grobda"
+  },
+  {
+   "名前": "gteikoku.zip",
+   "題名": "Gingateikoku no Gyakushu",
+   "枚数": 13,
+   "親": "uniwars"
+  },
+  {
+   "名前": "gunfront.zip",
+   "題名": "Gun & Frontier (World)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "gunlock.zip",
+   "題名": "Gunlock (Ver 2.3O 1994/01/20)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "gunsmoke.zip",
+   "題名": "Gun.Smoke (World, 1985-11-15)",
+   "枚数": 32,
+   "親": null
+  },
+  {
+   "名前": "gwarrior.zip",
+   "題名": "Galactic Warriors",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "GYRUSS.zip",
+   "題名": "Gyruss",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "gyrussce.zip",
+   "題名": "Gyruss (Centuri)",
+   "枚数": 15,
+   "親": "gyruss"
+  },
+  {
+   "名前": "hal21.zip",
+   "題名": "HAL21",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "hatena.zip",
+   "題名": "Adventure Quiz 2 - Hatena? no Daibouken (Japan 900228)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "hcastle.zip",
+   "題名": "Haunted Castle (version M)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "heiankyo.zip",
+   "題名": "Heiankyo Alien",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "hotchase.zip",
+   "題名": "Hot Chase (set 1)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "hyperspt.zip",
+   "題名": "Hyper Sports",
+   "枚数": 24,
+   "親": null
+  },
+  {
+   "名前": "hyprolym.zip",
+   "題名": "Hyper Olympic",
+   "枚数": 17,
+   "親": "trackfld"
+  },
+  {
+   "名前": "ikari.zip",
+   "題名": "Ikari Warriors (US JAMMA)",
+   "枚数": 20,
+   "親": null
+  },
+  {
+   "名前": "ikarijpb.zip",
+   "題名": "Ikari (Joystick hack bootleg)",
+   "枚数": 23,
+   "親": "ikari"
+  },
+  {
+   "名前": "ikki.zip",
+   "題名": "Ikki (Japan)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "imsorry.zip",
+   "題名": "I'm Sorry (315-5110, US)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "imsorryj.zip",
+   "題名": "Gonbee no I'm Sorry (315-5110, Japan)",
+   "枚数": 13,
+   "親": "imsorry"
+  },
+  {
+   "名前": "invaders.zip",
+   "題名": "Space Invaders / Space Invaders M",
+   "枚数": 4,
+   "親": null
+  },
+  {
+   "名前": "invds.zip",
+   "題名": "Invinco / Deep Scan",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "invinco.zip",
+   "題名": "Invinco",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "jrpacman.zip",
+   "題名": "Jr. Pac-Man (11/9/83)",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "jumpbug.zip",
+   "題名": "Jump Bug",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "jumpbugb.zip",
+   "題名": "Jump Bug (bootleg, set 1)",
+   "枚数": 14,
+   "親": "jumpbug"
+  },
+  {
+   "名前": "junofrst.zip",
+   "題名": "Juno First",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "kagekij.zip",
+   "題名": "Kageki (Japan)",
+   "枚数": 12,
+   "親": "kageki"
+  },
+  {
+   "名前": "kaitei.zip",
+   "題名": "Kaitei Takara Sagashi",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "kchamp.zip",
+   "題名": "Karate Champ (US)",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "kicker.zip",
+   "題名": "Kicker",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "KRULL.zip",
+   "題名": "Krull",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "kuhga.zip",
+   "題名": "Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)",
+   "枚数": 13,
+   "親": "vaportra"
+  },
+  {
+   "名前": "kungfum.zip",
+   "題名": "Kung-Fu Master (World)",
+   "枚数": 28,
+   "親": null
+  },
+  {
+   "名前": "kyukaidk.zip",
+   "題名": "Kyuukai Douchuuki (Japan, new version (Rev B))",
+   "枚数": 25,
+   "親": null
+  },
+  {
+   "名前": "LADYBUG.zip",
+   "題名": "Lady Bug",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "ldrun.zip",
+   "題名": "Lode Runner (set 1)",
+   "枚数": 20,
+   "親": null
+  },
+  {
+   "名前": "ldrun2.zip",
+   "題名": "Lode Runner II - The Bungeling Strikes Back",
+   "枚数": 26,
+   "親": null
+  },
+  {
+   "名前": "ldrun4.zip",
+   "題名": "Lode Runner IV - Teikoku Karano Dasshutsu (Japan)",
+   "枚数": 23,
+   "親": null
+  },
+  {
+   "名前": "ldruna.zip",
+   "題名": "Lode Runner (set 2)",
+   "枚数": 20,
+   "親": "ldrun"
+  },
+  {
+   "名前": "liblrabl.zip",
+   "題名": "Libble Rabble",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "lifefrce.zip",
+   "題名": "Lifeforce (US)",
+   "枚数": 7,
+   "親": "salamand"
+  },
+  {
+   "名前": "lotlot.zip",
+   "題名": "Lot Lot",
+   "枚数": 25,
+   "親": null
+  },
+  {
+   "名前": "lwings.zip",
+   "題名": "Legendary Wings (US, rev. C)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "m660.zip",
+   "題名": "Mission 660 (US)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "m660b.zip",
+   "題名": "Mission 660 (bootleg)",
+   "枚数": 18,
+   "親": "m660"
+  },
+  {
+   "名前": "m660j.zip",
+   "題名": "Mission 660 (Japan)",
+   "枚数": 19,
+   "親": "m660"
+  },
+  {
+   "名前": "macross2.zip",
+   "題名": "Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "magmax.zip",
+   "題名": "Mag Max (set 1)",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "mappy.zip",
+   "題名": "Mappy (US)",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "mariner.zip",
+   "題名": "Mariner",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "marvland.zip",
+   "題名": "Marvel Land (Japan)",
+   "枚数": 24,
+   "親": null
+  },
+  {
+   "名前": "masao.zip",
+   "題名": "Masao",
+   "枚数": 14,
+   "親": "mario"
+  },
+  {
+   "名前": "matmania.zip",
+   "題名": "Mat Mania",
+   "枚数": 36,
+   "親": null
+  },
+  {
+   "名前": "metafox.zip",
+   "題名": "Meta Fox",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "metalb.zip",
+   "題名": "Metal Black (World)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "metalbj.zip",
+   "題名": "Metal Black (Japan)",
+   "枚数": 10,
+   "親": "metalb"
+  },
+  {
+   "名前": "mgakuen2.zip",
+   "題名": "Mahjong Gakuen 2 Gakuen-chou no Fukushuu",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "mikie.zip",
+   "題名": "Mikie",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "mikiej.zip",
+   "題名": "Shinnyuushain Tooru-kun",
+   "枚数": 14,
+   "親": "mikie"
+  },
+  {
+   "名前": "minivadr.zip",
+   "題名": "Mini Vaders",
+   "枚数": 1,
+   "親": null
+  },
+  {
+   "名前": "mirninja.zip",
+   "題名": "Mirai Ninja (Japan, set 1)",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "mizubaku.zip",
+   "題名": "Mizubaku Daibouken (Japan)",
+   "枚数": 9,
+   "親": "liquidk"
+  },
+  {
+   "名前": "mkla1.zip",
+   "題名": "Mortal Kombat (rev 1.0 08/09/92)",
+   "枚数": 17,
+   "親": "mk"
+  },
+  {
+   "名前": "mkla2.zip",
+   "題名": "Mortal Kombat (rev 2.0 08/18/92)",
+   "枚数": 17,
+   "親": "mk"
+  },
+  {
+   "名前": "mkla3.zip",
+   "題名": "Mortal Kombat (rev 3.0 08/31/92)",
+   "枚数": 17,
+   "親": "mk"
+  },
+  {
+   "名前": "mkla4.zip",
+   "題名": "Mortal Kombat (rev 4.0 09/28/92)",
+   "枚数": 17,
+   "親": "mk"
+  },
+  {
+   "名前": "mmonkey.zip",
+   "題名": "Minky Monkey",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "momoko.zip",
+   "題名": "Momoko 120% (Japanese text)",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "monkeyd.zip",
+   "題名": "Monkey Donkey",
+   "枚数": 16,
+   "親": "ckong"
+  },
+  {
+   "名前": "mooncrgx.zip",
+   "題名": "Moon Cresta (bootleg on Galaxian hardware)",
+   "枚数": 13,
+   "親": "mooncrst"
+  },
+  {
+   "名前": "MOONCRSB.zip",
+   "題名": "Moon Cresta (bootleg set 1)",
+   "枚数": 13,
+   "親": "mooncrst"
+  },
+  {
+   "名前": "mooncrst.zip",
+   "題名": "Moon Cresta (Nichibutsu)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "moonwar.zip",
+   "題名": "Moonwar",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "motos.zip",
+   "題名": "Motos",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "MPLANETS.zip",
+   "題名": "Mad Planets",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "mrjong.zip",
+   "題名": "Mr. Jong (Japan)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "mrlo.zip",
+   "題名": "Mr. Lo!",
+   "枚数": 14,
+   "親": "mrdo"
+  },
+  {
+   "名前": "msgundam.zip",
+   "題名": "Mobile Suit Gundam",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "mspacman.zip",
+   "題名": "Ms. Pac-Man",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "naughtyb.zip",
+   "題名": "Naughty Boy",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "nemesis.zip",
+   "題名": "Nemesis (ROM version)",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "newpuckx.zip",
+   "題名": "New Puck-X",
+   "枚数": 10,
+   "親": "puckman"
+  },
+  {
+   "名前": "ninjakun.zip",
+   "題名": "Ninjakun Majou no Bouken",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "ninjemak.zip",
+   "題名": "Ninja Emaki (US)",
+   "枚数": 22,
+   "親": null
+  },
+  {
+   "名前": "p47.zip",
+   "題名": "P-47: The Phantom Fighter (World)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "p47j.zip",
+   "題名": "P-47: The Freedom Fighter (Japan)",
+   "枚数": 18,
+   "親": "p47"
+  },
+  {
+   "名前": "pacgal.zip",
+   "題名": "Pac-Gal (set 1)",
+   "枚数": 13,
+   "親": "mspacman"
+  },
+  {
+   "名前": "pacheart.zip",
+   "題名": "Pac-Man (Hearts)",
+   "枚数": 16,
+   "親": "puckman"
+  },
+  {
+   "名前": "pacman.zip",
+   "題名": "Pac-Man (Midway)",
+   "枚数": 10,
+   "親": "puckman"
+  },
+  {
+   "名前": "pacmanbl.zip",
+   "題名": "Pac-Man (bootleg on Galaxian hardware, set 1)",
+   "枚数": 12,
+   "親": "puckman"
+  },
+  {
+   "名前": "pacmania.zip",
+   "題名": "Pac-Mania",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "pacmod.zip",
+   "題名": "Pac-Man (Midway, harder)",
+   "枚数": 10,
+   "親": "puckman"
+  },
+  {
+   "名前": "pacplus.zip",
+   "題名": "Pac-Man Plus",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "pang.zip",
+   "題名": "Pang (World)",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "pangb.zip",
+   "題名": "Pang (bootleg, set 1)",
+   "枚数": 10,
+   "親": "pang"
+  },
+  {
+   "名前": "pangpoms.zip",
+   "題名": "Pang Pom's",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "pbobble3.zip",
+   "題名": "Puzzle Bobble 3 (Ver 2.1O 1996/09/27)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "pcktgal.zip",
+   "題名": "Pocket Gal (Japan)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "pcktgal2.zip",
+   "題名": "Pocket Gal 2 (English)",
+   "枚数": 7,
+   "親": "pcktgal"
+  },
+  {
+   "名前": "pengo.zip",
+   "題名": "Pengo (World, not encrypted, rev A)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "penta.zip",
+   "題名": "Penta (bootleg)",
+   "枚数": 14,
+   "親": "pengo"
+  },
+  {
+   "名前": "percuss.zip",
+   "題名": "The Percussor",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "phoenix.zip",
+   "題名": "Phoenix (Amstar, set 1)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "phoenix3.zip",
+   "題名": "Phoenix (T.P.N. bootleg)",
+   "枚数": 14,
+   "親": "phoenix"
+  },
+  {
+   "名前": "phoenixa.zip",
+   "題名": "Phoenix (Centuri, set 1)",
+   "枚数": 14,
+   "親": "phoenix"
+  },
+  {
+   "名前": "phoenixc.zip",
+   "題名": "Phoenix (Irecsa / G.G.I. Corporation)",
+   "枚数": 14,
+   "親": "phoenix"
+  },
+  {
+   "名前": "phoenixt.zip",
+   "題名": "Phoenix (Taito)",
+   "枚数": 14,
+   "親": "phoenix"
+  },
+  {
+   "名前": "pignewt.zip",
+   "題名": "Pig Newton (version C)",
+   "枚数": 27,
+   "親": null
+  },
+  {
+   "名前": "pignewta.zip",
+   "題名": "Pig Newton (version A)",
+   "枚数": 25,
+   "親": "pignewt"
+  },
+  {
+   "名前": "pingpong.zip",
+   "題名": "Konami's Ping-Pong",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "pistoldm.zip",
+   "題名": "Pistol Daimyo no Bouken (Japan)",
+   "枚数": 20,
+   "親": null
+  },
+  {
+   "名前": "pkunwar.zip",
+   "題名": "Penguin-Kun Wars (US)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "pkunwarj.zip",
+   "題名": "Penguin-Kun Wars (Japan, set 1)",
+   "枚数": 8,
+   "親": "pkunwar"
+  },
+  {
+   "名前": "plgirls.zip",
+   "題名": "Play Girls",
+   "枚数": 3,
+   "親": null
+  },
+  {
+   "名前": "plusalph.zip",
+   "題名": "Plus Alpha",
+   "枚数": 23,
+   "親": null
+  },
+  {
+   "名前": "ponpoko.zip",
+   "題名": "Ponpoko",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "ponpokov.zip",
+   "題名": "Ponpoko (Venture Line)",
+   "枚数": 14,
+   "親": "ponpoko"
+  },
+  {
+   "名前": "pootan.zip",
+   "題名": "Pootan",
+   "枚数": 13,
+   "親": "pooyan"
+  },
+  {
+   "名前": "pooyan.zip",
+   "題名": "Pooyan",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "pooyans.zip",
+   "題名": "Pooyan (Stern Electronics)",
+   "枚数": 13,
+   "親": "pooyan"
+  },
+  {
+   "名前": "popeye.zip",
+   "題名": "Popeye (revision D)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "popeyef.zip",
+   "題名": "Popeye (revision F)",
+   "枚数": 14,
+   "親": "popeye"
+  },
+  {
+   "名前": "popeyeu.zip",
+   "題名": "Popeye (revision D not protected)",
+   "枚数": 14,
+   "親": "popeye"
+  },
+  {
+   "名前": "popflame.zip",
+   "題名": "Pop Flamer (protected)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "portman.zip",
+   "題名": "Port Man",
+   "枚数": 10,
+   "親": "dockman"
+  },
+  {
+   "名前": "prehisle.zip",
+   "題名": "Prehistoric Isle in 1930 (World, set 1)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "psychos.zip",
+   "題名": "Psycho Soldier (US)",
+   "枚数": 29,
+   "親": null
+  },
+  {
+   "名前": "psychosj.zip",
+   "題名": "Psycho Soldier (Japan)",
+   "枚数": 29,
+   "親": "psychos"
+  },
+  {
+   "名前": "pulirula.zip",
+   "題名": "PuLiRuLa (World, dual PCB)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "puyopuy2.zip",
+   "題名": "Puyo Puyo 2 (Japan)",
+   "枚数": 3,
+   "親": null
+  },
+  {
+   "名前": "puzlclub.zip",
+   "題名": "Puzzle Club (Japan prototype)",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "qcrayon.zip",
+   "題名": "Quiz Crayon Shinchan (Japan)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "qix.zip",
+   "題名": "Qix (Rev 2)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "qix2.zip",
+   "題名": "Qix II (Tournament)",
+   "枚数": 17,
+   "親": "qix"
+  },
+  {
+   "名前": "qixb.zip",
+   "題名": "Qix (set 2, larger roms)",
+   "枚数": 9,
+   "親": "qix"
+  },
+  {
+   "名前": "qsangoku.zip",
+   "題名": "Quiz Sangokushi (Japan)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "qtono1.zip",
+   "題名": "Quiz Tonosama no Yabou (Japan)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "quarth.zip",
+   "題名": "Quarth (Japan)",
+   "枚数": 11,
+   "親": "blockhl"
+  },
+  {
+   "名前": "quester.zip",
+   "題名": "Quester (Japan)",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "quizhuhu.zip",
+   "題名": "Moriguchi Hiroko no Quiz de Hyuu!Hyuu! (Ver 2.2J 1995/05/25)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "rabiolep.zip",
+   "題名": "Rabio Lepus (Japan)",
+   "枚数": 18,
+   "親": null
+  },
+  {
+   "名前": "rayforce.zip",
+   "題名": "Ray Force (Ver 2.3A 1994/01/20)",
+   "枚数": 14,
+   "親": "gunlock"
+  },
+  {
+   "名前": "rf2.zip",
+   "題名": "Konami RF2: Red Fighter",
+   "枚数": 7,
+   "親": "konamigt"
+  },
+  {
+   "名前": "ringking.zip",
+   "題名": "Ring King (US set 1)",
+   "枚数": 17,
+   "親": "kingofb"
+  },
+  {
+   "名前": "ringohja.zip",
+   "題名": "Ring no Ohja (Japan 2 Players ver. N)",
+   "枚数": 11,
+   "親": "mainevt"
+  },
+  {
+   "名前": "roadf.zip",
+   "題名": "Road Fighter (set 1)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "roadf2.zip",
+   "題名": "Road Fighter (set 2)",
+   "枚数": 16,
+   "親": "roadf"
+  },
+  {
+   "名前": "robocop2.zip",
+   "題名": "Robocop 2 (Euro/Asia v0.10)",
+   "枚数": 25,
+   "親": null
+  },
+  {
+   "名前": "rollergj.zip",
+   "題名": "Rollergames (Japan)",
+   "枚数": 7,
+   "親": "rollerg"
+  },
+  {
+   "名前": "rompers.zip",
+   "題名": "Rompers (Japan, new version (Rev B))",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "roundup.zip",
+   "題名": "Round-Up",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "rpatrolb.zip",
+   "題名": "River Patrol (bootleg)",
+   "枚数": 14,
+   "親": "rpatrol"
+  },
+  {
+   "名前": "rthun2.zip",
+   "題名": "Rolling Thunder 2",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "rushcrsh.zip",
+   "題名": "Rush & Crash (Japan)",
+   "枚数": 29,
+   "親": "srumbler"
+  },
+  {
+   "名前": "rygarj.zip",
+   "題名": "Argus no Senshi (Japan set 1)",
+   "枚数": 18,
+   "親": "rygar"
+  },
+  {
+   "名前": "salamand.zip",
+   "題名": "Salamander (version D)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "sasuke.zip",
+   "題名": "Sasuke vs. Commander (set 1)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "satansat.zip",
+   "題名": "Satan of Saturn (set 1)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "scion.zip",
+   "題名": "Scion",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "scionc.zip",
+   "題名": "Scion (Cinematronics)",
+   "枚数": 15,
+   "親": "scion"
+  },
+  {
+   "名前": "scobra.zip",
+   "題名": "Super Cobra",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "scontraj.zip",
+   "題名": "Super Contra: Alien no Gyakushuu (Japan)",
+   "枚数": 40,
+   "親": "scontra"
+  },
+  {
+   "名前": "scramblb.zip",
+   "題名": "Scramble (bootleg on Galaxian hardware)",
+   "枚数": 11,
+   "親": "scramble"
+  },
+  {
+   "名前": "scramble.zip",
+   "題名": "Scramble",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "scregg.zip",
+   "題名": "Scrambled Egg",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "sf2rb.zip",
+   "題名": "Street Fighter II': Champion Edition (Rainbow, bootleg, set 1)",
+   "枚数": 18,
+   "親": "sf2ce"
+  },
+  {
+   "名前": "sidearms.zip",
+   "題名": "Side Arms - Hyper Dyne (World, 861129)",
+   "枚数": 27,
+   "親": null
+  },
+  {
+   "名前": "silkworm.zip",
+   "題名": "Silk Worm (World)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "sitv.zip",
+   "題名": "Space Invaders (TV Version rev 2)",
+   "枚数": 4,
+   "親": "invaders"
+  },
+  {
+   "名前": "skyfox.zip",
+   "題名": "Sky Fox",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "skykid.zip",
+   "題名": "Sky Kid (new version)",
+   "枚数": 14,
+   "親": null
+  },
+  {
+   "名前": "skysoldr.zip",
+   "題名": "Sky Soldiers (US)",
+   "枚数": 25,
+   "親": null
+  },
+  {
+   "名前": "sonicwi.zip",
+   "題名": "Sonic Wings (Japan)",
+   "枚数": 11,
+   "親": "aerofgt"
+  },
+  {
+   "名前": "sonofphx.zip",
+   "題名": "Son of Phoenix (bootleg of Repulse)",
+   "枚数": 21,
+   "親": "repulse"
+  },
+  {
+   "名前": "sos.zip",
+   "題名": "SOS Game",
+   "枚数": 3,
+   "親": null
+  },
+  {
+   "名前": "soukobdx.zip",
+   "題名": "Souko Ban Deluxe (Japan, SB1)",
+   "枚数": 12,
+   "親": "boxyboy"
+  },
+  {
+   "名前": "SPACEZAP.zip",
+   "題名": "Space Zap (Midway)",
+   "枚数": 4,
+   "親": null
+  },
+  {
+   "名前": "spartanx.zip",
+   "題名": "Spartan X (Japan)",
+   "枚数": 28,
+   "親": "kungfum"
+  },
+  {
+   "名前": "spelunk2.zip",
+   "題名": "Spelunker II - 23 no Kagi (Japan)",
+   "枚数": 28,
+   "親": null
+  },
+  {
+   "名前": "spelunkr.zip",
+   "題名": "Spelunker",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "spiero.zip",
+   "題名": "Super Pierrot (Japan)",
+   "枚数": 12,
+   "親": "dorunrun"
+  },
+  {
+   "名前": "ssozumo.zip",
+   "題名": "Syusse Oozumou (Japan)",
+   "枚数": 36,
+   "親": null
+  },
+  {
+   "名前": "sstrangr.zip",
+   "題名": "Space Stranger",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "starforc.zip",
+   "題名": "Star Force",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "stdragon.zip",
+   "題名": "Saint Dragon (set 1)",
+   "枚数": 22,
+   "親": null
+  },
+  {
+   "名前": "stg.zip",
+   "題名": "Strike Gunner S.T.G",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "superpac.zip",
+   "題名": "Super Pac-Man",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "svolley.zip",
+   "題名": "Super Volleyball (Japan)",
+   "枚数": 23,
+   "親": null
+  },
+  {
+   "名前": "sws92.zip",
+   "題名": "Super World Stadium '92 (Japan)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "sws92g.zip",
+   "題名": "Super World Stadium '92 Gekitouban (Japan)",
+   "枚数": 23,
+   "親": "sws92"
+  },
+  {
+   "名前": "sws93.zip",
+   "題名": "Super World Stadium '93 (Japan)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "szaxxon.zip",
+   "題名": "Super Zaxxon (315-5013)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "tagteam.zip",
+   "題名": "Tag Team Wrestling",
+   "枚数": 21,
+   "親": "bigprowr"
+  },
+  {
+   "名前": "tankfrce.zip",
+   "題名": "Tank Force (US, 2 Players)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "tantr.zip",
+   "題名": "Puzzle & Action: Tant-R (Japan)",
+   "枚数": 5,
+   "親": null
+  },
+  {
+   "名前": "tantrbl.zip",
+   "題名": "Puzzle & Action: Tant-R (Japan) (bootleg set 1)",
+   "枚数": 6,
+   "親": "tantr"
+  },
+  {
+   "名前": "tdragonb.zip",
+   "題名": "Thunder Dragon (bootleg with Raiden sounds, encrypted)",
+   "枚数": 9,
+   "親": "tdragon"
+  },
+  {
+   "名前": "tehkanwc.zip",
+   "題名": "Tehkan World Cup (set 1)",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "terrafu.zip",
+   "題名": "Terra Force (US)",
+   "枚数": 16,
+   "親": "terraf"
+  },
+  {
+   "名前": "tetrisbl.zip",
+   "題名": "Tetris (bootleg)",
+   "枚数": 8,
+   "親": "tetris"
+  },
+  {
+   "名前": "timeplt.zip",
+   "題名": "Time Pilot",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "timesold.zip",
+   "題名": "Time Soldiers (US Rev 3)",
+   "枚数": 21,
+   "親": null
+  },
+  {
+   "名前": "tknight.zip",
+   "題名": "Tecmo Knight (US)",
+   "枚数": 9,
+   "親": "wildfang"
+  },
+  {
+   "名前": "tmht.zip",
+   "題名": "Teenage Mutant Hero Turtles (UK 4 Players, version F)",
+   "枚数": 16,
+   "親": "tmnt"
+  },
+  {
+   "名前": "tmht2p.zip",
+   "題名": "Teenage Mutant Hero Turtles (UK 2 Players, version U)",
+   "枚数": 16,
+   "親": "tmnt"
+  },
+  {
+   "名前": "tmnt.zip",
+   "題名": "Teenage Mutant Ninja Turtles (World 4 Players, version X)",
+   "枚数": 16,
+   "親": null
+  },
+  {
+   "名前": "tmnt2pj.zip",
+   "題名": "Teenage Mutant Ninja Turtles (Japan 2 Players, version 1)",
+   "枚数": 16,
+   "親": "tmnt"
+  },
+  {
+   "名前": "tmnt2po.zip",
+   "題名": "Teenage Mutant Ninja Turtles (Oceania 2 Players, version ?)",
+   "枚数": 16,
+   "親": "tmnt"
+  },
+  {
+   "名前": "tmntu.zip",
+   "題名": "Teenage Mutant Ninja Turtles (US 4 Players, version R)",
+   "枚数": 16,
+   "親": "tmnt"
+  },
+  {
+   "名前": "tndrcade.zip",
+   "題名": "Thundercade / Twin Formation",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "tnk3.zip",
+   "題名": "T.N.K III (US)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "tnk3j.zip",
+   "題名": "T.A.N.K (Japan)",
+   "枚数": 17,
+   "親": "tnk3"
+  },
+  {
+   "名前": "toramich.zip",
+   "題名": "Tora e no Michi (Japan)",
+   "枚数": 19,
+   "親": "tigeroad"
+  },
+  {
+   "名前": "toypop.zip",
+   "題名": "Toypop",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "tp84.zip",
+   "題名": "Time Pilot '84 (set 1)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "transfrm.zip",
+   "題名": "Transformer",
+   "枚数": 5,
+   "親": null
+  },
+  {
+   "名前": "trigon.zip",
+   "題名": "Trigon (Japan)",
+   "枚数": 8,
+   "親": "lgtnfght"
+  },
+  {
+   "名前": "truxton2.zip",
+   "題名": "Truxton II / Tatsujin Oh",
+   "枚数": 4,
+   "親": null
+  },
+  {
+   "名前": "twinbee.zip",
+   "題名": "TwinBee (ROM version)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "twincobr.zip",
+   "題名": "Twin Cobra (World)",
+   "枚数": 27,
+   "親": null
+  },
+  {
+   "名前": "twineagl.zip",
+   "題名": "Twin Eagle - Revenge Joe's Brother",
+   "枚数": 12,
+   "親": null
+  },
+  {
+   "名前": "ultraman.zip",
+   "題名": "Ultraman (Japan)",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "uniwars.zip",
+   "題名": "UniWar S",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "vanguard.zip",
+   "題名": "Vanguard (SNK)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "vanvan.zip",
+   "題名": "Van-Van Car",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "vanvank.zip",
+   "題名": "Van-Van Car (Karateco, set 1)",
+   "枚数": 9,
+   "親": "vanvan"
+  },
+  {
+   "名前": "vastar.zip",
+   "題名": "Vastar (set 1)",
+   "枚数": 19,
+   "親": null
+  },
+  {
+   "名前": "vastar2.zip",
+   "題名": "Vastar (set 2)",
+   "枚数": 19,
+   "親": "vastar"
+  },
+  {
+   "名前": "venus.zip",
+   "題名": "Venus (bootleg of Gyruss)",
+   "枚数": 15,
+   "親": "gyruss"
+  },
+  {
+   "名前": "wanted.zip",
+   "題名": "Wanted",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "warofbug.zip",
+   "題名": "War of the Bugs or Monsterous Manouvers in a Mushroom Maze",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "warpwarp.zip",
+   "題名": "Warp & Warp",
+   "枚数": 4,
+   "親": null
+  },
+  {
+   "名前": "waterski.zip",
+   "題名": "Water Ski",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "wfortune.zip",
+   "題名": "Wheel Of Fortune (set 1)",
+   "枚数": 7,
+   "親": null
+  },
+  {
+   "名前": "wiping.zip",
+   "題名": "Wiping",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "wiz.zip",
+   "題名": "Wiz",
+   "枚数": 13,
+   "親": null
+  },
+  {
+   "名前": "wizt.zip",
+   "題名": "Wiz (Taito, set 1)",
+   "枚数": 13,
+   "親": "wiz"
+  },
+  {
+   "名前": "wldcourt.zip",
+   "題名": "Pro Tennis World Court (Japan)",
+   "枚数": 15,
+   "親": null
+  },
+  {
+   "名前": "wrofaero.zip",
+   "題名": "War of Aero - Project MEIOU",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "ws.zip",
+   "題名": "Pro Yakyuu World Stadium (Japan)",
+   "枚数": 20,
+   "親": null
+  },
+  {
+   "名前": "ws90.zip",
+   "題名": "Pro Yakyuu World Stadium '90 (Japan)",
+   "枚数": 20,
+   "親": "ws"
+  },
+  {
+   "名前": "xxmissio.zip",
+   "題名": "XX Mission",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "yamagchi.zip",
+   "題名": "Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "yanchamr.zip",
+   "題名": "Kaiketsu Yanchamaru (Japan)",
+   "枚数": 34,
+   "親": "kidniki"
+  },
+  {
+   "名前": "yesnoj.zip",
+   "題名": "Yes/No Sinri Tokimeki Chart",
+   "枚数": 6,
+   "親": null
+  },
+  {
+   "名前": "yiear.zip",
+   "題名": "Yie Ar Kung-Fu (version I)",
+   "枚数": 10,
+   "親": null
+  },
+  {
+   "名前": "yiear2.zip",
+   "題名": "Yie Ar Kung-Fu (version G)",
+   "枚数": 10,
+   "親": "yiear"
+  },
+  {
+   "名前": "youma.zip",
+   "題名": "Youma Ninpou Chou (Japan)",
+   "枚数": 22,
+   "親": "ninjemak"
+  },
+  {
+   "名前": "yuyugogo.zip",
+   "題名": "Yuuyu no Quiz de GO!GO! (Japan)",
+   "枚数": 8,
+   "親": null
+  },
+  {
+   "名前": "zarzon.zip",
+   "題名": "Zarzon",
+   "枚数": 16,
+   "親": "satansat"
+  },
+  {
+   "名前": "zaxxon.zip",
+   "題名": "Zaxxon (set 1, rev D)",
+   "枚数": 17,
+   "親": null
+  },
+  {
+   "名前": "zaxxonb.zip",
+   "題名": "Jackson",
+   "枚数": 17,
+   "親": "zaxxon"
+  },
+  {
+   "名前": "zeropnt.zip",
+   "題名": "Zero Point (set 1)",
+   "枚数": 11,
+   "親": null
+  },
+  {
+   "名前": "zerotime.zip",
+   "題名": "Zero Time (Petaco S.A.)",
+   "枚数": 8,
+   "親": "galaxian"
+  },
+  {
+   "名前": "zodiack.zip",
+   "題名": "Zodiack",
+   "枚数": 9,
+   "親": null
+  },
+  {
+   "名前": "zookeep.zip",
+   "題名": "Zoo Keeper (set 1)",
+   "枚数": 20,
+   "親": null
+  },
+  {
+   "名前": "zookeep2.zip",
+   "題名": "Zoo Keeper (set 2)",
+   "枚数": 20,
+   "親": "zookeep"
+  },
+  {
+   "名前": "zookeep3.zip",
+   "題名": "Zoo Keeper (set 3)",
+   "枚数": 20,
+   "親": "zookeep"
+  },
+  {
+   "名前": "zunkyou.zip",
+   "題名": "Zunzunkyou no Yabou (Japan)",
+   "枚数": 5,
+   "親": null
+  },
+  {
+   "名前": "zwackery.zip",
+   "題名": "Zwackery",
+   "枚数": 30,
+   "親": null
+  },
+  {
+   "名前": "zzyzzyxx.zip",
+   "題名": "Zzyzzyxx (set 1)",
+   "枚数": 14,
+   "親": null
+  }
+ ],
+ "足りない本": [
+  {
+   "名前": "bakatono.zip",
+   "不足": 36,
+   "要る数": 47
+  },
+  {
+   "名前": "mslug.zip",
+   "不足": 36,
+   "要る数": 47
+  },
+  {
+   "名前": "mslug5.zip",
+   "不足": 49,
+   "要る数": 51
+  },
+  {
+   "名前": "mslugx.zip",
+   "不足": 36,
+   "要る数": 51
+  },
+  {
+   "名前": "samsho3.zip",
+   "不足": 41,
+   "要る数": 55
+  },
+  {
+   "名前": "samsho4.zip",
+   "不足": 36,
+   "要る数": 53
+  },
+  {
+   "名前": "samsho5.zip",
+   "不足": 49,
+   "要る数": 51
+  },
+  {
+   "名前": "sfzj.zip",
+   "不足": 12,
+   "要る数": 13
+  },
+  {
+   "名前": "sfzjr1.zip",
+   "不足": 11,
+   "要る数": 13
+  },
+  {
+   "名前": "sfzjr2.zip",
+   "不足": 10,
+   "要る数": 13
+  },
+  {
+   "名前": "ssf2j.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "ssf2jr1.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "ssf2jr2.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "svcplus.zip",
+   "不足": 53,
+   "要る数": 55
+  },
+  {
+   "名前": "wh1.zip",
+   "不足": 38,
+   "要る数": 48
+  },
+  {
+   "名前": "wh2.zip",
+   "不足": 36,
+   "要る数": 49
+  },
+  {
+   "名前": "005.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "1941.zip",
+   "不足": 11,
+   "要る数": 19
+  },
+  {
+   "名前": "1941j.zip",
+   "不足": 27,
+   "要る数": 34
+  },
+  {
+   "名前": "1942.zip",
+   "不足": 9,
+   "要る数": 27
+  },
+  {
+   "名前": "1942a.zip",
+   "不足": 4,
+   "要る数": 27
+  },
+  {
+   "名前": "1942b.zip",
+   "不足": 5,
+   "要る数": 27
+  },
+  {
+   "名前": "1943.zip",
+   "不足": 4,
+   "要る数": 38
+  },
+  {
+   "名前": "1943j.zip",
+   "不足": 4,
+   "要る数": 38
+  },
+  {
+   "名前": "1943kai.zip",
+   "不足": 1,
+   "要る数": 38
+  },
+  {
+   "名前": "19xx.zip",
+   "不足": 5,
+   "要る数": 17
+  },
+  {
+   "名前": "19xxh.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "19xxj.zip",
+   "不足": 29,
+   "要る数": 35
+  },
+  {
+   "名前": "19xxjr1.zip",
+   "不足": 5,
+   "要る数": 17
+  },
+  {
+   "名前": "2020bb.zip",
+   "不足": 38,
+   "要る数": 47
+  },
+  {
+   "名前": "2020bbh.zip",
+   "不足": 38,
+   "要る数": 47
+  },
+  {
+   "名前": "3countb.zip",
+   "不足": 42,
+   "要る数": 47
+  },
+  {
+   "名前": "3wonders.zip",
+   "不足": 8,
+   "要る数": 27
+  },
+  {
+   "名前": "600.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "64street.zip",
+   "不足": 2,
+   "要る数": 13
+  },
+  {
+   "名前": "720.zip",
+   "不足": 3,
+   "要る数": 37
+  },
+  {
+   "名前": "99lstwar.zip",
+   "不足": 20,
+   "要る数": 24
+  },
+  {
+   "名前": "aburner.zip",
+   "不足": 27,
+   "要る数": 28
+  },
+  {
+   "名前": "acrobatm.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "actfancr.zip",
+   "不足": 3,
+   "要る数": 19
+  },
+  {
+   "名前": "agallet.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "airbustr.zip",
+   "不足": 4,
+   "要る数": 9
+  },
+  {
+   "名前": "airduel.zip",
+   "不足": 12,
+   "要る数": 21
+  },
+  {
+   "名前": "airwolf.zip",
+   "不足": 3,
+   "要る数": 16
+  },
+  {
+   "名前": "ajax.zip",
+   "不足": 36,
+   "要る数": 44
+  },
+  {
+   "名前": "alexkidd.zip",
+   "不足": 4,
+   "要る数": 19
+  },
+  {
+   "名前": "alibaba.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "alpham2.zip",
+   "不足": 36,
+   "要る数": 48
+  },
+  {
+   "名前": "alphaxz.zip",
+   "不足": 3,
+   "要る数": 18
+  },
+  {
+   "名前": "alpine.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "alpinea.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "altbeast.zip",
+   "不足": 4,
+   "要る数": 18
+  },
+  {
+   "名前": "ambush.zip",
+   "不足": 6,
+   "要る数": 10
+  },
+  {
+   "名前": "amidar.zip",
+   "不足": 9,
+   "要る数": 10
+  },
+  {
+   "名前": "androdun.zip",
+   "不足": 38,
+   "要る数": 45
+  },
+  {
+   "名前": "aodk.zip",
+   "不足": 36,
+   "要る数": 51
+  },
+  {
+   "名前": "aof.zip",
+   "不足": 44,
+   "要る数": 47
+  },
+  {
+   "名前": "apb.zip",
+   "不足": 5,
+   "要る数": 36
+  },
+  {
+   "名前": "apb2.zip",
+   "不足": 5,
+   "要る数": 36
+  },
+  {
+   "名前": "aquajack.zip",
+   "不足": 2,
+   "要る数": 16
+  },
+  {
+   "名前": "arabian.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "arabiana.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "arabianm.zip",
+   "不足": 9,
+   "要る数": 23
+  },
+  {
+   "名前": "arbalest.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "archrivl.zip",
+   "不足": 4,
+   "要る数": 17
+  },
+  {
+   "名前": "area88.zip",
+   "不足": 27,
+   "要る数": 33
+  },
+  {
+   "名前": "arkanoid.zip",
+   "不足": 4,
+   "要る数": 13
+  },
+  {
+   "名前": "arkatayt.zip",
+   "不足": 2,
+   "要る数": 8
+  },
+  {
+   "名前": "armedf.zip",
+   "不足": 5,
+   "要る数": 14
+  },
+  {
+   "名前": "armwar.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "armwara.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "armwaru.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "aso.zip",
+   "不足": 9,
+   "要る数": 20
+  },
+  {
+   "名前": "astorm.zip",
+   "不足": 4,
+   "要る数": 18
+  },
+  {
+   "名前": "astrob.zip",
+   "不足": 3,
+   "要る数": 28
+  },
+  {
+   "名前": "asuka.zip",
+   "不足": 2,
+   "要る数": 11
+  },
+  {
+   "名前": "athena.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "ATLANTIS.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "avsp.zip",
+   "不足": 7,
+   "要る数": 16
+  },
+  {
+   "名前": "avspa.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "avspj.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "avspu.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "bankp.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "baraduke.zip",
+   "不足": 4,
+   "要る数": 15
+  },
+  {
+   "名前": "batcira.zip",
+   "不足": 12,
+   "要る数": 16
+  },
+  {
+   "名前": "batsugun.zip",
+   "不足": 2,
+   "要る数": 9
+  },
+  {
+   "名前": "bayroute.zip",
+   "不足": 10,
+   "要る数": 16
+  },
+  {
+   "名前": "bbmanwj.zip",
+   "不足": 1,
+   "要る数": 8
+  },
+  {
+   "名前": "bchopper.zip",
+   "不足": 6,
+   "要る数": 29
+  },
+  {
+   "名前": "berabohm.zip",
+   "不足": 1,
+   "要る数": 25
+  },
+  {
+   "名前": "bigrun.zip",
+   "不足": 10,
+   "要る数": 40
+  },
+  {
+   "名前": "bioship.zip",
+   "不足": 4,
+   "要る数": 15
+  },
+  {
+   "名前": "bkrtmaq.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "blkdrgon.zip",
+   "不足": 1,
+   "要る数": 20
+  },
+  {
+   "名前": "blktiger.zip",
+   "不足": 1,
+   "要る数": 20
+  },
+  {
+   "名前": "block.zip",
+   "不足": 3,
+   "要る数": 10
+  },
+  {
+   "名前": "blockcar.zip",
+   "不足": 1,
+   "要る数": 5
+  },
+  {
+   "名前": "bloodbro.zip",
+   "不足": 3,
+   "要る数": 11
+  },
+  {
+   "名前": "bloxeed.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "boblbobl.zip",
+   "不足": 4,
+   "要る数": 21
+  },
+  {
+   "名前": "bombbee.zip",
+   "不足": 2,
+   "要る数": 3
+  },
+  {
+   "名前": "bombjack.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "bonzeadv.zip",
+   "不足": 2,
+   "要る数": 11
+  },
+  {
+   "名前": "boxyboy.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "breywood.zip",
+   "不足": 2,
+   "要る数": 22
+  },
+  {
+   "名前": "bstars2.zip",
+   "不足": 36,
+   "要る数": 48
+  },
+  {
+   "名前": "btoads.zip",
+   "不足": 7,
+   "要る数": 11
+  },
+  {
+   "名前": "bublbobl.zip",
+   "不足": 4,
+   "要る数": 18
+  },
+  {
+   "名前": "cadash.zip",
+   "不足": 4,
+   "要る数": 12
+  },
+  {
+   "名前": "cadashj.zip",
+   "不足": 8,
+   "要る数": 12
+  },
+  {
+   "名前": "cameltry.zip",
+   "不足": 1,
+   "要る数": 6
+  },
+  {
+   "名前": "canyon.zip",
+   "不足": 2,
+   "要る数": 7
+  },
+  {
+   "名前": "captcomm.zip",
+   "不足": 14,
+   "要る数": 25
+  },
+  {
+   "名前": "carnival.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "castfant.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cawing.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "cawingj.zip",
+   "不足": 7,
+   "要る数": 34
+  },
+  {
+   "名前": "cbdash.zip",
+   "不足": 27,
+   "要る数": 46
+  },
+  {
+   "名前": "cbnj.zip",
+   "不足": 45,
+   "要る数": 47
+  },
+  {
+   "名前": "cbtime.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cburnrub.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cbusterj.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "ccastles.zip",
+   "不足": 7,
+   "要る数": 11
+  },
+  {
+   "名前": "ccboot.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "ccboot2.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "cclimber.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "cdiscon1.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "centiped.zip",
+   "不足": 5,
+   "要る数": 7
+  },
+  {
+   "名前": "cexplore.zip",
+   "不足": 38,
+   "要る数": 57
+  },
+  {
+   "名前": "cfghtice.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cgangpzl.zip",
+   "不足": 2,
+   "要る数": 4
+  },
+  {
+   "名前": "cgraplop.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "checkman.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "chelnov.zip",
+   "不足": 3,
+   "要る数": 19
+  },
+  {
+   "名前": "chelnovj.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "chelnovu.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "chikij.zip",
+   "不足": 27,
+   "要る数": 34
+  },
+  {
+   "名前": "chukatai.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "circusc2.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "cischeat.zip",
+   "不足": 3,
+   "要る数": 30
+  },
+  {
+   "名前": "citycona.zip",
+   "不足": 6,
+   "要る数": 19
+  },
+  {
+   "名前": "ckong.zip",
+   "不足": 14,
+   "要る数": 16
+  },
+  {
+   "名前": "clapapa.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "clapapa2.zip",
+   "不足": 45,
+   "要る数": 47
+  },
+  {
+   "名前": "clocknch.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cluckypo.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cmissnx.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cnightst.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cobracom.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "contra.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "cosmogng.zip",
+   "不足": 6,
+   "要る数": 22
+  },
+  {
+   "名前": "cppicf.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cppicf2.zip",
+   "不足": 45,
+   "要る数": 47
+  },
+  {
+   "名前": "crimfght.zip",
+   "不足": 1,
+   "要る数": 8
+  },
+  {
+   "名前": "crush.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "crush2.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "crush3.zip",
+   "不足": 8,
+   "要る数": 10
+  },
+  {
+   "名前": "csuperas.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "csweetht.zip",
+   "不足": 45,
+   "要る数": 47
+  },
+  {
+   "名前": "cterrani.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "ctisland.zip",
+   "不足": 31,
+   "要る数": 51
+  },
+  {
+   "名前": "ctornado.zip",
+   "不足": 27,
+   "要る数": 47
+  },
+  {
+   "名前": "cworld2j.zip",
+   "不足": 8,
+   "要る数": 35
+  },
+  {
+   "名前": "cybotsj.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "daimakai.zip",
+   "不足": 27,
+   "要る数": 48
+  },
+  {
+   "名前": "darius.zip",
+   "不足": 11,
+   "要る数": 35
+  },
+  {
+   "名前": "darius2d.zip",
+   "不足": 10,
+   "要る数": 17
+  },
+  {
+   "名前": "dariuse.zip",
+   "不足": 3,
+   "要る数": 33
+  },
+  {
+   "名前": "dariusgx.zip",
+   "不足": 10,
+   "要る数": 14
+  },
+  {
+   "名前": "dariusj.zip",
+   "不足": 3,
+   "要る数": 33
+  },
+  {
+   "名前": "dariuso.zip",
+   "不足": 3,
+   "要る数": 33
+  },
+  {
+   "名前": "dbreed.zip",
+   "不足": 9,
+   "要る数": 18
+  },
+  {
+   "名前": "ddragon.zip",
+   "不足": 3,
+   "要る数": 23
+  },
+  {
+   "名前": "ddragon2.zip",
+   "不足": 4,
+   "要る数": 19
+  },
+  {
+   "名前": "ddragon3.zip",
+   "不足": 6,
+   "要る数": 17
+  },
+  {
+   "名前": "ddribble.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "ddsom.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "ddsomjr1.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "ddtod.zip",
+   "不足": 6,
+   "要る数": 17
+  },
+  {
+   "名前": "ddtodj.zip",
+   "不足": 6,
+   "要る数": 17
+  },
+  {
+   "名前": "ddtodu.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "dduxbl.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "decocass.zip",
+   "不足": 27,
+   "要る数": 45
+  },
+  {
+   "名前": "defender.zip",
+   "不足": 2,
+   "要る数": 14
+  },
+  {
+   "名前": "detatwin.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "digdug.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "digdug2.zip",
+   "不足": 3,
+   "要る数": 10
+  },
+  {
+   "名前": "digdugat.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "dkgensan.zip",
+   "不足": 6,
+   "要る数": 20
+  },
+  {
+   "名前": "DKONG3.zip",
+   "不足": 4,
+   "要る数": 16
+  },
+  {
+   "名前": "dkong3j.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "dogyuun.zip",
+   "不足": 1,
+   "要る数": 6
+  },
+  {
+   "名前": "doubledr.zip",
+   "不足": 36,
+   "要る数": 51
+  },
+  {
+   "名前": "dowild.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "drgnbstr.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "drgninja.zip",
+   "不足": 5,
+   "要る数": 25
+  },
+  {
+   "名前": "dsaber.zip",
+   "不足": 5,
+   "要る数": 23
+  },
+  {
+   "名前": "dsaberj.zip",
+   "不足": 3,
+   "要る数": 23
+  },
+  {
+   "名前": "dstlk.zip",
+   "不足": 9,
+   "要る数": 21
+  },
+  {
+   "名前": "elevator.zip",
+   "不足": 9,
+   "要る数": 13
+  },
+  {
+   "名前": "elvact2u.zip",
+   "不足": 13,
+   "要る数": 14
+  },
+  {
+   "名前": "elvactrj.zip",
+   "不足": 13,
+   "要る数": 14
+  },
+  {
+   "名前": "emeralda.zip",
+   "不足": 5,
+   "要る数": 5
+  },
+  {
+   "名前": "espial.zip",
+   "不足": 6,
+   "要る数": 12
+  },
+  {
+   "名前": "exctsccr.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "exedexes.zip",
+   "不足": 4,
+   "要る数": 24
+  },
+  {
+   "名前": "exerion.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "exerionb.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "exeriont.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "exprraid.zip",
+   "不足": 4,
+   "要る数": 20
+  },
+  {
+   "名前": "exvania.zip",
+   "不足": 4,
+   "要る数": 8
+  },
+  {
+   "名前": "exzisus.zip",
+   "不足": 15,
+   "要る数": 23
+  },
+  {
+   "名前": "f1dream.zip",
+   "不足": 3,
+   "要る数": 17
+  },
+  {
+   "名前": "f1gpstar.zip",
+   "不足": 15,
+   "要る数": 44
+  },
+  {
+   "名前": "fa.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "fantzone.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "fastlane.zip",
+   "不足": 1,
+   "要る数": 6
+  },
+  {
+   "名前": "fatfursp.zip",
+   "不足": 36,
+   "要る数": 51
+  },
+  {
+   "名前": "fax.zip",
+   "不足": 5,
+   "要る数": 38
+  },
+  {
+   "名前": "ffantasy.zip",
+   "不足": 3,
+   "要る数": 27
+  },
+  {
+   "名前": "ffight.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "ffightj.zip",
+   "不足": 7,
+   "要る数": 34
+  },
+  {
+   "名前": "ffightu.zip",
+   "不足": 8,
+   "要る数": 19
+  },
+  {
+   "名前": "fhawk.zip",
+   "不足": 1,
+   "要る数": 6
+  },
+  {
+   "名前": "finalizr.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "fireshrk.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "flashgal.zip",
+   "不足": 2,
+   "要る数": 25
+  },
+  {
+   "名前": "flicky.zip",
+   "不足": 7,
+   "要る数": 12
+  },
+  {
+   "名前": "forgottn.zip",
+   "不足": 31,
+   "要る数": 38
+  },
+  {
+   "名前": "fpoint.zip",
+   "不足": 3,
+   "要る数": 9
+  },
+  {
+   "名前": "fpointbl.zip",
+   "不足": 1,
+   "要る数": 8
+  },
+  {
+   "名前": "frogger.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "frontlin.zip",
+   "不足": 9,
+   "要る数": 14
+  },
+  {
+   "名前": "fshark.zip",
+   "不足": 4,
+   "要る数": 24
+  },
+  {
+   "名前": "galaga.zip",
+   "不足": 9,
+   "要る数": 14
+  },
+  {
+   "名前": "galaga3.zip",
+   "不足": 2,
+   "要る数": 20
+  },
+  {
+   "名前": "galaga3a.zip",
+   "不足": 6,
+   "要る数": 20
+  },
+  {
+   "名前": "galaga3b.zip",
+   "不足": 6,
+   "要る数": 20
+  },
+  {
+   "名前": "galaga88.zip",
+   "不足": 1,
+   "要る数": 25
+  },
+  {
+   "名前": "galagamw.zip",
+   "不足": 4,
+   "要る数": 14
+  },
+  {
+   "名前": "galivan.zip",
+   "不足": 2,
+   "要る数": 19
+  },
+  {
+   "名前": "gallop.zip",
+   "不足": 13,
+   "要る数": 18
+  },
+  {
+   "名前": "galpanic.zip",
+   "不足": 3,
+   "要る数": 12
+  },
+  {
+   "名前": "gaplus.zip",
+   "不足": 1,
+   "要る数": 20
+  },
+  {
+   "名前": "garyoret.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "gauntlet.zip",
+   "不足": 3,
+   "要る数": 20
+  },
+  {
+   "名前": "geebee.zip",
+   "不足": 1,
+   "要る数": 2
+  },
+  {
+   "名前": "gemini.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "genpeitd.zip",
+   "不足": 1,
+   "要る数": 25
+  },
+  {
+   "名前": "ghouls.zip",
+   "不足": 7,
+   "要る数": 33
+  },
+  {
+   "名前": "ghox.zip",
+   "不足": 1,
+   "要る数": 5
+  },
+  {
+   "名前": "gng.zip",
+   "不足": 6,
+   "要る数": 20
+  },
+  {
+   "名前": "goalx3.zip",
+   "不足": 40,
+   "要る数": 46
+  },
+  {
+   "名前": "goindol.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "goldnaxe.zip",
+   "不足": 4,
+   "要る数": 15
+  },
+  {
+   "名前": "gradius2.zip",
+   "不足": 4,
+   "要る数": 16
+  },
+  {
+   "名前": "gradius3.zip",
+   "不足": 2,
+   "要る数": 25
+  },
+  {
+   "名前": "grobda.zip",
+   "不足": 3,
+   "要る数": 11
+  },
+  {
+   "名前": "growl.zip",
+   "不足": 2,
+   "要る数": 10
+  },
+  {
+   "名前": "gslgr94u.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "gunbustr.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "gunforce.zip",
+   "不足": 9,
+   "要る数": 20
+  },
+  {
+   "名前": "gwar.zip",
+   "不足": 3,
+   "要る数": 26
+  },
+  {
+   "名前": "gyrodine.zip",
+   "不足": 1,
+   "要る数": 20
+  },
+  {
+   "名前": "hachoo.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "hangon.zip",
+   "不足": 6,
+   "要る数": 33
+  },
+  {
+   "名前": "headon.zip",
+   "不足": 2,
+   "要る数": 10
+  },
+  {
+   "名前": "hharry.zip",
+   "不足": 6,
+   "要る数": 20
+  },
+  {
+   "名前": "higemaru.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "hippodrm.zip",
+   "不足": 2,
+   "要る数": 27
+  },
+  {
+   "名前": "hishouza.zip",
+   "不足": 5,
+   "要る数": 24
+  },
+  {
+   "名前": "hopmappy.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "hpuncher.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "hvymetal.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "hwchamp.zip",
+   "不足": 2,
+   "要る数": 20
+  },
+  {
+   "名前": "ikarijp.zip",
+   "不足": 4,
+   "要る数": 27
+  },
+  {
+   "名前": "imgfight.zip",
+   "不足": 8,
+   "要る数": 24
+  },
+  {
+   "名前": "inthunt.zip",
+   "不足": 6,
+   "要る数": 21
+  },
+  {
+   "名前": "jackalj.zip",
+   "不足": 2,
+   "要る数": 9
+  },
+  {
+   "名前": "jailbrek.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "jedi.zip",
+   "不足": 2,
+   "要る数": 16
+  },
+  {
+   "名前": "jigkmgri.zip",
+   "不足": 2,
+   "要る数": 11
+  },
+  {
+   "名前": "kageki.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "kaiteids.zip",
+   "不足": 6,
+   "要る数": 21
+  },
+  {
+   "名前": "kangaroo.zip",
+   "不足": 3,
+   "要る数": 13
+  },
+  {
+   "名前": "karnov.zip",
+   "不足": 3,
+   "要る数": 23
+  },
+  {
+   "名前": "karnovj.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "kick.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "kidniki.zip",
+   "不足": 2,
+   "要る数": 34
+  },
+  {
+   "名前": "kikcubic.zip",
+   "不足": 3,
+   "要る数": 12
+  },
+  {
+   "名前": "kikikai.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "kingball.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "klax.zip",
+   "不足": 5,
+   "要る数": 17
+  },
+  {
+   "名前": "knckhead.zip",
+   "不足": 3,
+   "要る数": 13
+  },
+  {
+   "名前": "knights.zip",
+   "不足": 10,
+   "要る数": 23
+  },
+  {
+   "名前": "knightsj.zip",
+   "不足": 11,
+   "要る数": 23
+  },
+  {
+   "名前": "kod.zip",
+   "不足": 18,
+   "要る数": 28
+  },
+  {
+   "名前": "kodj.zip",
+   "不足": 9,
+   "要る数": 25
+  },
+  {
+   "名前": "kof2000.zip",
+   "不足": 47,
+   "要る数": 54
+  },
+  {
+   "名前": "kof98.zip",
+   "不足": 38,
+   "要る数": 54
+  },
+  {
+   "名前": "KOF99.zip",
+   "不足": 47,
+   "要る数": 54
+  },
+  {
+   "名前": "kotm.zip",
+   "不足": 45,
+   "要る数": 48
+  },
+  {
+   "名前": "kotm2.zip",
+   "不足": 38,
+   "要る数": 48
+  },
+  {
+   "名前": "ktiger.zip",
+   "不足": 3,
+   "要る数": 26
+  },
+  {
+   "名前": "ktiger2.zip",
+   "不足": 4,
+   "要る数": 19
+  },
+  {
+   "名前": "kuniokun.zip",
+   "不足": 1,
+   "要る数": 26
+  },
+  {
+   "名前": "kurikint.zip",
+   "不足": 2,
+   "要る数": 7
+  },
+  {
+   "名前": "lbowling.zip",
+   "不足": 39,
+   "要る数": 46
+  },
+  {
+   "名前": "ldrun3.zip",
+   "不足": 9,
+   "要る数": 23
+  },
+  {
+   "名前": "legofair.zip",
+   "不足": 3,
+   "要る数": 27
+  },
+  {
+   "名前": "lethalth.zip",
+   "不足": 5,
+   "要る数": 20
+  },
+  {
+   "名前": "lkage.zip",
+   "不足": 7,
+   "要る数": 14
+  },
+  {
+   "名前": "loht.zip",
+   "不足": 6,
+   "要る数": 23
+  },
+  {
+   "名前": "lostwrld.zip",
+   "不足": 7,
+   "要る数": 23
+  },
+  {
+   "名前": "lresort.zip",
+   "不足": 44,
+   "要る数": 47
+  },
+  {
+   "名前": "macross.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "macrossp.zip",
+   "不足": 4,
+   "要る数": 22
+  },
+  {
+   "名前": "magdrop2.zip",
+   "不足": 36,
+   "要る数": 44
+  },
+  {
+   "名前": "magdrop3.zip",
+   "不足": 40,
+   "要る数": 47
+  },
+  {
+   "名前": "makaimur.zip",
+   "不足": 2,
+   "要る数": 19
+  },
+  {
+   "名前": "maketrax.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "marble.zip",
+   "不足": 17,
+   "要る数": 42
+  },
+  {
+   "名前": "mario.zip",
+   "不足": 6,
+   "要る数": 15
+  },
+  {
+   "名前": "marukin.zip",
+   "不足": 4,
+   "要る数": 11
+  },
+  {
+   "名前": "marukodq.zip",
+   "不足": 39,
+   "要る数": 47
+  },
+  {
+   "名前": "mbombrd.zip",
+   "不足": 12,
+   "要る数": 43
+  },
+  {
+   "名前": "megaman.zip",
+   "不足": 12,
+   "要る数": 32
+  },
+  {
+   "名前": "mercsj.zip",
+   "不足": 27,
+   "要る数": 42
+  },
+  {
+   "名前": "metrocrs.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "mhavoc.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "mhavoc2.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "mhavocp.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "mhavocrv.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "midres.zip",
+   "不足": 11,
+   "要る数": 25
+  },
+  {
+   "名前": "MILLIPED.zip",
+   "不足": 1,
+   "要る数": 7
+  },
+  {
+   "名前": "missile.zip",
+   "不足": 2,
+   "要る数": 7
+  },
+  {
+   "名前": "missile2.zip",
+   "不足": 1,
+   "要る数": 7
+  },
+  {
+   "名前": "mk.zip",
+   "不足": 14,
+   "要る数": 17
+  },
+  {
+   "名前": "mmaze.zip",
+   "不足": 1,
+   "要る数": 22
+  },
+  {
+   "名前": "mnight.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "motorace.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "mpatrol.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "mpatrolw.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "mranger.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "mrdo.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "mrdofix.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "mrdot.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "mrdoy.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "mrdu.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "mrheli.zip",
+   "不足": 6,
+   "要る数": 25
+  },
+  {
+   "名前": "msh.zip",
+   "不足": 3,
+   "要る数": 21
+  },
+  {
+   "名前": "mshvsf.zip",
+   "不足": 3,
+   "要る数": 21
+  },
+  {
+   "名前": "mshvsfj.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "mslug.zip",
+   "不足": 36,
+   "要る数": 47
+  },
+  {
+   "名前": "mslug2.zip",
+   "不足": 36,
+   "要る数": 48
+  },
+  {
+   "名前": "msword.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "mswordj.zip",
+   "不足": 27,
+   "要る数": 34
+  },
+  {
+   "名前": "mswordu.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "mustang.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "myherok.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "mysticri.zip",
+   "不足": 5,
+   "要る数": 20
+  },
+  {
+   "名前": "mystston.zip",
+   "不足": 6,
+   "要る数": 19
+  },
+  {
+   "名前": "ncommand.zip",
+   "不足": 42,
+   "要る数": 47
+  },
+  {
+   "名前": "nebulray.zip",
+   "不足": 3,
+   "要る数": 19
+  },
+  {
+   "名前": "nemo.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "nemoj.zip",
+   "不足": 28,
+   "要る数": 34
+  },
+  {
+   "名前": "neobombe.zip",
+   "不足": 39,
+   "要る数": 47
+  },
+  {
+   "名前": "Neodrift.zip",
+   "不足": 39,
+   "要る数": 45
+  },
+  {
+   "名前": "neogeo.zip",
+   "不足": 36,
+   "要る数": 38
+  },
+  {
+   "名前": "neomrdo.zip",
+   "不足": 37,
+   "要る数": 44
+  },
+  {
+   "名前": "ninjakd2.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "ninjawj.zip",
+   "不足": 25,
+   "要る数": 27
+  },
+  {
+   "名前": "nkdodgeb.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "nprinces.zip",
+   "不足": 6,
+   "要る数": 18
+  },
+  {
+   "名前": "nrallyx.zip",
+   "不足": 11,
+   "要る数": 13
+  },
+  {
+   "名前": "nspirit.zip",
+   "不足": 10,
+   "要る数": 27
+  },
+  {
+   "名前": "nspiritj.zip",
+   "不足": 10,
+   "要る数": 27
+  },
+  {
+   "名前": "ogonsiro.zip",
+   "不足": 6,
+   "要る数": 24
+  },
+  {
+   "名前": "ordyne.zip",
+   "不足": 5,
+   "要る数": 32
+  },
+  {
+   "名前": "oscar.zip",
+   "不足": 2,
+   "要る数": 13
+  },
+  {
+   "名前": "oscarj1.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "OUTRUN.zip",
+   "不足": 8,
+   "要る数": 31
+  },
+  {
+   "名前": "outrunb.zip",
+   "不足": 10,
+   "要る数": 33
+  },
+  {
+   "名前": "outzone.zip",
+   "不足": 4,
+   "要る数": 11
+  },
+  {
+   "名前": "ozmawars.zip",
+   "不足": 2,
+   "要る数": 8
+  },
+  {
+   "名前": "pacland.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "paclandm.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "pacnchmp.zip",
+   "不足": 4,
+   "要る数": 10
+  },
+  {
+   "名前": "PACNPAL.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "pacnpal2.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "paintrlr.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "pandoras.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "pang3.zip",
+   "不足": 13,
+   "要る数": 17
+  },
+  {
+   "名前": "pang3j.zip",
+   "不足": 11,
+   "要る数": 17
+  },
+  {
+   "名前": "panicbom.zip",
+   "不足": 37,
+   "要る数": 45
+  },
+  {
+   "名前": "paperboy.zip",
+   "不足": 2,
+   "要る数": 27
+  },
+  {
+   "名前": "parodius.zip",
+   "不足": 2,
+   "要る数": 8
+  },
+  {
+   "名前": "pbobble.zip",
+   "不足": 5,
+   "要る数": 6
+  },
+  {
+   "名前": "pbobble2.zip",
+   "不足": 14,
+   "要る数": 14
+  },
+  {
+   "名前": "pbobblen.zip",
+   "不足": 44,
+   "要る数": 51
+  },
+  {
+   "名前": "pcktgalb.zip",
+   "不足": 2,
+   "要る数": 10
+  },
+  {
+   "名前": "peekaboo.zip",
+   "不足": 1,
+   "要る数": 8
+  },
+  {
+   "名前": "peterpak.zip",
+   "不足": 10,
+   "要る数": 39
+  },
+  {
+   "名前": "pgear.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "pgearr1.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "pgoal.zip",
+   "不足": 39,
+   "要る数": 46
+  },
+  {
+   "名前": "phelios.zip",
+   "不足": 2,
+   "要る数": 33
+  },
+  {
+   "名前": "phozon.zip",
+   "不足": 3,
+   "要る数": 19
+  },
+  {
+   "名前": "pitfall2.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "pitfight.zip",
+   "不足": 16,
+   "要る数": 43
+  },
+  {
+   "名前": "PLEIADS.zip",
+   "不足": 10,
+   "要る数": 14
+  },
+  {
+   "名前": "plgirls2.zip",
+   "不足": 1,
+   "要る数": 3
+  },
+  {
+   "名前": "plumppop.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "pompingw.zip",
+   "不足": 2,
+   "要る数": 9
+  },
+  {
+   "名前": "popbounc.zip",
+   "不足": 36,
+   "要る数": 44
+  },
+  {
+   "名前": "popeyebl.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "powj.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "psychic5.zip",
+   "不足": 7,
+   "要る数": 10
+  },
+  {
+   "名前": "puckman.zip",
+   "不足": 12,
+   "要る数": 16
+  },
+  {
+   "名前": "puckmana.zip",
+   "不足": 11,
+   "要る数": 16
+  },
+  {
+   "名前": "punchout.zip",
+   "不足": 14,
+   "要る数": 39
+  },
+  {
+   "名前": "puzznic.zip",
+   "不足": 4,
+   "要る数": 4
+  },
+  {
+   "名前": "qad.zip",
+   "不足": 8,
+   "要る数": 23
+  },
+  {
+   "名前": "qgakumon.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "qixa.zip",
+   "不足": 15,
+   "要る数": 17
+  },
+  {
+   "名前": "qndream.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "quartet.zip",
+   "不足": 2,
+   "要る数": 25
+  },
+  {
+   "名前": "quartet2.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "quizdais.zip",
+   "不足": 36,
+   "要る数": 44
+  },
+  {
+   "名前": "quiztou.zip",
+   "不足": 2,
+   "要る数": 14
+  },
+  {
+   "名前": "qzchikyu.zip",
+   "不足": 3,
+   "要る数": 10
+  },
+  {
+   "名前": "raiden.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "rallyx.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "rallyxm.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "rampart.zip",
+   "不足": 7,
+   "要る数": 14
+  },
+  {
+   "名前": "rastan.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "rastsag2.zip",
+   "不足": 8,
+   "要る数": 9
+  },
+  {
+   "名前": "rastsaga.zip",
+   "不足": 5,
+   "要る数": 16
+  },
+  {
+   "名前": "rbff2.zip",
+   "不足": 39,
+   "要る数": 52
+  },
+  {
+   "名前": "rdaction.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "redbaron.zip",
+   "不足": 9,
+   "要る数": 17
+  },
+  {
+   "名前": "renegade.zip",
+   "不足": 1,
+   "要る数": 26
+  },
+  {
+   "名前": "riotcity.zip",
+   "不足": 1,
+   "要る数": 19
+  },
+  {
+   "名前": "roadrunn.zip",
+   "不足": 10,
+   "要る数": 55
+  },
+  {
+   "名前": "robocop.zip",
+   "不足": 2,
+   "要る数": 27
+  },
+  {
+   "名前": "robocopj.zip",
+   "不足": 2,
+   "要る数": 27
+  },
+  {
+   "名前": "robokid.zip",
+   "不足": 1,
+   "要る数": 32
+  },
+  {
+   "名前": "robokidj.zip",
+   "不足": 1,
+   "要る数": 32
+  },
+  {
+   "名前": "rockmanj.zip",
+   "不足": 10,
+   "要る数": 32
+  },
+  {
+   "名前": "rockrage.zip",
+   "不足": 2,
+   "要る数": 11
+  },
+  {
+   "名前": "rocnrope.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "roishtar.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "rranger.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "rthun2j.zip",
+   "不足": 4,
+   "要る数": 25
+  },
+  {
+   "名前": "rthunder.zip",
+   "不足": 1,
+   "要る数": 28
+  },
+  {
+   "名前": "rtype.zip",
+   "不足": 13,
+   "要る数": 25
+  },
+  {
+   "名前": "rtype2.zip",
+   "不足": 4,
+   "要る数": 24
+  },
+  {
+   "名前": "rtype2j.zip",
+   "不足": 4,
+   "要る数": 24
+  },
+  {
+   "名前": "rtypejp.zip",
+   "不足": 7,
+   "要る数": 25
+  },
+  {
+   "名前": "rtypeleo.zip",
+   "不足": 7,
+   "要る数": 20
+  },
+  {
+   "名前": "rygar2.zip",
+   "不足": 18,
+   "要る数": 18
+  },
+  {
+   "名前": "ryukendn.zip",
+   "不足": 17,
+   "要る数": 21
+  },
+  {
+   "名前": "s1945.zip",
+   "不足": 2,
+   "要る数": 10
+  },
+  {
+   "名前": "samesame.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "samsho.zip",
+   "不足": 40,
+   "要る数": 50
+  },
+  {
+   "名前": "samsho2.zip",
+   "不足": 36,
+   "要る数": 53
+  },
+  {
+   "名前": "samurai.zip",
+   "不足": 13,
+   "要る数": 15
+  },
+  {
+   "名前": "SBAGMAN.zip",
+   "不足": 11,
+   "要る数": 19
+  },
+  {
+   "名前": "sbasketb.zip",
+   "不足": 3,
+   "要る数": 14
+  },
+  {
+   "名前": "sdi.zip",
+   "不足": 11,
+   "要る数": 17
+  },
+  {
+   "名前": "secretag.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "seganinj.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "SF2.zip",
+   "不足": 14,
+   "要る数": 31
+  },
+  {
+   "名前": "SF2CE.zip",
+   "不足": 11,
+   "要る数": 28
+  },
+  {
+   "名前": "sf2hf.zip",
+   "不足": 11,
+   "要る数": 28
+  },
+  {
+   "名前": "sfa2.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "sfa3.zip",
+   "不足": 3,
+   "要る数": 21
+  },
+  {
+   "名前": "sfz3j.zip",
+   "不足": 3,
+   "要る数": 21
+  },
+  {
+   "名前": "SFZCH.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "shadowld.zip",
+   "不足": 3,
+   "要る数": 28
+  },
+  {
+   "名前": "shangha3.zip",
+   "不足": 3,
+   "要る数": 5
+  },
+  {
+   "名前": "Sharrier.zip",
+   "不足": 4,
+   "要る数": 52
+  },
+  {
+   "名前": "shdancer.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "shisen.zip",
+   "不足": 8,
+   "要る数": 9
+  },
+  {
+   "名前": "sidepckt.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "sisv.zip",
+   "不足": 5,
+   "要る数": 6
+  },
+  {
+   "名前": "sisv2.zip",
+   "不足": 6,
+   "要る数": 6
+  },
+  {
+   "名前": "skykiddx.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "slyspy.zip",
+   "不足": 6,
+   "要る数": 21
+  },
+  {
+   "名前": "slyspy2.zip",
+   "不足": 8,
+   "要る数": 21
+  },
+  {
+   "名前": "snowbros.zip",
+   "不足": 1,
+   "要る数": 4
+  },
+  {
+   "名前": "socbrawl.zip",
+   "不足": 38,
+   "要る数": 47
+  },
+  {
+   "名前": "solomon.zip",
+   "不足": 4,
+   "要る数": 12
+  },
+  {
+   "名前": "sonicwi2.zip",
+   "不足": 37,
+   "要る数": 47
+  },
+  {
+   "名前": "sonicwi3.zip",
+   "不足": 39,
+   "要る数": 47
+  },
+  {
+   "名前": "sonson.zip",
+   "不足": 9,
+   "要る数": 17
+  },
+  {
+   "名前": "sonsonj.zip",
+   "不足": 9,
+   "要る数": 20
+  },
+  {
+   "名前": "spacbatt.zip",
+   "不足": 2,
+   "要る数": 13
+  },
+  {
+   "名前": "spacebrd.zip",
+   "不足": 5,
+   "要る数": 13
+  },
+  {
+   "名前": "spacedx.zip",
+   "不足": 6,
+   "要る数": 11
+  },
+  {
+   "名前": "spang.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "spcinvdj.zip",
+   "不足": 2,
+   "要る数": 14
+  },
+  {
+   "名前": "spdodgeb.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "splatter.zip",
+   "不足": 4,
+   "要る数": 30
+  },
+  {
+   "名前": "spnchout.zip",
+   "不足": 6,
+   "要る数": 39
+  },
+  {
+   "名前": "srdarwin.zip",
+   "不足": 3,
+   "要る数": 14
+  },
+  {
+   "名前": "ssf2.zip",
+   "不足": 7,
+   "要る数": 23
+  },
+  {
+   "名前": "ssf2t.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "ssi.zip",
+   "不足": 2,
+   "要る数": 7
+  },
+  {
+   "名前": "ssprint.zip",
+   "不足": 2,
+   "要る数": 28
+  },
+  {
+   "名前": "stadhero.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "stakwin2.zip",
+   "不足": 36,
+   "要る数": 47
+  },
+  {
+   "名前": "STARGATE.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "starjack.zip",
+   "不足": 1,
+   "要る数": 16
+  },
+  {
+   "名前": "strider.zip",
+   "不足": 7,
+   "要る数": 23
+  },
+  {
+   "名前": "striderj.zip",
+   "不足": 47,
+   "要る数": 50
+  },
+  {
+   "名前": "supbtime.zip",
+   "不足": 8,
+   "要る数": 13
+  },
+  {
+   "名前": "superman.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "swcourt.zip",
+   "不足": 3,
+   "要る数": 9
+  },
+  {
+   "名前": "swimmer.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "swimmera.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "sws96.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "sws97.zip",
+   "不足": 1,
+   "要る数": 12
+  },
+  {
+   "名前": "SXEVIOUS.zip",
+   "不足": 9,
+   "要る数": 26
+  },
+  {
+   "名前": "tail2nos.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "tankbatt.zip",
+   "不足": 1,
+   "要る数": 6
+  },
+  {
+   "名前": "tapper.zip",
+   "不足": 5,
+   "要る数": 19
+  },
+  {
+   "名前": "tdragon.zip",
+   "不足": 3,
+   "要る数": 11
+  },
+  {
+   "名前": "tdragon2.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "teddybb.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "teddybbo.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "tempest.zip",
+   "不足": 14,
+   "要る数": 14
+  },
+  {
+   "名前": "term2.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "terracre.zip",
+   "不足": 4,
+   "要る数": 19
+  },
+  {
+   "名前": "terraf.zip",
+   "不足": 9,
+   "要る数": 16
+  },
+  {
+   "名前": "tetris.zip",
+   "不足": 1,
+   "要る数": 9
+  },
+  {
+   "名前": "tetrist.zip",
+   "不足": 4,
+   "要る数": 9
+  },
+  {
+   "名前": "thndblst.zip",
+   "不足": 7,
+   "要る数": 20
+  },
+  {
+   "名前": "thndrx2.zip",
+   "不足": 4,
+   "要る数": 9
+  },
+  {
+   "名前": "thunderx.zip",
+   "不足": 3,
+   "要る数": 20
+  },
+  {
+   "名前": "tigerh.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "tigerhj.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "tigeroad.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "tinklpit.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "tmnt2.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "tmnt2a.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "tmntj.zip",
+   "不足": 4,
+   "要る数": 16
+  },
+  {
+   "名前": "tnzs.zip",
+   "不足": 3,
+   "要る数": 11
+  },
+  {
+   "名前": "todruaga.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "tokiob.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "topsecrt.zip",
+   "不足": 2,
+   "要る数": 26
+  },
+  {
+   "名前": "tp84a.zip",
+   "不足": 1,
+   "要る数": 17
+  },
+  {
+   "名前": "trackfld.zip",
+   "不足": 3,
+   "要る数": 17
+  },
+  {
+   "名前": "trally.zip",
+   "不足": 43,
+   "要る数": 48
+  },
+  {
+   "名前": "travrusa.zip",
+   "不足": 2,
+   "要る数": 18
+  },
+  {
+   "名前": "triothep.zip",
+   "不足": 6,
+   "要る数": 19
+  },
+  {
+   "名前": "trojanj.zip",
+   "不足": 3,
+   "要る数": 27
+  },
+  {
+   "名前": "truxton.zip",
+   "不足": 3,
+   "要る数": 13
+  },
+  {
+   "名前": "tshingen.zip",
+   "不足": 7,
+   "要る数": 19
+  },
+  {
+   "名前": "tumblep.zip",
+   "不足": 7,
+   "要る数": 7
+  },
+  {
+   "名前": "turbo.zip",
+   "不足": 2,
+   "要る数": 38
+  },
+  {
+   "名前": "turbofrc.zip",
+   "不足": 3,
+   "要る数": 16
+  },
+  {
+   "名前": "TURPIN.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "TURTLES.zip",
+   "不足": 1,
+   "要る数": 10
+  },
+  {
+   "名前": "tutankhm.zip",
+   "不足": 2,
+   "要る数": 17
+  },
+  {
+   "名前": "uccops.zip",
+   "不足": 5,
+   "要る数": 20
+  },
+  {
+   "名前": "unsquad.zip",
+   "不足": 7,
+   "要る数": 18
+  },
+  {
+   "名前": "valkyrie.zip",
+   "不足": 1,
+   "要る数": 31
+  },
+  {
+   "名前": "vampj.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "vandyke.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "vaportra.zip",
+   "不足": 9,
+   "要る数": 18
+  },
+  {
+   "名前": "varth.zip",
+   "不足": 15,
+   "要る数": 22
+  },
+  {
+   "名前": "varthj.zip",
+   "不足": 24,
+   "要る数": 35
+  },
+  {
+   "名前": "venture.zip",
+   "不足": 4,
+   "要る数": 17
+  },
+  {
+   "名前": "venture4.zip",
+   "不足": 3,
+   "要る数": 17
+  },
+  {
+   "名前": "victroad.zip",
+   "不足": 5,
+   "要る数": 27
+  },
+  {
+   "名前": "vigilant.zip",
+   "不足": 10,
+   "要る数": 17
+  },
+  {
+   "名前": "vimana.zip",
+   "不足": 3,
+   "要る数": 11
+  },
+  {
+   "名前": "vimanan.zip",
+   "不足": 1,
+   "要る数": 11
+  },
+  {
+   "名前": "vindctr2.zip",
+   "不足": 3,
+   "要る数": 42
+  },
+  {
+   "名前": "vindictr.zip",
+   "不足": 4,
+   "要る数": 20
+  },
+  {
+   "名前": "viofight.zip",
+   "不足": 2,
+   "要る数": 12
+  },
+  {
+   "名前": "volfied.zip",
+   "不足": 4,
+   "要る数": 21
+  },
+  {
+   "名前": "volfiedj.zip",
+   "不足": 4,
+   "要る数": 21
+  },
+  {
+   "名前": "volfiedu.zip",
+   "不足": 4,
+   "要る数": 21
+  },
+  {
+   "名前": "vsav.zip",
+   "不足": 3,
+   "要る数": 21
+  },
+  {
+   "名前": "vsav2.zip",
+   "不足": 1,
+   "要る数": 21
+  },
+  {
+   "名前": "vsslalom.zip",
+   "不足": 1,
+   "要る数": 1
+  },
+  {
+   "名前": "vstetris.zip",
+   "不足": 1,
+   "要る数": 1
+  },
+  {
+   "名前": "vulcan.zip",
+   "不足": 4,
+   "要る数": 16
+  },
+  {
+   "名前": "vulgus.zip",
+   "不足": 6,
+   "要る数": 25
+  },
+  {
+   "名前": "vulgusj.zip",
+   "不足": 2,
+   "要る数": 25
+  },
+  {
+   "名前": "wacko.zip",
+   "不足": 1,
+   "要る数": 14
+  },
+  {
+   "名前": "wardner.zip",
+   "不足": 1,
+   "要る数": 26
+  },
+  {
+   "名前": "wardnerj.zip",
+   "不足": 1,
+   "要る数": 26
+  },
+  {
+   "名前": "warriorb.zip",
+   "不足": 2,
+   "要る数": 21
+  },
+  {
+   "名前": "wb3.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wbdeluxe.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "wbml.zip",
+   "不足": 2,
+   "要る数": 16
+  },
+  {
+   "名前": "wbmlb.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wbmljb.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wbmljo.zip",
+   "不足": 2,
+   "要る数": 16
+  },
+  {
+   "名前": "wboy.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "wboy2.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "wboy2u.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "wboy3.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wboyo.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wboyu.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "wecleman.zip",
+   "不足": 2,
+   "要る数": 31
+  },
+  {
+   "名前": "wexpress.zip",
+   "不足": 4,
+   "要る数": 20
+  },
+  {
+   "名前": "whodunit.zip",
+   "不足": 21,
+   "要る数": 59
+  },
+  {
+   "名前": "whp.zip",
+   "不足": 44,
+   "要る数": 52
+  },
+  {
+   "名前": "wildfang.zip",
+   "不足": 6,
+   "要る数": 12
+  },
+  {
+   "名前": "willow.zip",
+   "不足": 9,
+   "要る数": 27
+  },
+  {
+   "名前": "willowj.zip",
+   "不足": 27,
+   "要る数": 42
+  },
+  {
+   "名前": "wjammers.zip",
+   "不足": 39,
+   "要る数": 49
+  },
+  {
+   "名前": "wndrmomo.zip",
+   "不足": 2,
+   "要る数": 26
+  },
+  {
+   "名前": "wndrplnt.zip",
+   "不足": 1,
+   "要る数": 23
+  },
+  {
+   "名前": "wof.zip",
+   "不足": 14,
+   "要る数": 27
+  },
+  {
+   "名前": "wofa.zip",
+   "不足": 12,
+   "要る数": 27
+  },
+  {
+   "名前": "wofj.zip",
+   "不足": 12,
+   "要る数": 27
+  },
+  {
+   "名前": "wofu.zip",
+   "不足": 12,
+   "要る数": 27
+  },
+  {
+   "名前": "wonder3.zip",
+   "不足": 40,
+   "要る数": 51
+  },
+  {
+   "名前": "worldwar.zip",
+   "不足": 4,
+   "要る数": 27
+  },
+  {
+   "名前": "wrestwar.zip",
+   "不足": 2,
+   "要る数": 24
+  },
+  {
+   "名前": "xevious.zip",
+   "不足": 1,
+   "要る数": 27
+  },
+  {
+   "名前": "xeviousa.zip",
+   "不足": 1,
+   "要る数": 24
+  },
+  {
+   "名前": "xexex.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "xmcota.zip",
+   "不足": 5,
+   "要る数": 21
+  },
+  {
+   "名前": "xmen2pj.zip",
+   "不足": 1,
+   "要る数": 13
+  },
+  {
+   "名前": "xmultipl.zip",
+   "不足": 11,
+   "要る数": 28
+  },
+  {
+   "名前": "xmvsf.zip",
+   "不足": 3,
+   "要る数": 20
+  },
+  {
+   "名前": "yamato.zip",
+   "不足": 3,
+   "要る数": 15
+  },
+  {
+   "名前": "yankeedo.zip",
+   "不足": 1,
+   "要る数": 15
+  },
+  {
+   "名前": "youjyudn.zip",
+   "不足": 1,
+   "要る数": 27
+  },
+  {
+   "名前": "zaxxon2.zip",
+   "不足": 1,
+   "要る数": 18
+  },
+  {
+   "名前": "zedblade.zip",
+   "不足": 36,
+   "要る数": 48
+  },
+  {
+   "名前": "zerowing.zip",
+   "不足": 4,
+   "要る数": 15
+  },
+  {
+   "名前": "zingzip.zip",
+   "不足": 3,
+   "要る数": 8
+  },
+  {
+   "名前": "neogeo.zip",
+   "不足": 36,
+   "要る数": 38
+  }
+ ]
+}
