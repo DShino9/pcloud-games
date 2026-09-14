@@ -174,6 +174,28 @@ async function bigGet(k, d) {
     await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
   }
 
+  /* **ネオジオは BIOS を一緒に渡さないと起動しない（#89）。**
+     `neogeo.zip`（倉庫の `アーケード/Arcade/bios/`）を取り寄せて EmulatorJS に渡す。
+     取れなければ**黙って諦めず**、その旨を出してから素のまま起こす。 */
+  let biosFile = null;
+  if (g.short === 'NEO') {
+    try {
+      STAGE = 'BIOS の取り寄せ';
+      say('ネオジオの BIOS を取り寄せています…');
+      const files = LS.get('files', {});
+      const bid = files['neogeo.zip'] || files['NEOGEO.ZIP'];
+      if (!bid) throw new Error('倉庫に neogeo.zip が見つかりません');
+      const relay2 = /(^|\.)github\.io$/.test(location.hostname)
+        ? (LS.get('relay', '') || 'https://gamedana.d-shino.workers.dev')
+        : location.origin + '/relay';
+      const b = await P.fetchFile(relay2, { fileid: bid,
+        host: LS.get('host', P.HOSTS[0]), auth: LS.get('auth', '') });
+      biosFile = new File([b], 'neogeo.zip', { type: 'application/octet-stream' });
+    } catch (e) {
+      say('BIOS を取り寄せられません（' + e.message + '）。そのまま起こします…');
+    }
+  }
+
   say('コアを起こしています…');
   bar(100);
   STAGE = 'コアの読み込み';
@@ -187,6 +209,7 @@ async function bigGet(k, d) {
   window.EJS_gameName    = g.name;
   window.EJS_gameID      = g.id;      // セーブの分かれ目
   window.EJS_pathtodata  = 'https://cdn.emulatorjs.org/stable/data/';
+  if (biosFile) window.EJS_biosUrl = biosFile;
   /* **中で一度押させる（#85）。**
      iPad・iPhone の Safari は、**その文書の中で指が触れるまで音を鳴らさない。**
      遊ぶ画面は iframe の中にあり、押されたのは外側の棚なので、

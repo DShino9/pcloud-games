@@ -101,6 +101,26 @@ ROM は元々まるごと読んでからコアを起こすので、頭出しが�
   `requestAnimationFrame` を止める。エミュレータのコアはそこで回っているので、
   裏のタブ・裏の窓では数フレームで止まる（不具合ではない）。
 
+## アーケード・ネオジオ（どれが動くかを先に判定する）
+
+倉庫の一式は **MAME 0.37 BETA 1 の頃の組**で、いまのコア（FBNeo）とは名前も CRC も違う。
+**動く本だけを棚に出す**ため、判定表 `arcade.json` を作ってから公開する。
+
+```bash
+# FBNeo の対応表（dat）を取ってくる
+curl -sL "https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML,%20Arcade%20only).dat" -o /tmp/fbneo-arcade.dat
+curl -sL "https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML,%20Neogeo%20only).dat" -o /tmp/fbneo-neogeo.dat
+
+# 判定（zip の目録だけ読む。1本あたり数十KB・1,400本で20分ほど）
+python3 tools/arcade-check.py --dat /tmp/fbneo-arcade.dat /tmp/fbneo-neogeo.dat
+
+# 題名だけ入れ直す（倉庫を見ない）
+python3 tools/arcade-check.py --dat /tmp/fbneo-arcade.dat --retitle arcade.json
+```
+
+`--only dkong.zip mslug.zip` で数本だけ試せる。倉庫の一覧は `emu-files.json`
+（`tools/scan-emu.py` が作る）を読むので、**倉庫に新しく入れたら先に走査し直す。**
+
 ## PC-98
 
 コアは NP2kai（**MIT**）を自分で wasm に組む。

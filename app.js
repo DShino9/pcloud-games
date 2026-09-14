@@ -301,13 +301,24 @@ function learnFrom(map, seen = []) {
       /* **zip のままでも遊べる区画。** EmulatorJS は zip を直接読めるので、
          1 zip＝1本のセット（ゲームボーイ 5,769 本・MSX）は展開せずそのまま本にする。
          中身が見えない区画（アーケード＝MAME など）は出さない。 */
-      const zarea = /\/任天堂\/ゲームボーイ\//.test(pp + '/') ? ['ゲームボーイ', 'GB', 'gambatte']
+      /* **アーケードとネオジオは、判定で「動く」と分かった本だけ。**（#89）
+         組が合わないものを並べても、押したら黒くなるだけで棚が汚れる。 */
+      const arcOk = (/\/アーケード\//.test(pp + '/') || /\/SNK\/ネオジオ/.test(pp + '/'))
+        && S.arc98 && S.arc98.get(P.nfc(name.toLowerCase()));
+      const zarea = arcOk
+        ? [/\/SNK\/ネオジオ/.test(pp + '/') || (arcOk.親 === 'neogeo') ? 'ネオジオ' : 'アーケード',
+           (arcOk.親 === 'neogeo') ? 'NEO' : 'ARC', 'fbneo']
+        : /\/任天堂\/ゲームボーイ\//.test(pp + '/') ? ['ゲームボーイ', 'GB', 'gambatte']
         : /\/パソコン\/MSX\//.test(pp + '/') ? ['MSX', 'MSX', 'bluemsx'] : null;
       if (zarea && /\.(zip|7z)$/i.test(name)) {
         const zkey = pp + '|' + name;
+        /* **アーケードは判定表の題名を使う。** `dkong` `mslug` では読めない
+           （FBNeo の対応表が `Donkey Kong (US set 1)` を持っている）。 */
+        const base0 = name.replace(/\.[^.]+$/, '');
         group.set(zkey, { system: zarea[0], short: zarea[1], core: zarea[2],
                           files: [name], paths: [pp], fids: [f.fileid],
-                          base: name.replace(/\.[^.]+$/, '') });
+                          base: base0,
+                          disp: (arcOk && arcOk.題名) || base0 });
         continue;
       }
       if (!/PC-?98/i.test(pp)) continue;   // PC-98 の圧縮は「起こす」対象
@@ -1883,6 +1894,15 @@ function screenLog() {
   /* PC-98 の台帳は無くても棚は開く（コアを組んでいない環境もある）。 */
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
+  /* **アーケードは「動くものだけ」出す（#89）。**
+     倉庫の一式は MAME 0.37b1 の頃の組で、いまのコア（FBNeo）とは名前も CRC も違う。
+     1,397本のうち動くのは一部なので、**動かない本で一覧を埋めない。**
+     判定は Mac 側の `tools/arcade-check.py` が zip の目録だけ読んで作る。 */
+  try {
+    const a = await (await fetch('./arcade.json', { cache: 'no-cache' })).json();
+    S.arc98 = new Map((a.本 || []).filter(b => b.状態 === '動く')
+      .map(b => [P.nfc(b.名前.toLowerCase()), b]));
+  } catch (e) { S.arc98 = new Map(); }
   S.items = mergeCatalogs();
   /* **束ね方を直したら、一度だけ黙って束ね直す（#91）。**
      走査し直さなくても、台帳が持っている在処とファイル名で付け直せる。
