@@ -44,6 +44,11 @@ html,body{overflow:hidden;background:#000}
   padding:8px 15px;border-radius:10px;background:rgba(28,28,36,.96);border:1px solid var(--line);
   color:var(--fg);font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s;
   max-width:88vw;text-align:center}
+/* 指で動かすカーソル（#92）。**指の下に隠れないよう大きく描く。**
+   TeamViewer のスマホ版に倣い、マウス操作のときだけ出す。 */
+#cur{position:absolute;z-index:9;width:30px;height:30px;margin:-2px 0 0 -2px;
+  pointer-events:none;transition:opacity .2s;filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
+#cur.hide{display:none}
 #hint{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:8;
   padding:8px 16px;border-radius:999px;background:rgba(110,168,254,.92);color:#0b0b0f;
   font-size:13px;font-weight:600;pointer-events:none;transition:opacity .3s}
@@ -444,7 +449,13 @@ function drawDisksInner() {
     '<button class="hbtn" id="stsave">セーブ</button>' +
     '<button class="hbtn" id="stload">戻す</button>' +
     '<button class="hbtn" id="blank">ブランクを足す</button>' +
-    (TOUCHY ? '<button class="hbtn" id="kbb">キー</button>' : '') +
+    (TOUCHY ? '<button class="hbtn" id="kbb">キー</button>' +
+       /* **指の使い方をその場で切り替える（#92）。** 設定の奥に置かない。
+          左右のボタンも帯に出す（長押しが効きにくい本があるため）。 */
+       '<button class="hbtn" id="tmode">' + (TMODE === 'rel' ? '指:マウス' : '指:タッチ') + '</button>' +
+       '<button class="hbtn" id="mbl">左</button>' +
+       '<button class="hbtn" id="mbr">右</button>' +
+       '<button class="hbtn" id="thelp">使い方</button>' : '') +
     '<button class="hbtn" id="menu">メニュー</button>' +
     '<button class="hbtn" id="mouse">マウス</button>' +
     '<button class="hbtn" id="rst">リセット</button>' +
@@ -459,6 +470,21 @@ function drawDisksInner() {
   el.querySelectorAll('.hbtn[data-i]').forEach(b => b.onclick = () => { swap(Number(b.dataset.i)); $('#canvas').focus(); });
   const r = $('#rst');
   if (r) r.onclick = askReboot;
+  /* 指の使い方（#92）。 */
+  const tm = $('#tmode');
+  if (tm) tm.onclick = () => { setTMode(TMODE === 'rel' ? 'abs' : 'rel'); drawDisks(); };
+  /* 左右のボタンは**押している間だけ押したことにする**（掴んで引きずれる）。 */
+  for (const [id, btn] of [['#mbl', 0], ['#mbr', 2]]) {
+    const b = $(id);
+    if (!b) continue;
+    b.onpointerdown = e => { e.preventDefault(); sendMouse('mousedown', curPoint(), btn); };
+    b.onpointerup = e => { e.preventDefault(); sendMouse('mouseup', curPoint(), btn); };
+    b.onpointercancel = () => sendMouse('mouseup', curPoint(), btn);
+  }
+  const th = $('#thelp');
+  if (th) th.onclick = () => toast98(TMODE === 'rel'
+    ? 'マウス操作: 指を滑らせるとカーソルが動く／タップ＝左／長押し・2本指タップ＝右'
+    : 'タッチ操作: 触った所がそのまま押される／長押し＝右');
   /* メニューとマウス捕獲。コアに口があれば直に呼ぶ。
      無ければ鍵を作って送る（本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
      口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。 */
@@ -729,14 +755,77 @@ function drawKeys() {
   });
 }
 
-/* ---- 触って操作する ----
+/* ---- 触って操作する（2通り・#92） ----
    iPhone にはマウスもキーボードも無い。コア（SDL）はマウスの出来事しか知らないので、
-   指の動きをマウスの出来事に訳して渡す。
-   ・触った場所は画面の見た目の座標。コアは 640×400 で考えているので、そこへ直す
-   ・指を置く＝押す、離す＝離す、滑らす＝動かす
-   ・長押しは右ボタン（PC-98 は右ボタンでキャンセルの本が多い） */
+   指の動きをマウスの出来事に訳して渡す。**TeamViewer のスマホ版に倣って2通り持つ。**
+
+   ① マウス操作（既定・`rel`）… 指を滑らせるとカーソルが**相対に**動く。タップ＝左、
+      長押し／2本指タップ＝右。**カーソルは指と別の所に大きく描く**ので、指の下に隠れない。
+      細かい所（PC-98 のメニューは小さい）を突くのはこちらが向く。
+   ② タッチ操作（`abs`）… 触った所がそのまま押される。大きなボタンを叩くのはこちらが速い。
+
+   切り替えは**帯でその場で**（設定の奥に置かない）。左右のボタンも帯に出す
+   （長押しが効きにくい本があるため）。 */
 const TOUCHY = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
-const TOUCH = { on: false, id: null, t0: 0, moved: false, right: false, timer: null };
+const TOUCH = { on: false, id: null, t0: 0, moved: false, right: false, timer: null,
+                lx: 0, ly: 0 };
+/* いまのカーソルの居場所（画面の見た目の座標）。相対で動かすので、こちらが持つ。 */
+const CUR = { x: 0, y: 0, ready: false };
+let TMODE = 'rel';
+try { TMODE = LS.get('tmode', 'rel') === 'abs' ? 'abs' : 'rel'; } catch (e) {}
+
+/* カーソルの絵。**指より大きく、縁取りを付ける**（小さい黒矢印は指の下で見えない）。 */
+function curEl() {
+  let el = $('#cur');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cur';
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="30" height="30">'
+      + '<path d="M3 2 L3 20 L8 15.5 L11.5 22.5 L14.5 21 L11 14.5 L18 14 Z"'
+      + ' fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function curReset() {
+  const cv = $('#canvas');
+  if (!cv) return;
+  const r = cv.getBoundingClientRect();
+  CUR.x = r.left + r.width / 2; CUR.y = r.top + r.height / 2; CUR.ready = true;
+  drawCur();
+}
+function drawCur() {
+  const el = curEl();
+  el.classList.toggle('hide', TMODE !== 'rel' || !TOUCHY);
+  el.style.left = CUR.x + 'px';
+  el.style.top = CUR.y + 'px';
+}
+/* 帯の左右ボタンが押す場所。カーソルの居場所。 */
+function curPoint() {
+  if (!CUR.ready) curReset();
+  return { cx: CUR.x, cy: CUR.y };
+}
+function setTMode(m) {
+  TMODE = m === 'abs' ? 'abs' : 'rel';
+  try { LS.set('tmode', TMODE); } catch (e) {}
+  if (TMODE === 'rel' && !CUR.ready) curReset();
+  drawCur();
+  toast98(TMODE === 'rel'
+    ? 'マウス操作 — 指を滑らせるとカーソルが動きます（タップ＝左・長押し＝右）'
+    : 'タッチ操作 — 触った所がそのまま押されます');
+}
+/* カーソルを動かす。**絵の外へは出さない。** */
+function moveCur(dx, dy) {
+  const cv = $('#canvas');
+  const r = cv.getBoundingClientRect();
+  const scale = Math.min(r.width / cv.width, r.height / cv.height);
+  const w = cv.width * scale, h = cv.height * scale;
+  const x0 = r.left + (r.width - w) / 2, y0 = r.top + (r.height - h) / 2;
+  if (!CUR.ready) curReset();
+  CUR.x = Math.max(x0, Math.min(x0 + w - 1, CUR.x + dx));
+  CUR.y = Math.max(y0, Math.min(y0 + h - 1, CUR.y + dy));
+  drawCur();
+}
 
 function canvasXY(t) {
   const cv = $('#canvas');
@@ -764,43 +853,71 @@ function sendMouse(type, p, button) {
 function bindTouch() {
   const cv = $('#canvas');
   const opt = { passive: false };
+  curReset();
+  /* 画面の向きや大きさが変わったら、カーソルを絵の中へ入れ直す。 */
+  addEventListener('resize', () => { if (CUR.ready) moveCur(0, 0); });
+
   cv.addEventListener('touchstart', e => {
+    /* **2本指でつつく＝右ボタン**（TeamViewer と同じ）。長押しが効きにくい本のため。 */
+    if (e.touches.length === 2 && TMODE === 'rel') {
+      clearTimeout(TOUCH.timer);
+      const p = curPoint();
+      sendMouse('mousedown', p, 2); sendMouse('mouseup', p, 2);
+      TOUCH.on = false; TOUCH.right = false;
+      toast98('右ボタン');
+      e.preventDefault();
+      return;
+    }
     if (TOUCH.on) return;
     const t = e.changedTouches[0];
     TOUCH.on = true; TOUCH.id = t.identifier; TOUCH.t0 = Date.now();
     TOUCH.moved = false; TOUCH.right = false;
-    const p = canvasXY(t);
-    sendMouse('mousemove', p);
+    TOUCH.lx = t.clientX; TOUCH.ly = t.clientY;
+    /* タッチ操作は触った所へ跳ぶ。マウス操作はカーソルを動かさない（相対だから）。 */
+    const p = TMODE === 'abs' ? canvasXY(t) : curPoint();
+    if (TMODE === 'abs') sendMouse('mousemove', p);
     /* 長押しは右ボタン。押し続けたら切り替える。 */
     clearTimeout(TOUCH.timer);
     TOUCH.timer = setTimeout(() => {
       if (TOUCH.on && !TOUCH.moved) {
         TOUCH.right = true;
-        sendMouse('mousedown', p, 2);
+        sendMouse('mousedown', TMODE === 'abs' ? p : curPoint(), 2);
         toast98('右ボタン');
       }
     }, 500);
     e.preventDefault();
   }, opt);
+
   cv.addEventListener('touchmove', e => {
     if (!TOUCH.on) return;
     const t = [...e.changedTouches].find(x => x.identifier === TOUCH.id);
     if (!t) return;
-    TOUCH.moved = true;
-    clearTimeout(TOUCH.timer);
-    sendMouse('mousemove', canvasXY(t));
+    const dx = t.clientX - TOUCH.lx, dy = t.clientY - TOUCH.ly;
+    /* 指のふるえで「動いた」ことにしない（タップが利かなくなる）。 */
+    if (Math.abs(dx) + Math.abs(dy) > 2) TOUCH.moved = true;
+    if (TOUCH.moved) clearTimeout(TOUCH.timer);
+    if (TMODE === 'abs') {
+      sendMouse('mousemove', canvasXY(t));
+    } else {
+      /* **相対。画面を引き伸ばしている分、指の動きより少し速くする。** */
+      moveCur(dx * 1.25, dy * 1.25);
+      sendMouse('mousemove', curPoint(), TOUCH.right ? 2 : 0);
+    }
+    TOUCH.lx = t.clientX; TOUCH.ly = t.clientY;
     e.preventDefault();
   }, opt);
+
   const end = e => {
     if (!TOUCH.on) return;
     const t = [...e.changedTouches].find(x => x.identifier === TOUCH.id);
     if (!t) return;
     clearTimeout(TOUCH.timer);
-    const p = canvasXY(t);
+    const p = TMODE === 'abs' ? canvasXY(t) : curPoint();
     if (TOUCH.right) {
       sendMouse('mouseup', p, 2);
-    } else {
-      /* 押して離すのが速ければ、その場で左クリック */
+    } else if (!TOUCH.moved || TMODE === 'abs') {
+      /* 押して離すのが速ければ、その場で左クリック。
+         マウス操作では**滑らせただけでは押さない**（カーソルを動かしただけ）。 */
       sendMouse('mousedown', p, 0);
       sendMouse('mouseup', p, 0);
     }
