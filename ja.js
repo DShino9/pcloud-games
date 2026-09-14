@@ -377,7 +377,10 @@ const TITLE = {
 
 /* 後ろに付く「別冊」の言い方。**素の題名を引く前に外し、訳した後で戻す。**
    `Sangokushi 4 - Power Up Kit` の1件ずつを表に書かずに済む。 */
-const SUFFIX = [
+/* ---- 別冊（別の本として並べるもの） ---- */
+/* パワーアップキット・シナリオ集は**中身が別の商品**。見せ方では後ろに付け足すが、
+   束ねるときは外さない（外すと本編と1本に潰れる）。 */
+const EDITION = [
   [/\s*[-–]?\s*power\s*-?\s*up\s*kit$/i,       ' パワーアップキット'],
   [/\s*[-–]?\s*powerup-?kit$/i,                ' パワーアップキット'],
   [/\s*[-–]?\s*hint\s*disk$/i,                 ' ヒントディスク'],
@@ -392,17 +395,29 @@ const SUFFIX = [
   [/\s*[-–]?\s*scenario\s*shuu\s*(\d)$/i,      ' シナリオ集$1'],
   [/\s*[-–]?\s*scenario\s*editor$/i,           ' シナリオエディタ'],
   [/\s*[-–]?\s*kakuchoo$/i,                    ' 拡張データ'],
-  /* PC-98 の実物は「システム／ユーザー／データ」と役割で分かれている。
-     `SANGOKUSHI Ⅳ_SYSTEM` の一枚ずつを表に書かずに済ませる。 */
-  [/[ _-](system|sys)$/i,                      '（システム）'],
-  [/[ _-](user|usr)$/i,                        '（ユーザー）'],
-  [/[ _-](dat|data)$/i,                        '（データ）'],
-  [/[ _-]game$/i,                              '（ゲーム）'],
-  [/[ _-]save$/i,                              '（セーブ）'],
-  [/[ _-]opening$/i,                           '（オープニング）'],
-  [/[ _-]ending$/i,                            '（エンディング）'],
   [/[ _-]umi$/i,                               '（海）'],
 ];
+
+/* ---- 役割（同じ本の中の一枚） ---- */
+/* PC-98 の実物は「システム／ユーザー／データ」と役割で分かれている。
+   `SANGOKUSHI Ⅳ_SYSTEM` の一枚ずつを表に書かずに済ませる。
+   **この表は見せ方（titleJa）と束ね（bundleKey・#91）の両方が読む。**
+   一枚ずつ別の本として並んでいたのは、束ねる側がこの表を見ていなかったため。 */
+const ROLE = [
+  [/[ _-](system|sys|sysdisc|sysdisk|sys?disk)$/i, '（システム）'],
+  [/[ _-](kidou|起動|起動ディスク)$/i,             '（起動）'],
+  [/[ _-](user|usr)$/i,                            '（ユーザー）'],
+  [/[ _-](dat|data)$/i,                            '（データ）'],
+  [/[ _-]game$/i,                                  '（ゲーム）'],
+  [/[ _-](save|sav)$/i,                            '（セーブ）'],
+  [/[ _-](opening|open|op)$/i,                     '（オープニング）'],
+  [/[ _-]ending$/i,                                '（エンディング）'],
+  [/[ _-](program|prog|prg)$/i,                    '（プログラム）'],
+  [/[ _-](install|installed|setup)$/i,             '（インストール）'],
+];
+
+/* 見せ方は「別冊 → 役割」の順に外す（`… Power Up Kit_SYSTEM` の重ね書きがある）。 */
+const SUFFIX = [...EDITION, ...ROLE];
 
 /* ---- 掃除 ---- */
 /* 題名に混ざる「本体でない書き足し」。**中身を見分ける数字は落とさない**
@@ -458,6 +473,50 @@ function tidy(name) {
   return t;
 }
 
+/* ---- 束ねの鍵（#91） ---- */
+/* PC-98 の1本は `X_SYSTEM` `X_USER` `X_DAT` のように**役割ごとに別のファイル**で入っている。
+   束ねる側が末尾1文字（`_A` `1`）しか落としていなかったので、
+   `三國志IV` が「システム」「ゲーム」「データ」「エンディング」の**4本**に割れて並んでいた。
+   見せ方と同じ ROLE の表で役割を外し、同じ鍵にして1本に戻す。
+
+   **外さないもの**: パワーアップキット・シナリオ集などの別冊（EDITION）。あれは別の商品。
+   **枚の番号は一度だけ**外す（`Rance 4.1` と `Rance 4.2` を潰さないため）。
+   **0詰めの2桁も枚の番号。** `Brandish 3 01.D88`〜`09.D88` は末尾1文字の規則では
+   `1` しか落ちず、`Brandish 3 0` という名前の9枚組になっていた（版の数字と違い、
+   `01` の形は枚の番号にしか使われない）。 */
+const DISK_PAREN = /\s*[([][^)\]]*disk[^)\]]*[)\]]/gi;      /* (Disk 1 of 3)(Disk A) */
+const DISK_TAIL  = /[ _-]?(disk|disc)?[ _-]?(0\d|[A-Da-d1-9])$/i;  /* _A / -disk2 / 3 / 01〜09 */
+/* **役割を外した後は、番号を控えめにしか落とさない。**
+   `Ys3 Prg` → `Ys3`（`YS` と別の本）、`SANGOKUSHI 3_User` → `SANGOKUSHI 3`（三国志 と別の本）。
+   役割を外すと版の数字が末尾に露出するので、元の緩い形のまま落とすと**別の本が1本に潰れる。** */
+const DISK_TAIL2 = /([ _-](disk|disc)[ _-]?\d{1,2}|[ _-]0\d|[ _-][A-Da-d])$/i;
+
+/* 役割と枚の番号を外す。**空になってよい** —— `A.fdi` `DISK1.fdi` のように
+   名前が枚の印だけのフォルダは、空の鍵で「そのフォルダ＝1本」に束ねる（元からの振舞い）。 */
+function strip98(base) {
+  let k = norm(base).replace(DISK_PAREN, ' ').replace(/\s+/g, ' ').trim();
+  let numOff = false, roleOff = false;
+  for (let i = 0; i < 6; i++) {
+    let cut = false;
+    for (const [re] of ROLE) {
+      if (!re.test(k)) continue;
+      const s2 = k.replace(re, '').trim();
+      if (!s2) break;                      /* 名前が役割だけのものは削り切らない */
+      k = s2; cut = true; roleOff = true; break;
+    }
+    if (!cut && !numOff) {
+      const s2 = k.replace(roleOff ? DISK_TAIL2 : DISK_TAIL, '').trim();
+      if (s2 !== k) { k = s2; cut = true; numOff = true; }
+    }
+    if (!cut || !k) break;
+  }
+  return k;
+}
+/* 見せる題名。空になったときだけ元の名前に戻す。 */
+function bundleBase(base) { return strip98(base) || norm(base).trim(); }
+/* 鍵は思い切り均す（`SANGOKUSHI Ⅳ` も `Sangokushi 4` も同じ鍵）。 */
+function bundleKey(base) { return keyOf(strip98(base)); }
+
 /* ---- 引く ---- */
 function sysJa(s)   { return SYS[s] || s || ''; }
 function genreJa(g) { return GENRE[g] || g || ''; }
@@ -509,6 +568,7 @@ function isTool(name, path) {
 }
 
 root.JA = { sysJa, genreJa, makerJa, titleJa, tidy, isTool, sortKey, keyOf,
+            bundleBase, bundleKey,
             SYS, GENRE, MAKER, TITLE };
 
 })(window);

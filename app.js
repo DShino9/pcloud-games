@@ -323,15 +323,20 @@ function learnFrom(map, seen = []) {
     const dir = f.path || '';
     /* **Disk を含む括弧書きは束ねる前に落とす。** 展開した本は
        `〜(Disk 1 of 3)(Disk A).hdm` の形で、末尾1文字の規則をすり抜けて
-       1枚ずつ別の本になっていた（サムネイルがディスクごとに割れた正体）。 */
+       1枚ずつ別の本になっていた（サムネイルがディスクごとに割れた正体）。
+       **役割の書き足しも落とす（#91）。** `SANGOKUSHI Ⅳ_SYSTEM` `_GAME` `_DAT`
+       `_ENDING` は同じ1本の4枚なのに、末尾1文字しか見ていなかったので
+       4本に割れて並んでいた。**見せ方（ja.js）と同じ表**を鍵にも使う。 */
+    const b98 = (sys[0] === 'PC-98' && window.JA) ? JA.bundleBase(base) : base;
     const key = sys[0] === 'PC-98'
-      ? dir + '|' + base
-        .replace(/\s*[([][^)\]]*disk[^)\]]*[)\]]/gi, '')
-        .replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
-        .trim()
+      ? dir + '|' + (window.JA ? JA.bundleKey(base) : base
+          .replace(/\s*[([][^)\]]*disk[^)\]]*[)\]]/gi, '')
+          .replace(/[ _-]?(disk)?[ _-]?[A-Da-d1-9]$/i, '')
+          .trim())
       : dir + '|' + base;
     if (!group.has(key)) group.set(key, { system: sys[0], short: sys[1], core: sys[2],
-                                          files: [], paths: [], fids: [], base });
+                                          files: [], paths: [], fids: [], base,
+                                          disp: b98 });
     const gg = group.get(key);
     gg.files.push(name); gg.paths.push(f.path || ''); gg.fids.push(f.fileid);
   }
@@ -346,8 +351,10 @@ function learnFrom(map, seen = []) {
     const dir = dir0.split('/').pop() || '';
     const nice = dir.replace(/^【[^】]*】\s*/, '').trim();
     const alone = (dirCount[dir0] || 0) === g.files.length && g.files.length <= 12;
+    /* **鍵をそのまま題名にしない（#91）。** PC-98 の鍵は表を引くために
+       小文字へ均してあるので、見せる名は束ねる前に取っておいた `disp` を使う。 */
     const name0 = (alone && nice && !/^(PC98|PC-98|disk|rom|games?)$/i.test(nice))
-      ? nice : key.split('|').pop();
+      ? nice : (g.disp || key.split('|').pop());
     /* 圧縮のままの本は、ファイル名の末尾の形式書き（(FDI-HDI) など）を落として題名に。 */
     const nm2 = g.arc
       ? (g.base.replace(/\s*[([]\s*(FDI|FDD|HDM|HDI|DCP|DCU|DIP|D88|2HD|NFD|XDF|TFD|VHD|SLH|HDD|THD|NHD|88D|D98|FILES?)[^)\]]*[)\]]\s*$/i, '').trim() || g.base)
@@ -363,6 +370,89 @@ function learnFrom(map, seen = []) {
   }
   if (n) { LS.set('extra', extra); S.items = mergeCatalogs(); }
   return n;
+}
+
+/* **走査し直さずに束ね直す（#91）。**
+   台帳はもう在処（paths）もファイル名（files）も持っているので、倉庫を7,000冊
+   歩き直さなくても、手元で鍵を付け直せば `_SYSTEM` `_DAT` は1本に戻せる。
+   **束ねるだけで、割らない。** 前の束ねはそのまま活かし、同じ鍵になった本だけを合わせる
+   （割る向きに動かすと、いま遊べている本の組み合わせまで壊れる）。
+   端末が覚えた選択（組み合わせ・版・ジャンル・直した題名・遊んだ回数）は新しい id へ移す。 */
+const BUNDLE_VER = 1;                 /* 束ね方を変えたら上げる。上げた版で一度だけ束ね直す */
+
+function rebundle98() {
+  if (!window.JA) return { merged: 0, books: 0 };
+  const extra = LS.get('extra', []);
+  if (!extra.length) return { merged: 0, books: 0 };
+  const baseOf = f => String(f || '').replace(/\.[^.]+$/, '');
+  /* 題名がフォルダの名前から採られたものか（`learnFrom` はそう付ける）。
+     ファイル名から採ったものは `〜_SYSTEM` `Brandish 3 0` のような
+     役割・枚の番号つきで、本の名前ではない。**フォルダ名と突き合わせて見分ける。** */
+  const dirName = x => ((x.paths || [])[0] || '').split('/').pop()
+                         .replace(/^【[^】]*】\s*/, '').trim();
+  const fromDir = x => !!dirName(x) && JA.keyOf(dirName(x)) === JA.keyOf(x.name || '');
+  const out = [], by = new Map(), remap = {};
+  let merged = 0;
+  for (const e of extra) {
+    const ok = e.system === 'PC-98' && !e.arc
+      && Array.isArray(e.paths) && e.paths.length && Array.isArray(e.files) && e.files.length;
+    if (!ok) { out.push(e); continue; }
+    const key = (e.paths[0] || '') + '|' + JA.bundleKey(baseOf(e.files[0]));
+    const id = 'X-' + key;
+    const head = by.get(key);
+    if (!head) {
+      if (e.id !== id) { remap[e.id] = id; e.id = id; }
+      by.set(key, e); out.push(e);
+      continue;
+    }
+    /* 同じ本。枚を合わせる（同じ在処の同じ名前は入れない）。 */
+    const have = new Set(head.paths.map((pp, i) => pp + '/' + head.files[i]));
+    for (let i = 0; i < e.files.length; i++) {
+      const full = (e.paths[i] || '') + '/' + e.files[i];
+      if (have.has(full)) continue;
+      head.files.push(e.files[i]); head.paths.push(e.paths[i] || '');
+      head.fids.push((e.fids || [])[i] || null);
+      have.add(full);
+    }
+    if (!fromDir(head) && fromDir(e)) head.name = e.name;
+    if (!head.cover && e.cover) head.cover = e.cover;
+    if (!head.genre && e.genre) head.genre = e.genre;
+    remap[e.id] = head.id;
+    merged++;
+  }
+  /* 枚の順・札・見せる名を整え直す（何度通しても同じ形になる）。 */
+  for (const e of out) {
+    if (e.system !== 'PC-98' || e.arc || !Array.isArray(e.files)) continue;
+    const pair = e.files.map((f, i) => [f, (e.paths || [])[i] || '', (e.fids || [])[i] || null])
+                        .sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'ja'));
+    e.files = pair.map(x => x[0]); e.paths = pair.map(x => x[1]); e.fids = pair.map(x => x[2]);
+    e.path = e.paths[0] || '';
+    e.sub = e.files.length > 1 ? e.files.length + '枚' : '見つけた分';
+    /* 目録で直した題名（`title` に元が残る）は本人の手が入っているので触らない。 */
+    if (!e.title && !fromDir(e)) {
+      const b = JA.bundleBase(baseOf(e.files[0]));
+      if (b) e.name = b;                 /* `〜_SYSTEM` `Brandish 3 0` のまま並ばせない */
+    }
+  }
+  /* 端末が覚えているものを、残った id へ移す。 */
+  for (const k of ['fdpick', 'ver', 'genre2', 'renamed', 'plays']) {
+    const m = LS.get(k, {});
+    let moved = false;
+    for (const [oldId, newId] of Object.entries(remap)) {
+      if (m[oldId] == null || oldId === newId) continue;
+      if (m[newId] == null) m[newId] = m[oldId];
+      delete m[oldId]; moved = true;
+    }
+    if (moved) {
+      LS.set(k, m);
+      if (k === 'ver') S.ver = m;
+      if (k === 'plays') S.plays = m;
+    }
+  }
+  LS.set('extra', out);
+  LS.set('bundlever', BUNDLE_VER);
+  if (merged) log.note(`ディスクを束ね直した: ${merged} 本を合流 → ${out.length} 本`);
+  return { merged, books: out.length };
 }
 
 async function refreshHere() { S.here = await ROMS.list(); }
@@ -1788,6 +1878,23 @@ function screenLog() {
   try { S.cat98 = await (await fetch('./pc98.json?v=20260831', { cache: 'no-cache' })).json(); }
   catch (e) { S.cat98 = null; }
   S.items = mergeCatalogs();
+  /* **束ね方を直したら、一度だけ黙って束ね直す（#91）。**
+     走査し直さなくても、台帳が持っている在処とファイル名で付け直せる。
+     **台帳は Cache API にある**（state2.js の大きい控え）ので、引っ越しが
+     済むまで待つ。待たずに読むと空に見えて、束ね直しが空振りする。 */
+  (async () => {
+    for (let i = 0; i < 100 && window.S2 && !S2.ready; i++)
+      await new Promise(r => setTimeout(r, 100));
+    if (window.S2 && S2.applying) return;
+    try {
+      if ((LS.get('bundlever', 0) | 0) >= BUNDLE_VER) return;
+      const r = rebundle98();
+      if (!r.merged) return;
+      S.items = mergeCatalogs();
+      render();
+      toast(`ディスクを束ね直しました（${r.merged} 本を合流）`);
+    } catch (e) { log.note('束ね直せません: ' + (e.message || e)); }
+  })();
   /* 開くたびに控えを取り込む。**棚を選んでいなくても読める**ので、
      ここで場所が分かれば、フォルダを選ばせる画面に飛ばずに済む。
      取り込みが済むまでは上げない（失敗した回に空で上書きしないため）。 */
@@ -2345,6 +2452,7 @@ async function screenPlaces(folderid) {
         <button class="hbtn" id="auto">よくある置き場を探す</button>
         <button class="hbtn" id="add">場所を足す</button>
         <button class="hbtn" id="scan2">いま見直す</button>
+        <button class="hbtn" id="rebund">ディスクを束ね直す</button>
         <button class="hbtn" id="dupes">重複を片付ける</button>
         <button class="hbtn" id="idx">目録を読む</button>
         <button class="hbtn" id="back">← 設定へ</button>
@@ -2382,6 +2490,18 @@ async function screenPlaces(folderid) {
       screenPlaces();
     };
     $('#dupes').onclick = () => go('#/dupes');
+    /* **走査し直さずに束ね直す（#91）。** `_SYSTEM` `_DAT` が別の本に割れているとき、
+       倉庫を歩き直さなくても手元の台帳だけで1本に戻せる（7,000冊の走査は数分かかる）。 */
+    $('#rebund').onclick = () => {
+      const m = $('#pm');
+      try {
+        const r = rebundle98();
+        S.items = mergeCatalogs();
+        m.innerHTML = r.merged
+          ? `ディスクを束ね直しました。<b>${r.merged} 本</b>を合流 → 見つけた本は <b>${r.books} 本</b>。`
+          : '束ね直すものはありませんでした（もう1本にまとまっています）。';
+      } catch (e) { m.textContent = '束ね直せません: ' + e.message; }
+    };
     $('#idx').onclick = async () => {
       const m = $('#pm');
       try {
