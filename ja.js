@@ -460,24 +460,33 @@ const CP437 = '\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e
             + '\u2261\u00b1\u2265\u2264\u2320\u2321\u00f7\u2248\u00b0\u2219\u00b7\u221a\u207f\u00b2\u25a0\u00a0';
 const JP  = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/;   /* かな・漢字・半角カナ */
 const JPG = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/g;
+/* **表は2つ要る。** 全角の漢字・かなは2バイトで CP437 の絵に化けるが、
+   **半角カナは1バイト（0xA1〜0xDF）**なので、そのまま Latin-1 の字に化ける
+   （`´Ù³Þ½Þ` ＝ `ｴﾙｳﾞｽﾞ`）。倉庫の実測で CP437 が 80 件・Latin-1 が 162 件。 */
+const LATIN1 = Array.from({ length: 128 }, (_, i) => String.fromCharCode(0x80 + i)).join('');
 function demojibake(name) {
   const s = String(name || '');
   if (!s || JP.test(s)) return s;                 /* もう日本語なら触らない */
   if (!/[\u0080-\u00ff\u0192\u0391-\u03c9\u2190-\u25ff\u20a7]/.test(s)) return s;
-  const b = [];
-  for (const ch of s) {
-    const c = ch.codePointAt(0);
-    if (c < 0x80) { b.push(c); continue; }
-    const i = CP437.indexOf(ch);
-    if (i < 0) return s;                          /* CP437 に無い字 ＝ 化けではない */
-    b.push(0x80 + i);
+  for (const table of [CP437, LATIN1]) {
+    const b = [];
+    let ok = true;
+    for (const ch of s) {
+      const c = ch.codePointAt(0);
+      if (c < 0x80) { b.push(c); continue; }
+      const i = table.indexOf(ch);
+      if (i < 0) { ok = false; break; }           /* その表に無い字 ＝ この道ではない */
+      b.push(0x80 + i);
+    }
+    if (!ok) continue;
+    try {
+      const t = new TextDecoder('shift_jis', { fatal: true }).decode(new Uint8Array(b));
+      /* **日本語にならなければ元のまま。** 当てずっぽうで別の名前にしない。
+         1字だけ日本語になるものは（`√PWX2` → `瀨WX2`）まぐれ当たりなので採らない。 */
+      if ((t.match(JPG) || []).length >= 2) return t;
+    } catch (e) {}
   }
-  try {
-    const t = new TextDecoder('shift_jis', { fatal: true }).decode(new Uint8Array(b));
-    /* **日本語にならなければ元のまま。** 当てずっぽうで別の名前にしない。
-       1字だけ日本語になるものは（`√PWX2` → `瀨WX2`）まぐれ当たりなので採らない。 */
-    return (t.match(JPG) || []).length >= 2 ? t : s;
-  } catch (e) { return s; }
+  return s;
 }
 
 /* **くっついた役割の語を切り離す。** `BlandishUSER` のように区切りなしで
@@ -512,7 +521,7 @@ function keyOf(t) {
 }
 
 function tidy(name) {
-  let t = unglue(demojibake(norm(name)));
+  let t = unglue(norm(demojibake(name)));
   for (const re of NOISE) t = t.replace(re, ' ');
   t = t.replace(/[（(]\s*[)）]/g, ' ').replace(/\s+/g, ' ').trim();
   return t;
@@ -569,7 +578,7 @@ function cutDisk(k, list) {
 /* 役割と枚の番号を外す。**空になってよい** —— `A.fdi` `DISK1.fdi` のように
    名前が枚の印だけのフォルダは、空の鍵で「そのフォルダ＝1本」に束ねる（元からの振舞い）。 */
 function strip98(base, loose) {
-  let k = unglue(demojibake(norm(base))).replace(DISK_PAREN, ' ').replace(/\s+/g, ' ').trim();
+  let k = unglue(norm(demojibake(base))).replace(DISK_PAREN, ' ').replace(/\s+/g, ' ').trim();
   let numOff = false, roleOff = false;
   for (let i = 0; i < 6; i++) {
     let cut = false;

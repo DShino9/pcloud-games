@@ -434,6 +434,39 @@ function drawDisks() {
   }
 }
 
+/* ---- コアの口を叩く ----
+   メニューとマウス捕獲。コアに口があれば直に呼ぶ。無ければ鍵を作って送る
+   （本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
+   口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。
+   **帯の外（起こした直後の自動のマウス入れ）からも呼ぶので、ここに置く。** */
+/* 口があるか確かめる。**触るだけで止まる**ことがあるので、必ず包む
+   （emscripten は「無い口」に、触ると止まる仕掛けを置く）。 */
+function has98(fn) {
+  try { return typeof Module['_' + fn] === 'function'; } catch (e) { return false; }
+}
+function sendKey98(code) {
+  const cv = $('#canvas');
+  if (!cv) return;
+  cv.focus();
+  const num = code === 'F11' ? 122 : 123;
+  for (const target of [cv, document]) {
+    for (const type of ['keydown', 'keyup']) {
+      target.dispatchEvent(new KeyboardEvent(type, {
+        key: code, code, keyCode: num, which: num,
+        ctrlKey: true, bubbles: true, cancelable: true, composed: true,
+      }));
+    }
+  }
+}
+function call98(fn, code, label) {
+  if (has98(fn)) {
+    try { Module.ccall(fn, null, [], []); $('#canvas').focus(); return; }
+    catch (e) {}
+  }
+  sendKey98(code);
+  if (label) toast98(label + '（Ctrl+' + code + ' でも開きます）');
+}
+
 function drawDisksInner() {
   const el = $('#disks');
   el.classList.remove('hide');
@@ -455,9 +488,10 @@ function drawDisksInner() {
        '<button class="hbtn" id="tmode">' + (TMODE === 'rel' ? '指:マウス' : '指:タッチ') + '</button>' +
        '<button class="hbtn" id="mbl">左</button>' +
        '<button class="hbtn" id="mbr">右</button>' +
+       '<button class="hbtn" id="mcal">位置を合わせる</button>' +
        '<button class="hbtn" id="thelp">使い方</button>' : '') +
     '<button class="hbtn" id="menu">メニュー</button>' +
-    '<button class="hbtn" id="mouse">マウス</button>' +
+    '<button class="hbtn" id="mouse">' + (MSCAP ? 'マウス:入' : 'マウス:切') + '</button>' +
     '<button class="hbtn" id="rst">リセット</button>' +
     '<button class="hbtn" id="lgb">ログ</button>' +
     '<span class="lbl">Ctrl+F11 / Ctrl+F12 でも</span>' +
@@ -485,35 +519,6 @@ function drawDisksInner() {
   if (th) th.onclick = () => toast98(TMODE === 'rel'
     ? 'マウス操作: 指を滑らせるとカーソルが動く／タップ＝左／長押し・2本指タップ＝右'
     : 'タッチ操作: 触った所がそのまま押される／長押し＝右');
-  /* メニューとマウス捕獲。コアに口があれば直に呼ぶ。
-     無ければ鍵を作って送る（本家はブラウザ版に Ctrl+F11 / Ctrl+F12 を割り当てている）。
-     口を「必ずある」前提にすると、落とされたときに起動ごと死ぬ。実際に踏んだ。 */
-  /* 口があるか確かめる。**触るだけで止まる**ことがあるので、必ず包む
-     （emscripten は「無い口」に、触ると止まる仕掛けを置く）。 */
-  const has98 = fn => {
-    try { return typeof Module['_' + fn] === 'function'; } catch (e) { return false; }
-  };
-  const sendKey = code => {
-    const cv = $('#canvas');
-    cv.focus();
-    const num = code === 'F11' ? 122 : 123;
-    for (const target of [cv, document]) {
-      for (const type of ['keydown', 'keyup']) {
-        target.dispatchEvent(new KeyboardEvent(type, {
-          key: code, code, keyCode: num, which: num,
-          ctrlKey: true, bubbles: true, cancelable: true, composed: true,
-        }));
-      }
-    }
-  };
-  const call98 = (fn, code, label) => {
-    if (has98(fn)) {
-      try { Module.ccall(fn, null, [], []); $('#canvas').focus(); return; }
-      catch (e) {}
-    }
-    sendKey(code);
-    toast98(label + '（Ctrl+' + code + ' でも開きます）');
-  };
   /* セーブと巻き戻し。押すと枠を選ばせる。
      中身のある枠には印を付ける（間違って上書きしないように）。 */
   const slotRow = (title2, act) => {
@@ -570,10 +575,9 @@ function drawDisksInner() {
   const mn = $('#menu');
   if (mn) mn.onclick = () => call98('np2web_menu', 'F11', 'メニュー');
   const ms = $('#mouse');
-  if (ms) ms.onclick = () => {
-    call98('np2web_mouse', 'F12', 'マウス');
-    toast98('もう一度「マウス」で戻せます（Esc でも）');
-  };
+  if (ms) ms.onclick = () => { msCapture(!MSCAP); drawDisks(); };
+  const mc = $('#mcal');
+  if (mc) mc.onclick = () => msCalibrate(true);
 
   const lb = $('#lgb');
   if (lb) lb.onclick = () => {
@@ -796,10 +800,47 @@ function curReset() {
 }
 function drawCur() {
   const el = curEl();
-  el.classList.toggle('hide', TMODE !== 'rel' || !TOUCHY);
+  /* **どちらの使い方でも出す。** これは指の印ではなく
+     「いま中のカーソルが居るはずの場所」なので、タッチ操作でも要る。 */
+  el.classList.toggle('hide', !TOUCHY);
   el.style.left = CUR.x + 'px';
   el.style.top = CUR.y + 'px';
 }
+/* ---- マウス捕獲（これが無いとコアはマウスを一切受け付けない） ----
+   NP2kai の `mousemng.c` は EMSCRIPTEN では **`if(captured)` で囲ってあり**、
+   捕獲が入っていない間はボタンも動きも捨てる（本家の実装）。
+   指で避ける端末には F12 の鍵盤が無いので、**起こしたらこちらから一度入れる。**
+   「仮のカーソルは動くのにエミュの中のカーソルが動かない」の正体。 */
+let MSCAP = false;
+function msCapture(on) {
+  if (!!on === MSCAP) return;
+  call98('np2web_mouse', 'F12', 'マウス');
+  MSCAP = !!on;
+  toast98(MSCAP ? 'マウスを入れました（帯の「マウス」で切れます）'
+                : 'マウスを切りました');
+}
+
+/* ---- 位置を合わせる ----
+   **PC-98 のマウスはバスマウス＝相対。** 「ここへ飛べ」とは言えず、
+   いまどこに居るかも外からは読めない。だから**隅に突き当てて 0,0 に決める**（大きな
+   負の移動を一度送ると、中のカーソルは左上で止まる）。
+   以後はこちらが足し込んだ位置＝中のカーソルの位置になるので、
+   仮のカーソルと重なる。ずれたらこのボタンで合わせ直す。 */
+function msCalibrate(say) {
+  const cv = $('#canvas');
+  if (!cv) return;
+  const r = cv.getBoundingClientRect();
+  const scale = Math.min(r.width / cv.width, r.height / cv.height);
+  const x0 = r.left + (r.width - cv.width * scale) / 2;
+  const y0 = r.top + (r.height - cv.height * scale) / 2;
+  /* 左上へ大きく振る → 中のカーソルが隅で止まる。 */
+  sendMouse('mousemove', { cx: x0 - 4000, cy: y0 - 4000 });
+  sendMouse('mousemove', { cx: x0, cy: y0 });
+  CUR.x = x0; CUR.y = y0; CUR.ready = true;
+  drawCur();
+  if (say) toast98('左上に合わせました');
+}
+
 /* 帯の左右ボタンが押す場所。カーソルの居場所。 */
 function curPoint() {
   if (!CUR.ready) curReset();
@@ -842,11 +883,20 @@ function canvasXY(t) {
     cx: t.clientX, cy: t.clientY,
   };
 }
+/* **動いた分（movementX）も必ず添える。**
+   SDL は「捕まえている（pointer lock）」ときは `movementX` しか見ず、
+   そうでないときは座標から差分を出す。捕獲を入れるとブラウザに
+   pointer lock を頼みに行くので、どちらの道に転んでも動くように両方入れる。 */
+const LASTSENT = { cx: null, cy: null };
 function sendMouse(type, p, button) {
   const cv = $('#canvas');
+  const mx = LASTSENT.cx == null ? 0 : p.cx - LASTSENT.cx;
+  const my = LASTSENT.cy == null ? 0 : p.cy - LASTSENT.cy;
+  LASTSENT.cx = p.cx; LASTSENT.cy = p.cy;
   cv.dispatchEvent(new MouseEvent(type, {
     clientX: p.cx, clientY: p.cy, button: button || 0,
     buttons: type === 'mouseup' ? 0 : (button === 2 ? 2 : 1),
+    movementX: Math.round(mx), movementY: Math.round(my),
     bubbles: true, cancelable: true, view: window,
   }));
 }
@@ -875,7 +925,10 @@ function bindTouch() {
     TOUCH.lx = t.clientX; TOUCH.ly = t.clientY;
     /* タッチ操作は触った所へ跳ぶ。マウス操作はカーソルを動かさない（相対だから）。 */
     const p = TMODE === 'abs' ? canvasXY(t) : curPoint();
-    if (TMODE === 'abs') sendMouse('mousemove', p);
+    if (TMODE === 'abs') {
+      sendMouse('mousemove', p);
+      CUR.x = p.cx; CUR.y = p.cy; CUR.ready = true; drawCur();
+    }
     /* 長押しは右ボタン。押し続けたら切り替える。 */
     clearTimeout(TOUCH.timer);
     TOUCH.timer = setTimeout(() => {
@@ -897,7 +950,10 @@ function bindTouch() {
     if (Math.abs(dx) + Math.abs(dy) > 2) TOUCH.moved = true;
     if (TOUCH.moved) clearTimeout(TOUCH.timer);
     if (TMODE === 'abs') {
-      sendMouse('mousemove', canvasXY(t));
+      const q = canvasXY(t);
+      sendMouse('mousemove', q);
+      /* **中のカーソルもここへ来ている**（SDL が差分にして渡す）。印を合わせる。 */
+      CUR.x = q.cx; CUR.y = q.cy; CUR.ready = true; drawCur();
     } else {
       /* **相対。画面を引き伸ばしている分、指の動きより少し速くする。** */
       moveCur(dx * 1.25, dy * 1.25);
@@ -1207,7 +1263,13 @@ async function bigGet(k, d) {
       const cv = $('#canvas');
       cv.addEventListener('pointerdown', () => { cv.focus(); hideHint(); });
       /* 触って操作する端末では、指をマウスに訳す。 */
-      if (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window) bindTouch();
+      if (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window) {
+        bindTouch();
+        /* **指の端末では、こちらからマウスを入れる。** F12 の鍵盤が無いので、
+           入れないままだとコアが動きもボタンも捨てる（#92 の「全然だめ」の正体）。
+           少し待つのは、コアが最初の画面を出すまで受け取れないため。 */
+        setTimeout(() => { try { msCapture(true); msCalibrate(false); drawDisks(); } catch (e) {} }, 1200);
+      }
       addEventListener('keydown', () => { KEYS++; hideHint(); }, true);
       cv.focus();
       try { window.focus(); } catch (e) {}

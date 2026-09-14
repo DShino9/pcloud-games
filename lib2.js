@@ -62,9 +62,15 @@ function l2deco(g) {
 }
 
 function l2items() {
-  let list = grouped(S.items).filter(g => S.tools || g.kind === 'game');
-  /* 道具・エミュ本体・名無しは本ではない。「道具」を押したときだけ出す。 */
-  if (!S.tools) list = list.filter(g => !JA.isTool(g.name, g.path));
+  /* **探しているときは道具も出す。**（2026-09-15 本人「一太郎とかが見つからない」）
+     一太郎・花子・MIFES のような実用ソフトは倉庫の `UTILITIES_PROGRAMS` に入っていて、
+     一覧では「道具」を押さないと出ない。それは並びを綺麗に保つためだが、
+     **名前で探しているなら話は別** —— 探しても出てこないのは「無い」と同じ。
+     出したものには「道具」の印を付けて、遊ぶものと混ざって見えないようにする。 */
+  const q = (S.q || '').trim();
+  let list = grouped(S.items).filter(g => S.tools || q || g.kind === 'game');
+  if (!S.tools && !q) list = list.filter(g => !JA.isTool(g.name, g.path));
+  if (q) for (const g of list) g._tool = !!JA.isTool(g.name, g.path);
   if (L.sys) list = list.filter(g => g.system === L.sys);
   const head = l2head(list);
   for (const g of list) { g._maker = l2maker(g, head); l2deco(g); }
@@ -88,10 +94,13 @@ function l2list() {
   else if (S.view === 'none') list = list.filter(g => !hasAll(g));
   const q = S.q.trim().toLowerCase();
   /* **日本語でも元の綴りでも引ける。** `三國志` でも `sangokushi` でも当たる。 */
+  /* **在処も見る。** 倉庫は `Koei/Sangokushi 4/` のようにフォルダが題名なので、
+     ファイル名が化けていても（`ÄOÜáÄua.fdi`）道で引ける。 */
   if (q) list = list.filter(g =>
     (g._ja || '').toLowerCase().includes(q) ||
     (g.name || '').toLowerCase().includes(q) ||
     (g._maker || '').toLowerCase().includes(q) ||
+    (g.path || '').toLowerCase().includes(q) ||
     g.files.some(f => f.toLowerCase().includes(q)));
   const pl = g => (S.plays[g.id] || {});
   const nm = g => g._ja || g.name;
@@ -338,7 +347,7 @@ function l2card(g) {
       ${hasAll(g) ? '' : '<span class="no">倉庫に無い</span>'}
     </div>
     <div class="t">${esc(nm)}</div>
-    <div class="s">${esc(g.sub || g._genre || g.genre || '')}${
+    <div class="s">${g._tool ? '道具・' : ''}${esc(g.sub || g._genre || g.genre || '')}${
       g.vers && !g.settled ? `<span class="vers">${g.vers.length}版</span>` : ''}</div>
   </button>`;
 }
@@ -348,7 +357,7 @@ function l2row(g) {
     <span class="rc">${cov ? `<img loading="lazy" src="${esc(cov)}" alt="">` : ''}</span>
     <span class="rn">${esc(g._ja || (g.garbled ? '名前が読めないディスク' : g.name))}</span>
     ${gotIt(g) ? '<span class="off" style="position:static">●</span>' : ''}
-    <span class="rs">${esc(g._genre || g.genre || '')}${g.vers && !g.settled ? ` ${g.vers.length}版` : ''}</span>
+    <span class="rs">${g._tool ? '道具・' : ''}${esc(g._genre || g.genre || '')}${g.vers && !g.settled ? ` ${g.vers.length}版` : ''}</span>
   </button>`;
 }
 

@@ -29,6 +29,12 @@ const VERSION = (document.querySelector('script[src*="app.js"]') || {})
 
 try { document.getElementById('hver').textContent = 'v' + VERSION; } catch (e) {}
 
+/* 画面下の「最新版に更新」。中身は共通部品（core/koushin.js。正本は shelf-core/。触らない）。
+   **消すのは pg-shell- で始まる控えだけ。** pg-big-v1（台帳の控え）と roms-v1（ROM 本体）を
+   巻き込むと、取り込み直しと数GBの取り寄せがやり直しになる。
+   遊んでいる間は隠れる（#play は z-index 80、この帯は 30）。 */
+try { Koushin.tsukeru({ ban: 'v' + VERSION, shirushi: 'pg-shell-', na: 'ゲーム棚' }); } catch (e) {}
+
 const ROMS = P.shelfCache('roms-v1', 'rom.local');
 /* 手で入れた箱絵。**置き場に入れずに端末の中に置く。**
    探しても出てこない本（`Aya3` など3本）と、切り出しを外した本を、
@@ -378,7 +384,7 @@ function learnFrom(map, seen = []) {
    **束ねるだけで、割らない。** 前の束ねはそのまま活かし、同じ鍵になった本だけを合わせる
    （割る向きに動かすと、いま遊べている本の組み合わせまで壊れる）。
    端末が覚えた選択（組み合わせ・版・ジャンル・直した題名・遊んだ回数）は新しい id へ移す。 */
-const BUNDLE_VER = 2;   /* 2: 文字化けを戻す・枚の印の見分けを直した（#93） */                 /* 束ね方を変えたら上げる。上げた版で一度だけ束ね直す */
+const BUNDLE_VER = 3;   /* 2: 文字化けを戻す・枚の印の見分けを直した／3: 半角カナの化けも戻す（#93） */                 /* 束ね方を変えたら上げる。上げた版で一度だけ束ね直す */
 
 function rebundle98() {
   if (!window.JA) return { merged: 0, books: 0 };
