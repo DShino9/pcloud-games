@@ -270,6 +270,11 @@ const TITLE = {
   'asteka': 'アステカ',
   'asteka 2': 'アステカII 太陽の神殿',
   'brandish': 'ブランディッシュ',
+  /* **綴り違い（#93）。** 倉庫のファイル名が `Blandish`（r ではなく l）で入っている。
+     直すのは見せ方だけ。倉庫の名前は触らない。 */
+  'blandish': 'ブランディッシュ',
+  'blandish 2': 'ブランディッシュ2',
+  'blandish 3': 'ブランディッシュ3',
   'brandish 2': 'ブランディッシュ2',
   'brandish 3': 'ブランディッシュ3',
   'brandish vt': 'ブランディッシュVT',
@@ -441,6 +446,46 @@ const NOISE = [
   /\s*[([]\s*(fdi|fdd|hdm|hdi|d88|xdf|nfd|2hd|files?)\s*[)\]]\s*$/i,
 ];
 
+/* ---- 文字化けを戻す（#93） ---- */
+/* 倉庫のファイル名には **Shift_JIS の生バイトを CP437 として読んだ姿**で入っているものがある。
+   `ÄOÜáÄu·M` は `8E 4F 9A A0 8E 75 87 57` ＝ **三國志Ⅳ**。実測で戻せることを確かめた。
+   **戻すのは見せるときだけ。** 倉庫のファイル名も fileid の表も、いまの綴りのまま使う。 */
+const CP437 = '\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e8\u00ef\u00ee\u00ec\u00c4\u00c5'
+            + '\u00c9\u00e6\u00c6\u00f4\u00f6\u00f2\u00fb\u00f9\u00ff\u00d6\u00dc\u00a2\u00a3\u00a5\u20a7\u0192'
+            + '\u00e1\u00ed\u00f3\u00fa\u00f1\u00d1\u00aa\u00ba\u00bf\u2310\u00ac\u00bd\u00bc\u00a1\u00ab\u00bb'
+            + '\u2591\u2592\u2593\u2502\u2524\u2561\u2562\u2556\u2555\u2563\u2551\u2557\u255d\u255c\u255b\u2510'
+            + '\u2514\u2534\u252c\u251c\u2500\u253c\u255e\u255f\u255a\u2554\u2569\u2566\u2560\u2550\u256c\u2567'
+            + '\u2568\u2564\u2565\u2559\u2558\u2552\u2553\u256b\u256a\u2518\u250c\u2588\u2584\u258c\u2590\u2580'
+            + '\u03b1\u00df\u0393\u03c0\u03a3\u03c3\u00b5\u03c4\u03a6\u0398\u03a9\u03b4\u221e\u03c6\u03b5\u2229'
+            + '\u2261\u00b1\u2265\u2264\u2320\u2321\u00f7\u2248\u00b0\u2219\u00b7\u221a\u207f\u00b2\u25a0\u00a0';
+const JP  = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/;   /* かな・漢字・半角カナ */
+const JPG = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/g;
+function demojibake(name) {
+  const s = String(name || '');
+  if (!s || JP.test(s)) return s;                 /* もう日本語なら触らない */
+  if (!/[\u0080-\u00ff\u0192\u0391-\u03c9\u2190-\u25ff\u20a7]/.test(s)) return s;
+  const b = [];
+  for (const ch of s) {
+    const c = ch.codePointAt(0);
+    if (c < 0x80) { b.push(c); continue; }
+    const i = CP437.indexOf(ch);
+    if (i < 0) return s;                          /* CP437 に無い字 ＝ 化けではない */
+    b.push(0x80 + i);
+  }
+  try {
+    const t = new TextDecoder('shift_jis', { fatal: true }).decode(new Uint8Array(b));
+    /* **日本語にならなければ元のまま。** 当てずっぽうで別の名前にしない。
+       1字だけ日本語になるものは（`√PWX2` → `瀨WX2`）まぐれ当たりなので採らない。 */
+    return (t.match(JPG) || []).length >= 2 ? t : s;
+  } catch (e) { return s; }
+}
+
+/* **くっついた役割の語を切り離す。** `BlandishUSER` のように区切りなしで
+   書き足された形がある。大文字の役割語が小文字・数字の直後に立っているときだけ
+   `_` を入れて、以降は区切りありと同じ道で扱う。 */
+const GLUED = /([a-z0-9])(SYSTEM|SYS|USER|USR|DATA|GAME|SAVE|OPENING|ENDING|PROGRAM|PRG)$/;
+const unglue = s => String(s || '').replace(GLUED, '$1_$2');
+
 /* 半角カナだけを直す。`ﾄﾞﾗｺﾞﾝ` → `ドラゴン`。
    **NFKC を丸ごと掛けない。** それだと `ぎゅわんぶらあ自己中心派２` が `…派2` に、
    `上海Ⅱ` が `上海II` になる —— **正しい題名を崩してしまう。**
@@ -467,7 +512,7 @@ function keyOf(t) {
 }
 
 function tidy(name) {
-  let t = norm(name);
+  let t = unglue(demojibake(norm(name)));
   for (const re of NOISE) t = t.replace(re, ' ');
   t = t.replace(/[（(]\s*[)）]/g, ' ').replace(/\s+/g, ' ').trim();
   return t;
@@ -485,16 +530,46 @@ function tidy(name) {
    `1` しか落ちず、`Brandish 3 0` という名前の9枚組になっていた（版の数字と違い、
    `01` の形は枚の番号にしか使われない）。 */
 const DISK_PAREN = /\s*[([][^)\]]*disk[^)\]]*[)\]]/gi;      /* (Disk 1 of 3)(Disk A) */
-const DISK_TAIL  = /[ _-]?(disk|disc)?[ _-]?(0\d|[A-Da-d1-9])$/i;  /* _A / -disk2 / 3 / 01〜09 */
+const SEP = '[ _\\-\u3000]';                                /* 全角の空白も区切り（`三国志　A`） */
+/* **末尾の「枚の印」を落とす。形ごとに分けて見る。**
+   ひとまとめの緩い規則（`[ _-]?[A-Da-d1-9]$`）だと `Prince of Persia` の `a` まで落ちて
+   `Prince of Persi` という題名になっていた。**語の終わりの文字と、枚の印は違う。** */
+const CUTS = [
+  /^()(?:(?:disk|disc)[ _\-\u3000]?)?(?:0?\d{1,2}|[A-Da-d])$/i,   /* 名前が枚の印だけ（`A` `DISK1`） */
+  new RegExp('^(.*?)' + SEP + '?(?:disk|disc)' + SEP + '?(?:\\d{1,2}|[A-Da-d])$', 'i'),  /* -disk2 / Disk_A */
+  new RegExp('^(.*?)' + SEP + '(?:0\\d|[1-9]|[A-Da-d])$'),                  /* _A / 　B / -3 / _07 */
+  /^(.*[a-z0-9])([A-D])$/,                                     /* BlandishA（小文字の後の大文字） */
+  /^(.*\d)([a-d])$/,                                           /* 3goku2a（数字の後の小文字） */
+  /^(.*[^\u0000-\u007f])([A-Da-d])$/,                          /* 天下統一A・三國志a（漢字の後） */
+  /^(.*[A-Z])(0?\d)$/,                                         /* DISK1 / DISK01 */
+];
 /* **役割を外した後は、番号を控えめにしか落とさない。**
    `Ys3 Prg` → `Ys3`（`YS` と別の本）、`SANGOKUSHI 3_User` → `SANGOKUSHI 3`（三国志 と別の本）。
-   役割を外すと版の数字が末尾に露出するので、元の緩い形のまま落とすと**別の本が1本に潰れる。** */
-const DISK_TAIL2 = /([ _-](disk|disc)[ _-]?\d{1,2}|[ _-]0\d|[ _-][A-Da-d])$/i;
+   役割を外すと版の数字が末尾に露出するので、緩いまま落とすと**別の本が1本に潰れる。**
+   区切りつきの素の数字（` 3`）だけを外し、字と0詰めは残す。 */
+const CUTS2 = [
+  CUTS[0], CUTS[1],
+  new RegExp('^(.*?)' + SEP + '(?:0\\d|[A-Da-d])$'),
+  CUTS[3], CUTS[4], CUTS[5],
+];
+/* **束ねる鍵は思い切り落とす（これまで通り）。** `Nysengka/b` `shikumi1〜4` のように
+   区切りも大文字の切れ目も無い多枚ものが実際にあり、控えめにすると1本が何本にも割れる。
+   **見せる名だけ控えめにする** —— 題名に `Prince of Persi` と出るのを防ぐのが目的で、
+   束ね方まで変える必要はない。 */
+const CUTS_LOOSE = [CUTS[0], CUTS[1],
+  new RegExp('^(.*?)' + SEP + '?(?:0\\d|[A-Da-d1-9])$', 'i'),
+  /* 文字化けを戻すと全角になる（`ＤＩＳＫ－Ａ`）。鍵の側だけ全角も落とす。 */
+  /^(.*?)[ _\-\u3000\uff0d\uff3f]?(?:ＤＩＳＫ|ＤＩＳＣ)?[ _\-\u3000\uff0d\uff3f]?[Ａ-Ｄａ-ｄ１-９]$/i,
+  /^(.*[^\u0000-\u007f])(0?\d)$/];                              /* 提督の決断1（漢字の後の数字） */
+function cutDisk(k, list) {
+  for (const re of list) { const m = k.match(re); if (m) return m[1]; }
+  return k;
+}
 
 /* 役割と枚の番号を外す。**空になってよい** —— `A.fdi` `DISK1.fdi` のように
    名前が枚の印だけのフォルダは、空の鍵で「そのフォルダ＝1本」に束ねる（元からの振舞い）。 */
-function strip98(base) {
-  let k = norm(base).replace(DISK_PAREN, ' ').replace(/\s+/g, ' ').trim();
+function strip98(base, loose) {
+  let k = unglue(demojibake(norm(base))).replace(DISK_PAREN, ' ').replace(/\s+/g, ' ').trim();
   let numOff = false, roleOff = false;
   for (let i = 0; i < 6; i++) {
     let cut = false;
@@ -505,7 +580,7 @@ function strip98(base) {
       k = s2; cut = true; roleOff = true; break;
     }
     if (!cut && !numOff) {
-      const s2 = k.replace(roleOff ? DISK_TAIL2 : DISK_TAIL, '').trim();
+      const s2 = cutDisk(k, roleOff ? CUTS2 : (loose ? CUTS_LOOSE : CUTS)).trim();
       if (s2 !== k) { k = s2; cut = true; numOff = true; }
     }
     if (!cut || !k) break;
@@ -513,14 +588,14 @@ function strip98(base) {
   return k;
 }
 /* 見せる題名。空になったときだけ元の名前に戻す。 */
-function bundleBase(base) { return strip98(base) || norm(base).trim(); }
+function bundleBase(base) { return strip98(base, false) || norm(base).trim(); }
 /* 鍵は思い切り均す（`SANGOKUSHI Ⅳ` も `Sangokushi 4` も同じ鍵）。 */
-function bundleKey(base) { return keyOf(strip98(base)); }
+function bundleKey(base) { return keyOf(strip98(base, true)); }
 
 /* ---- 引く ---- */
 function sysJa(s)   { return SYS[s] || s || ''; }
 function genreJa(g) { return GENRE[g] || g || ''; }
-function makerJa(m) { return MAKER[m] || norm(m || ''); }
+function makerJa(m) { return MAKER[m] || demojibake(norm(m || '')); }
 function sortKey(name) { return keyOf(tidy(name)); }
 
 /* 題名。**当たらなければ掃除しただけのものを返す**（無理に訳さない）。 */
@@ -531,6 +606,7 @@ function titleJa(name) {
   if (hit) return hit;
   /* 後ろの「別冊」「役割」を外して、素の題名で引き直す。**二段まで**
      （`Sangokushi 4 - Power Up Kit_SYSTEM` のような重ね書きがある）。 */
+  let best = '';
   for (let pass = 0, cur = t, tails = ''; pass < 2; pass++) {
     let cut = false;
     for (const [re, tail] of SUFFIX) {
@@ -544,8 +620,11 @@ function titleJa(name) {
     if (!cut) break;
     const b = TITLE[keyOf(cur)];
     if (b) return b + tails;
+    /* 表に無くても、**外した札は確かなもの**。`三國志Ⅳ_ENDING` を
+       そのまま並べず `三國志Ⅳ（エンディング）` にする。 */
+    if (cur) best = cur + tails;
   }
-  return t;
+  return best || t;
 }
 
 /* **道具・エミュ本体・ブランクは本ではない。** 一覧に混ざると探せない
@@ -568,7 +647,7 @@ function isTool(name, path) {
 }
 
 root.JA = { sysJa, genreJa, makerJa, titleJa, tidy, isTool, sortKey, keyOf,
-            bundleBase, bundleKey,
+            bundleBase, bundleKey, demojibake,
             SYS, GENRE, MAKER, TITLE };
 
 })(window);

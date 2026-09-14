@@ -53,7 +53,10 @@ function l2maker(i, head) {
    並べ替えと探し口は `_ja` を見るので、利用者からは日本語の棚に見える。 */
 /* 1冊に日本語の名を添える。一覧・札・見出し・探し口すべてがこれを見る。 */
 function l2deco(g) {
-  g._ja = g.garbled ? '名前が読めないディスク' : (JA.titleJa(g.name) || g.name);
+  /* **文字化けは戻してから見せる（#93）。** `ÄOÜáÄu·M` は Shift_JIS を CP437 として
+     読んだ姿で、元に戻せる（＝三國志Ⅳ）。戻せたものは「読めないディスク」にしない。 */
+  const t = JA.titleJa(g.name) || g.name;
+  g._ja = (g.garbled && t === g.name) ? '名前が読めないディスク' : t;
   g._genre = JA.genreJa(g.genre);
   return g;
 }
