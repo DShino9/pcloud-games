@@ -36,23 +36,35 @@ function l2maker(i, head) {
      その直後の一節がメーカー（473社）。「共通の頭の次の一節」では、
      枝分かれ（PC98/select/FDD）で止まってしまい9行しか出なかった。 */
   const m = pp.match(/\/PC98 (?:Disk|HDD)\/([^/]+)/i);
-  if (m) return m[1];
+  if (m) return JA.makerJa(m[1]);
   if (pp && pp.length > head.length) {
     const seg = pp.slice(head.length).replace(/^\//, '').split('/')[0];
     /* 器の名前（機種や整理の区画）はメーカーではない。 */
     if (seg && !/^(PC-?98|PC98.*|select|fdd|collection|rom|disk|games?|パソコン|家庭用ゲーム機|その他|整理隔離|重複|削除待ち)$/i.test(seg))
-      return seg;
+      return JA.makerJa(seg);
   }
   return (window.Makers ? Makers.makerOf(i.name, pp) : '')
     || (i.system === 'PC-98' && pp ? 'メーカーフォルダなし' : 'その他');
 }
 
-/* いま見ている機種の本（束ねた後）。メーカーも付けて返す。 */
+/* いま見ている機種の本（束ねた後）。メーカーと**日本語の題名**を付けて返す。 */
+/* **題名は元のまま持ち、見せる名（`_ja`）を別に添える（#86）。**
+   `name` を書き換えると、fileid の表・棚のフォルダ名・覚えた選択がずれる。
+   並べ替えと探し口は `_ja` を見るので、利用者からは日本語の棚に見える。 */
+/* 1冊に日本語の名を添える。一覧・札・見出し・探し口すべてがこれを見る。 */
+function l2deco(g) {
+  g._ja = g.garbled ? '名前が読めないディスク' : (JA.titleJa(g.name) || g.name);
+  g._genre = JA.genreJa(g.genre);
+  return g;
+}
+
 function l2items() {
   let list = grouped(S.items).filter(g => S.tools || g.kind === 'game');
+  /* 道具・エミュ本体・名無しは本ではない。「道具」を押したときだけ出す。 */
+  if (!S.tools) list = list.filter(g => !JA.isTool(g.name, g.path));
   if (L.sys) list = list.filter(g => g.system === L.sys);
   const head = l2head(list);
-  for (const g of list) g._maker = l2maker(g, head);
+  for (const g of list) { g._maker = l2maker(g, head); l2deco(g); }
   return list;
 }
 
@@ -61,26 +73,30 @@ function l2list() {
   if (L.recent) {
     return grouped(S.items)
       .filter(g => g.kind === 'game' && (S.plays[g.id] || {}).last)
+      .map(l2deco)
       .sort((a, b) => (S.plays[b.id].last || 0) - (S.plays[a.id].last || 0));
   }
   let list = l2items();
   if (L.maker) list = list.filter(g => g._maker === L.maker);
   if (L.genre) list = list.filter(g => L.genre === 'ジャンル未設定'
-    ? !g.genre : g.genre === L.genre);
+    ? !g.genre : g._genre === L.genre);
   if (S.view === 'play') list = list.filter(gotIt);
   else if (S.view === 'all') list = list.filter(hasAll);
   else if (S.view === 'none') list = list.filter(g => !hasAll(g));
   const q = S.q.trim().toLowerCase();
+  /* **日本語でも元の綴りでも引ける。** `三國志` でも `sangokushi` でも当たる。 */
   if (q) list = list.filter(g =>
+    (g._ja || '').toLowerCase().includes(q) ||
     (g.name || '').toLowerCase().includes(q) ||
     (g._maker || '').toLowerCase().includes(q) ||
     g.files.some(f => f.toLowerCase().includes(q)));
   const pl = g => (S.plays[g.id] || {});
+  const nm = g => g._ja || g.name;
   const cmp = {
-    name:  (a, b) => collator.compare(a.name, b.name),
-    plays: (a, b) => (pl(b).n || 0) - (pl(a).n || 0) || collator.compare(a.name, b.name),
-    last:  (a, b) => (pl(b).last || 0) - (pl(a).last || 0) || collator.compare(a.name, b.name),
-  }[S.sort] || ((a, b) => collator.compare(a.name, b.name));
+    name:  (a, b) => collator.compare(nm(a), nm(b)),
+    plays: (a, b) => (pl(b).n || 0) - (pl(a).n || 0) || collator.compare(nm(a), nm(b)),
+    last:  (a, b) => (pl(b).last || 0) - (pl(a).last || 0) || collator.compare(nm(a), nm(b)),
+  }[S.sort] || ((a, b) => collator.compare(nm(a), nm(b)));
   return list.sort((a, b) => (hasAll(b) - hasAll(a)) || cmp(a, b));
 }
 
@@ -105,14 +121,20 @@ function l2sheet(kind, rows) {
   const cur = kind === 'maker' ? L.maker : L.genre;
   /* 頭文字で並べ直す（シートは探す場なので、数の順より引ける順）。 */
   const sorted = [...rows].sort((a, b) => collator.compare(a[0], b[0]));
+  const fav = kind === 'maker' ? mkFavs(L.sys) : [];
   const buckets = new Map();
+  /* ★は頭文字より先。**探さずに届くための印**なので、先頭に固める（#87）。 */
+  const favRows = sorted.filter(r => fav.includes(r[0]));
+  if (favRows.length) buckets.set('★ お気に入り', favRows);
   for (const r of sorted) {
+    if (fav.includes(r[0])) continue;
     const h = /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(r[0]) ? '＿末尾' : l2initial(r[0]);
     if (!buckets.has(h)) buckets.set(h, []);
     buckets.get(h).push(r);
   }
   const order = [...buckets.keys()].sort((a, b) =>
-    (a === '＿末尾') - (b === '＿末尾') || collator.compare(a, b));
+    (b === '★ お気に入り') - (a === '★ お気に入り')
+    || (a === '＿末尾') - (b === '＿末尾') || collator.compare(a, b));
   const box = document.createElement('div');
   box.className = 'sheet';
   box.innerHTML = `<div class="sheetbox l2shbox">
@@ -121,8 +143,13 @@ function l2sheet(kind, rows) {
     <div class="l2shlist">${order.map(h => `
       <div class="l2shhead" data-h="${esc(h)}">${h === '＿末尾' ? '—' : esc(h)}</div>
       ${buckets.get(h).map(([m, c]) => `
-        <button class="l2shrow${cur === m ? ' on' : ''}" data-v="${esc(m)}">
-          <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('')}`).join('')}
+        <div class="l2shline" data-key="${esc(m)}">
+          <button class="l2shrow${cur === m ? ' on' : ''}" data-v="${esc(m)}">
+            <span>${esc(m)}</span><span class="c">${c}</span></button>
+          ${kind === 'maker' ? `<button class="l2star${fav.includes(m) ? ' on' : ''}"
+            data-shfav="${esc(m)}" aria-label="お気に入り"
+            >${fav.includes(m) ? '★' : '☆'}</button>` : ''}
+        </div>`).join('')}`).join('')}
     </div>
     <div class="l2shfoot">
       ${cur ? `<button class="hbtn" id="shclear">絞り込みを外す（いま: ${esc(cur)}）</button>` : ''}
@@ -144,14 +171,19 @@ function l2sheet(kind, rows) {
     else L.genre = (L.genre === v ? '' : v);
     L.page = 1; l2save(); close(); screenLibrary();
   };
+  for (const b of box.querySelectorAll('[data-shfav]')) b.onclick = e => {
+    e.stopPropagation();
+    mkFavToggle(L.sys, b.dataset.shfav);
+    close(); l2sheet(kind, l2facets(kind));
+  };
   const q = box.querySelector('.l2shq');
   q.oninput = () => {
     const t = q.value.trim().toLowerCase();
-    for (const b of box.querySelectorAll('.l2shrow'))
-      b.style.display = !t || b.dataset.v.toLowerCase().includes(t) ? '' : 'none';
+    for (const b of box.querySelectorAll('.l2shline'))
+      b.style.display = !t || b.dataset.key.toLowerCase().includes(t) ? '' : 'none';
     for (const h of box.querySelectorAll('.l2shhead')) {
       let el = h.nextElementSibling, any = false;
-      while (el && el.classList.contains('l2shrow')) {
+      while (el && el.classList.contains('l2shline')) {
         if (el.style.display !== 'none') { any = true; break; }
         el = el.nextElementSibling;
       }
@@ -164,13 +196,38 @@ function l2facets(kind) {
   const items = l2items();
   const map = new Map();
   for (const g of items) {
-    const k = kind === 'maker' ? g._maker : (g.genre || 'ジャンル未設定');
+    const k = kind === 'maker' ? g._maker : (g._genre || 'ジャンル未設定');
     map.set(k, (map.get(k) || 0) + 1);
   }
   return [...map.entries()].sort((a, b) =>
     /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(a[0]) ? 1
     : /^(その他|メーカーフォルダなし|ジャンル未設定)$/.test(b[0]) ? -1
     : b[1] - a[1] || collator.compare(a[0], b[0]));
+}
+
+/* ---- お気に入りメーカー（#87・#88）----
+   PC-98 だけで **437社**。数の順に12社出しても、目当ての1社は
+   ほぼ毎回「すべてのメーカー…」の向こう側にある（光栄は57本で6番目、
+   ファルコムは33本で18番目）。**★を付けた社はレールの先頭に固定する。**
+
+   覚えは機種ごと（ファミコンの「任天堂」と PC-98 の「光栄」は別の並び）。
+   `mkfav` は `S2.HAND` に入れてあるので、**端末をまたいで付いてくる**
+   —— iPad で開いても、Mac で付けた★がそのまま出る。 */
+const MK_FAV0 = { 'PC-98': ['光栄', '日本ファルコム'] };
+function mkFavs(sys) {
+  const all = LS.get('mkfav', null);
+  /* まだ一度も触っていない端末には、初めから光栄とファルコムを出す（#88）。
+     **空の配列は「自分で全部外した」という意思**なので、初期値で塗り潰さない。 */
+  if (!all || !(sys in all)) return (MK_FAV0[sys] || []).slice();
+  return (all[sys] || []).slice();
+}
+function mkFavToggle(sys, m) {
+  const all = LS.get('mkfav', null) || {};
+  const cur = (sys in all) ? (all[sys] || []).slice() : (MK_FAV0[sys] || []).slice();
+  const i = cur.indexOf(m);
+  if (i >= 0) cur.splice(i, 1); else cur.unshift(m);
+  all[sys] = cur;
+  LS.set('mkfav', all);
 }
 
 function mkRemember(m) {
@@ -186,6 +243,7 @@ function l2rail() {
   const bySys = new Map();
   for (const g of grouped(S.items)) {
     if (g.kind !== 'game') continue;
+    if (!S.tools && JA.isTool(g.name, g.path)) continue;
     bySys.set(g.system, (bySys.get(g.system) || 0) + 1);
   }
   const order = [...bySys.entries()].sort((a, b) => b[1] - a[1]);
@@ -201,30 +259,44 @@ function l2rail() {
     if (openSys) {
       const mrows = l2facets('maker');
       const grows = l2facets('genre');
+      const fav = mkFavs(nm);
+      /* メーカーの行。★は別のボタンにする（ボタンの中にボタンは置けない）。 */
+      const mkrow = (kind, m, c, cur, star) => `<div class="l2mkrow${cur === m ? ' on' : ''}">
+          <button class="l2mk" data-${kind}="${esc(m)}">
+            <span>${esc(m)}</span>${c != null ? `<span class="c">${c}</span>` : ''}</button>
+          ${star ? `<button class="l2star${fav.includes(m) ? ' on' : ''}"
+            data-fav="${esc(m)}" data-favsys="${esc(nm)}"
+            title="${fav.includes(m) ? 'お気に入りから外す' : 'お気に入りにする'}"
+            aria-label="${fav.includes(m) ? 'お気に入りから外す' : 'お気に入りにする'}"
+            >${fav.includes(m) ? '★' : '☆'}</button>` : ''}
+        </div>`;
       const grp = (kind, label, rows, cur) => {
         const key = nm + '/' + kind;
         const open = op.has(key);
         /* **多いときは上位だけ**（Amazon の絞り込み式）。12件を超える分は
-           「すべて…」→ 検索＋頭文字見出しの選択シートで選ぶ。431行を並べない。
-           並びは**直近開いたメーカーが先**（本人の指定）、残りは数の順。 */
-        let rows2 = rows;
+           「すべて…」→ 検索＋頭文字見出しの選択シートで選ぶ。437行を並べない。
+           並びは **①お気に入り ②直近開いた社 ③数の順**（本人の指定）。 */
+        let rows2 = rows, favRows = [];
         if (kind === 'maker') {
-          const rec = (LS.get('mkRecent', {})[nm] || []);
           const bag = new Map(rows);
+          favRows = fav.filter(m => bag.has(m)).map(m => [m, bag.get(m)]);
+          const rec = (LS.get('mkRecent', {})[nm] || []).filter(m => !fav.includes(m));
           rows2 = rec.filter(m => bag.has(m)).map(m => [m, bag.get(m)])
-            .concat(rows.filter(([m]) => !rec.includes(m)));
+            .concat(rows.filter(([m]) => !rec.includes(m) && !fav.includes(m)));
         }
         const shown = rows2.length > 15 ? rows2.slice(0, 12) : rows2;
-        const cut = rows.length - shown.length;
+        const cut = rows.length - favRows.length - shown.length;
         return `<button class="l2grp" data-grp="${esc(key)}">
             <span class="tri">${open ? '▾' : '▸'}</span>${label}
             <span class="c">${rows.length}</span></button>`
-          + (open ? shown.map(([m, c]) => `
-            <button class="l2mk${cur === m ? ' on' : ''}" data-${kind}="${esc(m)}">
-              <span>${esc(m)}</span><span class="c">${c}</span></button>`).join('') : '')
-          + (open && cur && !shown.some(([m]) => m === cur)
-              ? `<button class="l2mk on" data-${kind}="${esc(cur)}">
-                  <span>${esc(cur)}</span></button>` : '')
+          /* お気に入りは畳んでいても出す。**そのために付けた印**なので、
+             一段開かせてから見せるのでは意味がない。 */
+          + (kind === 'maker' && favRows.length
+              ? `<div class="l2favs">${favRows.map(([m, c]) =>
+                  mkrow(kind, m, c, cur, true)).join('')}</div>` : '')
+          + (open ? shown.map(([m, c]) => mkrow(kind, m, c, cur, kind === 'maker')).join('') : '')
+          + (open && cur && !shown.some(([m]) => m === cur) && !fav.includes(cur)
+              ? mkrow(kind, cur, null, cur, kind === 'maker') : '')
           + (open && cut > 0
               ? `<button class="l2mk l2all" data-pick="${kind}">すべての${label}（${rows.length}）…</button>` : '');
       };
@@ -238,19 +310,20 @@ function l2rail() {
     }
     return `<button class="l2sys${openSys ? ' on' : ''}" data-sys="${esc(nm)}">
         <span class="tri">${openSys ? '▾' : '▸'}</span>
-        <span class="n">${esc(nm)}</span><span class="c">${n}</span></button>${sub}`;
+        <span class="n">${esc(JA.sysJa(nm))}</span><span class="c">${n}</span></button>${sub}`;
   }).join('');
   html += `<button class="l2sys${L.sys ? '' : ' on'}" data-sys="">
       <span class="tri"></span><span class="n">すべて</span>
       <span class="c">${[...bySys.values()].reduce((a, b) => a + b, 0)}</span></button>`;
-  html += '<div class="l2foot">メーカーは倉庫のフォルダが正。<br>メーカーとジャンルは掛け合わせられます。</div>';
+  html += '<div class="l2foot">メーカーは倉庫のフォルダが正（日本語に直して出しています）。'
+        + '<br>★ を押すと先頭に固定されます。<br>メーカーとジャンルは掛け合わせられます。</div>';
   return html;
 }
 
 /* ---- 中央 ---- */
 function l2card(g) {
   const cov = S.covurl[g.id] || g.cover;
-  const nm = g.garbled ? '名前が読めないディスク' : g.name;
+  const nm = g._ja || (g.garbled ? '名前が読めないディスク' : g.name);
   return `<button class="item${L.sel === g.id ? ' sel' : ''}" data-id="${esc(g.id)}">
     <div class="cov">${cov ? `<img loading="lazy" src="${esc(cov)}" alt="">`
                            : `<div class="ph">${esc(nm)}</div>`}
@@ -262,7 +335,7 @@ function l2card(g) {
       ${hasAll(g) ? '' : '<span class="no">倉庫に無い</span>'}
     </div>
     <div class="t">${esc(nm)}</div>
-    <div class="s">${esc(g.sub || g.genre || '')}${
+    <div class="s">${esc(g.sub || g._genre || g.genre || '')}${
       g.vers && !g.settled ? `<span class="vers">${g.vers.length}版</span>` : ''}</div>
   </button>`;
 }
@@ -270,9 +343,9 @@ function l2row(g) {
   const cov = S.covurl[g.id] || g.cover;
   return `<button class="l2r${L.sel === g.id ? ' sel' : ''}" data-id="${esc(g.id)}">
     <span class="rc">${cov ? `<img loading="lazy" src="${esc(cov)}" alt="">` : ''}</span>
-    <span class="rn">${esc(g.garbled ? '名前が読めないディスク' : g.name)}</span>
+    <span class="rn">${esc(g._ja || (g.garbled ? '名前が読めないディスク' : g.name))}</span>
     ${gotIt(g) ? '<span class="off" style="position:static">●</span>' : ''}
-    <span class="rs">${esc(g.genre || '')}${g.vers && !g.settled ? ` ${g.vers.length}版` : ''}</span>
+    <span class="rs">${esc(g._genre || g.genre || '')}${g.vers && !g.settled ? ` ${g.vers.length}版` : ''}</span>
   </button>`;
 }
 
@@ -300,6 +373,34 @@ function l2pager(list) {
   return `<div class="l2pager">${p > 1 ? btn(p - 1, '‹ 前へ') : ''}${h}${
     p < pages ? btn(p + 1, '次へ ›') : ''}</div>`;
 }
+/* ---- 頭文字で飛ぶ（Steam のライブラリ・iOS の連絡先と同じ作法）----
+   **1,355本を12ページめくって探させない。** 題名順のときだけ、
+   「あ か さ た な … A B C」を出し、押したらその文字が始まるページへ跳ぶ。
+   その機種に無い文字は出さない（押せる物しか出さない）。 */
+function l2jump(list) {
+  if (S.sort !== 'name' || list.length <= STEP) return '';
+  const { p } = l2page(list);
+  const first = new Map();                       /* 頭文字 → 何番目に最初に出るか */
+  list.forEach((g, i) => {
+    const h = l2initial(g._ja || g.name);
+    if (!first.has(h)) first.set(h, i);
+  });
+  const ORDER = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ま行', 'や行', 'ら行', 'わ行',
+                 '漢字ほか', '#'];
+  const keys = [...first.keys()].sort((a, b) => {
+    const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    if (ia >= 0) return -1;
+    if (ib >= 0) return 1;
+    return collator.compare(a, b);
+  });
+  return `<div class="l2jump">${keys.map(h => {
+    const page = Math.floor(first.get(h) / STEP) + 1;
+    return `<button class="l2jb${page === p ? ' on' : ''}" data-page="${page}"
+      >${esc(h.replace('行', ''))}</button>`;
+  }).join('')}</div>`;
+}
+
 function l2grid(list) {
   if (!list.length) return `<div class="empty">${S.q ? '見つかりません'
     : S.view === 'play' ? 'まだ棚に何も取り寄せていません。<br><span class="sub">「ぜんぶ」から選んで遊ぶと、その本が棚に入ります。</span>'
@@ -307,6 +408,7 @@ function l2grid(list) {
   const { from, to } = l2page(list);
   const cells = list.slice(from, to).map(L.rows ? l2row : l2card).join('');
   return `<div class="l2count">${list.length.toLocaleString()} 冊中 ${(from + 1).toLocaleString()}〜${to.toLocaleString()} 冊</div>`
+    + l2jump(list)
     + (L.rows ? `<div class="l2rows">${cells}</div>` : `<div class="grid">${cells}</div>`)
     + l2pager(list);
 }
@@ -314,7 +416,7 @@ function l2grid(list) {
 /* ---- 右の札 ---- */
 function l2detail() {
   const g = l2items().find(x => x.id === L.sel)
-        || grouped(S.items).find(x => x.id === L.sel);
+        || (x => x && l2deco(x))(grouped(S.items).find(x => x.id === L.sel));
   if (!g) return '<div class="l2none">一覧から本を選ぶと<br>ここに札が出ます</div>';
   const cov = S.covurl[g.id] || g.cover;
   const inWare = hasAll(g), onShelf = gotIt(g);
@@ -322,15 +424,17 @@ function l2detail() {
   const vers = g.gkey ? (S.gmap || {})[g.gkey] : null;
   return `<div class="sheetbar"></div>
     <div class="l2cov">${cov ? `<img src="${esc(cov)}" alt="">`
-      : `<div class="ph">${esc(g.name)}</div>`}</div>
-    <div class="l2t">${esc(g.name)}</div>
-    <div class="l2m">${esc(maker)}${maker ? ' ／ ' : ''}${esc(g.system)}</div>
+      : `<div class="ph">${esc(g._ja || g.name)}</div>`}</div>
+    <div class="l2t">${esc(g._ja || g.name)}</div>
+    <div class="l2m">${esc(maker)}${maker ? ' ／ ' : ''}${esc(JA.sysJa(g.system))}</div>
+    ${(g._ja && g._ja !== g.name)
+      ? `<div class="l2orig">元の名: ${esc(g.name)}</div>` : ''}
     <div class="l2state">
       ${onShelf ? '<span class="chip shelf">● 棚にある（すぐ遊べる）</span>'
         : g.arc ? '<span class="chip">圧縮のまま（起こすと遊べる・準備中）</span>'
         : inWare ? '<span class="chip">倉庫にある</span>'
         : '<span class="chip away">倉庫に無い</span>'}
-      ${g.genre ? `<span class="chip">${esc(g.genre)}</span>`
+      ${g.genre ? `<span class="chip">${esc(g._genre || g.genre)}</span>`
         : `<button class="chip dashed" id="dgenre">＋ ジャンルを付ける</button>`}
     </div>
     <button class="primary l2play" id="dplay"${inWare && !g.arc ? '' : ' disabled'}>▶ 遊ぶ</button>
@@ -425,7 +529,7 @@ function screenLibrary() {
   const nNone = scope.length - nAll;
   const crumbs = ['<b>棚</b>']
     .concat(L.recent ? ['🕒 最近遊んだ'] : [])
-    .concat(!L.recent && L.sys ? [esc(L.sys)] : [])
+    .concat(!L.recent && L.sys ? [esc(JA.sysJa(L.sys))] : [])
     .concat(L.maker ? [esc(L.maker)] : [])
     .concat(L.genre ? [esc(L.genre)] : [])
     .concat(S.q.trim() ? [`「${esc(S.q.trim())}」で探した分`] : [])
@@ -490,6 +594,11 @@ function screenLibrary() {
     const op = l2open();
     op.has(b.dataset.grp) ? op.delete(b.dataset.grp) : op.add(b.dataset.grp);
     LS.set('l2open', [...op]);
+    screenLibrary();
+  };
+  for (const b of main().querySelectorAll('[data-fav]')) b.onclick = e => {
+    e.stopPropagation();
+    mkFavToggle(b.dataset.favsys, b.dataset.fav);
     screenLibrary();
   };
   for (const b of main().querySelectorAll('[data-maker]')) b.onclick = () => {

@@ -89,12 +89,18 @@ const qs  = new URLSearchParams(location.search);
 const id  = qs.get('id');
 const fid = qs.get('fid');
 
+/* どこまで進んだか。止まったときに**これを画面に出す**（#85）。 */
+let STAGE = '始め';
+
 const say = t => { $('#st').textContent = t; };
 const bar = p => { $('#bar i').style.width = Math.max(0, Math.min(100, p)) + '%'; };
 function fail(msg) { $('#bar').style.display = 'none'; say(''); $('#err').innerHTML = msg; failBeacon(msg); }
 /* **しくじりの、のろし。** 画面の文言を写してもらわなくても、
    何で止まったかを倉庫の _記録 に送っておき、Mac 側から読めるようにする。 */
+let BEACONED = false;
 async function failBeacon(msg) {
+  if (BEACONED) return;
+  BEACONED = true;
   try {
     const g = k => { try { return JSON.parse(localStorage.getItem('pg.' + k)); } catch (e) { return null; } };
     const auth = g('auth'), rootId = g('rootId'), host = g('host') || 'api.pcloud.com';
@@ -161,6 +167,7 @@ async function bigGet(k, d) {
          中継所が未設定でも落ちていても、遅くなるだけで遊べる。
          ROM は元々まるごと読んでから起こすので、頭出しが効かない不利は無い。 */
       if (!relay) say('中継所なしで取り寄せます。少し待ってください…');
+      STAGE = 'ROM の取り寄せ';
       blob = await P.fetchFile(relay, { fileid: fid, host, auth }, tell, g.bytes);
     } catch (e) { return fail('取り寄せられません: ' + e.message); }
     /* 一度取れたら手元に置く。次からは圏外でも遊べる。 */
@@ -169,6 +176,7 @@ async function bigGet(k, d) {
 
   say('コアを起こしています…');
   bar(100);
+  STAGE = 'コアの読み込み';
 
   window.EJS_player      = '#game';
   window.EJS_core        = g.core;
@@ -179,7 +187,16 @@ async function bigGet(k, d) {
   window.EJS_gameName    = g.name;
   window.EJS_gameID      = g.id;      // セーブの分かれ目
   window.EJS_pathtodata  = 'https://cdn.emulatorjs.org/stable/data/';
-  window.EJS_startOnLoaded = true;
+  /* **中で一度押させる（#85）。**
+     iPad・iPhone の Safari は、**その文書の中で指が触れるまで音を鳴らさない。**
+     遊ぶ画面は iframe の中にあり、押されたのは外側の棚なので、
+     この文書は「一度も触られていない」扱いになる。
+     EmulatorJS はコアの輪を音の器に合わせて回すので、器が止まったままだと
+     **絵も出ない —— 黒いまま・灰色のまま**（2026-09-14 本人の iPad で確認）。
+     Mac と Android で動いていたのは、あちらが指を要求しないから。
+     自動で始めるのをやめ、EmulatorJS 自身の開始画面を出す。
+     そこを押せばこの文書が触られたことになり、音も絵も起きる。 */
+  window.EJS_startOnLoaded = false;
   /* 日本語の言語ファイルは配られていない（ja-JP も ja も 404）。
      指定すると毎回 404 を出しに行くので、指定しない。 */
   window.EJS_color       = '#6ea8fe';
@@ -190,15 +207,39 @@ async function bigGet(k, d) {
     rewindEnabled: 'disabled',   // 巻き戻しは常に記録し続けるので高くつく
     vsync: 'enabled',            // 画面の更新に合わせる（出しすぎない）
   };
-  window.EJS_onGameStart = () => { $('#load').classList.add('hide'); };
+  /* 開始画面が出たら覆いを外す（ここから先は EmulatorJS の画面）。 */
+  window.EJS_ready       = () => { STAGE = '開始待ち'; $('#load').classList.add('hide'); };
+  window.EJS_onGameStart = () => { STAGE = '動いている'; $('#load').classList.add('hide'); };
 
   const s = document.createElement('script');
   s.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
   s.onerror = () => fail('コアを取ってこられません（cdn.emulatorjs.org につながらない）');
   document.body.appendChild(s);
-  /* 起動の合図が来ないことがある。少し待って画面が出ていれば覆いを外す。 */
-  setTimeout(() => { if (document.querySelector('#game canvas')) $('#load').classList.add('hide'); }, 8000);
+  /* **黙って黒いままにしない（#85）。**
+     前はここで「絵の器があれば覆いを外す」だけをしていた。器は EmulatorJS が
+     先に作るので、**中身が一度も動いていなくても覆いが外れ、黒い画面だけが残った。**
+     何で止まったのか、画面にもログにも出ないので、こちらから読めなかった。
+     いまはどこまで進んだかを見て、進んでいなければ**その場で言う**。 */
+  let waited = 0;
+  const watch = setInterval(() => {
+    waited += 500;
+    if (STAGE === '動いている') return clearInterval(watch);
+    /* EmulatorJS が自分の画面（開始の三角・帯・絵の器）を出したら、覆いを外す。
+       `EJS_ready` が来ない版があるので、目に見えるもので判断する。 */
+    if ($('#game').children.length) {
+      STAGE = '開始待ち';
+      $('#load').classList.add('hide');
+      return;
+    }
+    if (waited < 30000) return;
+    clearInterval(watch);
+    $('#load').classList.remove('hide');
+    fail('コアが起きません（' + esc(STAGE) + 'で止まりました）<br>'
+       + esc(g.core) + ' ／ ' + esc(navigator.userAgent.slice(0, 80)) + '<br>'
+       + 'つなぎを確かめるか、別の本で試してください');
+  }, 500);
 })();
+function esc(t) { return String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
 
 /* 落ちたときに残す証拠。
    **落ちると pagehide は来ない。** iOS が重さでページを畳むと、
@@ -206,14 +247,21 @@ async function bigGet(k, d) {
    ちゃんと閉じたときだけ「終わった」印を付ける。
    印の無い記録＝**途中で切れた**＝落ちた、と読める。 */
 let ERR = '';
-addEventListener('error', e => {
-  ERR = ERR || ('しくじり: ' + (e.message || '') + ' @' + (e.filename || '').split('/').pop() + ':' + (e.lineno || ''));
+/* **しくじりを画面にも出す（#85）。** 溜めるだけでは、動いていない端末の前に
+   いる人には何も分からない。まだ始まっていないうちのしくじりは、
+   そのまま止まる理由なので、覆いを戻して見せ、のろしも上げる。 */
+function caught(msg) {
+  ERR = ERR || msg;
   saveRun(false);
-});
-addEventListener('unhandledrejection', e => {
-  ERR = ERR || ('待ちしくじり: ' + ((e.reason && e.reason.message) || e.reason || ''));
-  saveRun(false);
-});
+  if (STAGE === '動いている') return;
+  const ld = document.querySelector('#load');
+  if (ld) ld.classList.remove('hide');
+  fail(esc(msg));
+}
+addEventListener('error', e => caught(
+  'しくじり: ' + (e.message || '') + ' @' + (e.filename || '').split('/').pop() + ':' + (e.lineno || '')));
+addEventListener('unhandledrejection', e => caught(
+  '待ちしくじり: ' + ((e.reason && e.reason.message) || e.reason || '')));
 setInterval(() => saveRun(false), 5000);
 
 /* 動きの記録。棚の「設定 → 動きの記録」から読める。端末ごとの比較に使う。

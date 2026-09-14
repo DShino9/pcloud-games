@@ -15,7 +15,9 @@
 
 const S2 = {
   SCAN: ['extra', 'files', 'pics', 'scan'],
-  HAND: ['renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots', 'rootId', 'rootName'],
+  /* `mkfav` ＝ お気に入りメーカー（#87）。**端末をまたいで付いてくる**べきもの
+     —— Mac で付けた★が iPad にも出る。見た目の好み（畳み・並び）とは違う。 */
+  HAND: ['renamed', 'genre2', 'fdpick', 'ver', 'plays', 'roots', 'rootId', 'rootName', 'mkfav'],
   applying: false,
   timer: 0,
   busy: false,

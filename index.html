@@ -47,6 +47,26 @@
 .l2grp:hover{color:var(--dim)}
 .l2mk{font-size:13px;padding:4px 8px}
 .l2mk.on{color:var(--accent);font-weight:700}
+/* メーカーの行。名前と★は別のボタン（ボタンの中にボタンは置けない）。 */
+.l2mkrow{display:flex;align-items:center;width:100%;border-radius:8px}
+.l2mkrow:hover{background:rgba(255,255,255,.05)}
+.l2mkrow .l2mk{flex:1;min-width:0;background:none}
+.l2mkrow .l2mk span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.l2mkrow.on .l2mk{color:var(--accent);font-weight:700}
+.l2star{flex:0 0 auto;background:none;border:0;cursor:pointer;color:var(--dim2);
+  font-size:13px;padding:4px 6px;line-height:1}
+.l2star.on{color:#e8b84b}
+.l2star:hover{color:#e8b84b}
+/* ★を付けた社は、束を畳んでいても出す。 */
+.l2favs{border-left:2px solid #e8b84b;margin-left:2px;padding-left:2px}
+/* 頭文字で飛ぶ帯。 */
+.l2jump{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px}
+.l2jb{min-width:30px;padding:5px 8px;font-size:13px;border:1px solid var(--line);
+  border-radius:7px;background:none;color:var(--dim);cursor:pointer}
+.l2jb:hover{border-color:var(--accent);color:var(--fg)}
+.l2jb.on{background:var(--accent);color:#0b0c10;font-weight:700;border-color:var(--accent)}
+/* 訳した題名の下に、元の綴りを小さく（探すときの手がかり）。 */
+.l2orig{font-size:11px;color:var(--dim2);margin:-6px 0 8px;word-break:break-all}
 .l2foot{margin:14px 0 0 8px;font-size:11px;color:var(--dim2);line-height:1.7}
 .l2main{flex:1;min-width:0;padding:0 14px}
 .l2crumbs{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--dim);
@@ -102,6 +122,8 @@
   .l2sys .tri{display:none}
   .l2sub{display:flex;flex:none;border:0;margin:0;padding:0;gap:4px}
   .l2mk{flex:none;border:1px dashed var(--line);border-radius:16px;padding:4px 12px;width:auto}
+  .l2mkrow{flex:none;width:auto}
+  .l2jb{min-width:34px;padding:8px 10px;font-size:14px}
   .l2grp{flex:none;width:auto;padding:4px 2px 4px 6px}
   .l2sub{display:none}
   .l2pickers{display:flex;flex:none;gap:4px}
@@ -142,10 +164,13 @@
 .l2shlist{overflow-y:auto;flex:1;min-height:0}
 .l2shhead{position:sticky;top:0;background:var(--bg2,var(--bg));color:var(--dim2);
   font-size:11px;letter-spacing:.1em;padding:7px 8px 3px;border-bottom:1px solid var(--line)}
-.l2shrow{display:flex;width:100%;align-items:center;gap:8px;padding:9px 10px;font-size:14px;
-  background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);cursor:pointer;text-align:left}
+.l2shline{display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.l2shrow{display:flex;flex:1;min-width:0;align-items:center;gap:8px;padding:11px 10px;font-size:14px;
+  background:none;border:0;color:var(--fg);cursor:pointer;text-align:left}
+.l2shrow span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .l2shrow .c{margin-left:auto;color:var(--dim2);font-size:12px}
 .l2shrow.on{color:var(--accent);font-weight:700}
+.l2shline .l2star{font-size:16px;padding:10px 12px}
 .l2shfoot{display:flex;gap:8px;justify-content:flex-end}
 /* 掘っている場所の道しるべ。 */
 .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font-size:13px}
@@ -315,12 +340,13 @@ body{--ratio:3/4; --fit:contain}
 </div>
 <div id="toast"></div>
 <script src="./core/pcloud.js?v=6"></script>
+<script src="./ja.js?v=3"></script>
 <script src="./makers.js?v=1"></script>
 <script src="./pc98disk.js?v=3"></script>
-<script src="./title.js?v=1"></script>
+<script src="./title.js?v=2"></script>
 <script src="./disks.js?v=3"></script>
-<script src="./app.js?v=124"></script>
-<script src="./lib2.js?v=13"></script>
-<script src="./state2.js?v=8"></script>
+<script src="./app.js?v=125"></script>
+<script src="./lib2.js?v=14"></script>
+<script src="./state2.js?v=9"></script>
 </body>
 </html>

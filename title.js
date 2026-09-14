@@ -12,12 +12,14 @@ function screenTitle(id) {
   const g = S.items.find(x => x.id === id)
         || grouped(S.items).find(x => x.id === id);
   if (!g) return go('#/lib');
-  $('#title').textContent = g.name;
+  /* 日本語で読める名（#86）。**元の名は下に小さく残す**（倉庫で探すときの手がかり）。 */
+  const ja = g.garbled ? '名前が読めないディスク' : (JA.titleJa(g.name) || g.name);
+  $('#title').textContent = ja;
 
   const cov = S.covurl[g.id] || g.cover;
   const inWare = hasAll(g);
   const onShelf = gotIt(g);
-  const maker = (window.Makers ? Makers.makerOf(g.name, g.path) : '') || '';
+  const maker = JA.makerJa((window.Makers ? Makers.makerOf(g.name, g.path) : '') || '');
   const vers = g.gkey ? (S.gmap || {})[g.gkey] : null;
 
   /* いまの状態を1行で。ここが分からないと、次に何を押せばいいか分からない。 */
@@ -28,14 +30,15 @@ function screenTitle(id) {
   main().innerHTML = `
   <div class="tpage">
     <div class="tcov">${cov ? `<img src="${esc(cov)}" alt="">`
-      : `<div class="ph">${esc(g.name)}</div>`}</div>
+      : `<div class="ph">${esc(ja)}</div>`}</div>
     <div class="tbody">
-      <h2>${esc(g.name)}</h2>
+      <h2>${esc(ja)}</h2>
+      ${ja !== g.name ? `<div class="l2orig">元の名: ${esc(g.name)}</div>` : ''}
       <div class="tmeta">
         <span class="tag" data-s="${esc(g.short)}">${esc(g.short)}</span>
-        <span>${esc(g.system)}</span>
+        <span>${esc(JA.sysJa(g.system))}</span>
         ${maker ? `<span>・${esc(maker)}</span>` : ''}
-        ${g.genre ? `<span>・${esc(g.genre)}</span>` : ''}
+        ${g.genre ? `<span>・${esc(JA.genreJa(g.genre))}</span>` : ''}
         ${g.files.length > 1 ? `<span>・${g.files.length}枚</span>` : ''}
         ${g.bytes ? `<span>・${size(g.bytes)}</span>` : ''}
       </div>

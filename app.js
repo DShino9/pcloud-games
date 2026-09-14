@@ -498,9 +498,9 @@ function screenHome() {
       <button class="sysc" data-sys="${esc(name)}" data-s="${esc(b.short)}">
         <div class="syscov">${b.cover ? `<img src="${esc(b.cover)}" alt="">` : ''}<i></i></div>
         <div class="syshead">
-          ${LOGOS[b.short] ? `<img class="syslogo" src="logos/${esc(b.short)}.png" alt="${esc(name)}">`
+          ${LOGOS[b.short] ? `<img class="syslogo" src="logos/${esc(b.short)}.png" alt="${esc(JA.sysJa(name))}">`
                            : `<span class="systag">${esc(b.short)}</span>`}
-          <span class="sysname">${esc(name)}</span>
+          <span class="sysname">${esc(JA.sysJa(name))}</span>
         </div>
         <div class="syscnt">倉庫 <b>${b.have}</b> 本${
           b.got ? ` ・<span style="color:var(--ok)">棚に ${b.got}</span>` : ''}</div>
@@ -1280,7 +1280,7 @@ function play(id) {
   $('#pframe').src = g.pc98
     ? './play98.html?id=' + encodeURIComponent(id) + '&v=31'
     : './play.html?id=' + encodeURIComponent(id) +
-      '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=13';
+      '&fid=' + ((g.fids && g.fids[0]) || S.files[P.nfc(g.files[0])]) + '&v=14';
   $('#play').classList.remove('hide');
   /* 遊んでいるあいだ、棚を**空にする**。
      display:none では、iPhone は読み込んだ絵を抱えたまま離さない。
