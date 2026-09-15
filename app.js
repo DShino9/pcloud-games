@@ -2946,8 +2946,16 @@ function huntTried() {
    **見えている分だけ。** 7171本を総当たりしたら、置き場にも端末にも悪い。 */
 function huntCovers(items) {
   const t = huntTried();
+  /* **大捜索の索引（`_絵/絵.json`）に載っている本は、必ず探しに行く。**（2026-09-15）
+     ここの見分けが `倉庫の絵がある` か `libretro に置き場がある` かだけだったので、
+     **PC-98 のように libretro を持たない機種は、索引に絵があっても取りに行かなかった**
+     （PC-98 342枚・MSX 10枚が置いたまま使われていなかった）。 */
+  const AM = LS.get('artmap', {}) || {};
+  const inArt = g => !!AM[g.system + '|' + P.nfc((g.files || [])[0] || '')];
   const add = items.filter(g => !g.cover && !S.covurl[g.id] && !t.has(g.id)
-    && (g.pic || LR_REPO[g.system]));
+    && (g.pic || LR_REPO[g.system] || inArt(g)));
+  /* **索引に載っている本を先に。** 1回取れば出るので、画面が早く埋まる。 */
+  add.sort((a, b) => (inArt(b) ? 1 : 0) - (inArt(a) ? 1 : 0));
   for (const g of add) if (!HUNT.queue.some(x => x.id === g.id)) HUNT.queue.push(g);
   runHunt();
 }

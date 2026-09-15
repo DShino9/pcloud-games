@@ -139,7 +139,15 @@ async function s2art() {
   try {
     const r = await call('listfolder', { folderid: S.rootId });
     const d = (r.metadata.contents || []).find(c => c.isfolder && P.nfc(c.name) === '_絵');
-    if (!d) return;
+    /* **黙って諦めない。**（2026-09-15）棚の置き先が倉庫（`/EMU`）になっていると
+       `_絵` がそこに無く、**箱絵が1枚も出ない**。理由が分からないと直しようがない。 */
+    if (!d) {
+      S.noArt = true;
+      log.note(`箱絵の索引が無い: ${S.rootName || '棚の置き先'} の下に _絵 が見つからない`
+             + '（設定 → フォルダを選び直す で /ゲーム棚 を選ぶ）');
+      return;
+    }
+    S.noArt = false;
     const r2 = await call('listfolder', { folderid: d.folderid });
     const f = (r2.metadata.contents || []).find(c => P.nfc(c.name) === '絵.json');
     if (!f || (f.modified || '') === LS.get('artAt', '')) return;
