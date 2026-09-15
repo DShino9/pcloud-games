@@ -232,7 +232,62 @@ async function bigGet(k, d) {
   };
   /* 開始画面が出たら覆いを外す（ここから先は EmulatorJS の画面）。 */
   window.EJS_ready       = () => { STAGE = '開始待ち'; $('#load').classList.add('hide'); };
-  window.EJS_onGameStart = () => { STAGE = '動いている'; $('#load').classList.add('hide'); };
+  window.EJS_onGameStart = () => {
+    STAGE = '動いている'; $('#load').classList.add('hide');
+    setTimeout(touchBridge, 1200);
+  };
+
+  /* ---- ニンテンドーDS の**タッチ画面**（2026-09-15） ----
+   **EmulatorJS は指をコアに渡していない。** 絵の上に置いているのは自前の
+   十字キー・ボタンだけで、画面そのものへの指は拾わない。コア（melonDS）は
+   **マウスの出来事しか知らない**ので、机の上ではクリックで触れるのに、
+   iPad では**タッチ画面が一切効かない**（本人・2026-09-15）。
+
+   PC-98 と同じ考え方で、**指をマウスに訳して絵へ渡す。**
+   訳すのは**タッチ画面を持つ機種だけ**（ほかの機種で `preventDefault` を
+   掛けると、EmulatorJS 自身の合図＝下から出すメニューなどを塞いでしまう）。 */
+  const NEEDS_POINTER = new Set(['melonds', 'desmume', 'desmume2015']);
+  function touchBridge() {
+    try {
+      if (!(matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window)) return;
+      if (!NEEDS_POINTER.has(String(g.core || '').toLowerCase())) return;
+      const cv = document.querySelector('#game canvas');
+      if (!cv || cv.dataset.tbridge) return;
+      cv.dataset.tbridge = '1';
+      const send = (type, t, held) => cv.dispatchEvent(new MouseEvent(type, {
+        clientX: t.clientX, clientY: t.clientY, button: 0,
+        buttons: held ? 1 : 0, bubbles: true, cancelable: true, view: window,
+      }));
+      const opt = { passive: false };
+      let id = null;
+      cv.addEventListener('touchstart', e => {
+        if (id !== null) return;                    /* 1本目の指だけ見る */
+        const t = e.changedTouches[0];
+        id = t.identifier;
+        /* **置く前に一度そこへ動かす。** いきなり押すと、前に居た場所で
+           押したことになる本がある（DS の下画面は位置がすべて）。 */
+        send('mousemove', t, false);
+        send('mousedown', t, true);
+        e.preventDefault();
+      }, opt);
+      cv.addEventListener('touchmove', e => {
+        const t = [...e.changedTouches].find(x => x.identifier === id);
+        if (!t) return;
+        send('mousemove', t, true);
+        e.preventDefault();
+      }, opt);
+      const end = e => {
+        const t = [...e.changedTouches].find(x => x.identifier === id);
+        if (!t) return;
+        send('mouseup', t, false);
+        id = null;
+        e.preventDefault();
+      };
+      cv.addEventListener('touchend', end, opt);
+      cv.addEventListener('touchcancel', end, opt);
+      try { LS.set('log', (LS.get('log', []) || []).concat('指をタッチ画面に訳した: ' + g.core).slice(-20)); } catch (e2) {}
+    } catch (e) {}
+  }
 
   const s = document.createElement('script');
   s.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
