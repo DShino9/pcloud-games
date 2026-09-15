@@ -242,11 +242,86 @@ async function bigGet(k, d) {
     vsync: 'enabled',            // 画面の更新に合わせる（出しすぎない）
   };
   /* 開始画面が出たら覆いを外す（ここから先は EmulatorJS の画面）。 */
-  window.EJS_ready       = () => { STAGE = '開始待ち'; $('#load').classList.add('hide'); };
+  window.EJS_ready       = () => {
+    STAGE = '開始待ち'; $('#load').classList.add('hide');
+    restoreSave();                      /* 始まる前に棚のセーブを入れておく */
+  };
   window.EJS_onGameStart = () => {
     STAGE = '動いている'; $('#load').classList.add('hide');
     setTimeout(touchBridge, 1200);
+    clearInterval(window.__saveT);
+    window.__saveT = setInterval(() => pushSave('60秒ごと'), 60000);
   };
+  addEventListener('pagehide', () => pushSave('閉じた'));
+  addEventListener('visibilitychange', () => { if (document.hidden) pushSave('離れた'); });
+
+  /* ---- セーブを棚へ預ける（2026-09-15・本人「pc98以外もセーブ機能はつけてね」） ----
+     EmulatorJS は**その端末の中**にセーブを溜める造りで、端末を替えると消える。
+     PC-98 はディスクごと棚へ書き戻しているので、こちらも同じにする。
+
+     置き先: `<棚>/_セーブ/<本の id>.srm`（1本＝1ファイル。**丸ごと差し替える**）
+     入れ: 始まる前に取り寄せて、コアの置き場へ書いてから読ませる
+     出し: 60秒ごとと、画面を離れるときに上げる（中身が変わったときだけ） */
+  const SAVE_DIR = '_セーブ';
+  const logNote = t => { try { LS.set('log', (LS.get('log', []) || []).concat(
+      new Date().toLocaleTimeString('ja-JP') + ' ' + t).slice(-20)); } catch (e) {} };
+  const saveName = String(g.id || id).replace(/[\\/:*?"<>|]/g, '_') + '.srm';
+  let saveMark = '';                     /* 上げた中身の目印。変わらなければ上げない */
+  const mgr = () => {
+    try { return window.EJS_emulator && window.EJS_emulator.gameManager; } catch (e) { return null; }
+  };
+  const mark = d => d ? (d.length + ':' + d[0] + ':' + d[(d.length / 2) | 0] + ':' + d[d.length - 1]) : '';
+
+  async function saveFolderId() {
+    const auth = LS.get('auth', ''), rootId = LS.get('rootId', null);
+    const host = LS.get('host', P.HOSTS[0]);
+    if (!auth || !rootId) return null;
+    return await P.ensureFolder(rootId, SAVE_DIR, { host, auth });
+  }
+
+  async function restoreSave() {
+    try {
+      const m = mgr();
+      if (!m || typeof m.getSaveFilePath !== 'function') return;
+      const auth = LS.get('auth', ''), host = LS.get('host', P.HOSTS[0]);
+      const fid2 = await saveFolderId();
+      if (!fid2) return;
+      const r = await P.api('listfolder', { folderid: fid2 }, { host, auth });
+      const f = ((r.metadata || {}).contents || [])
+        .find(c => !c.isfolder && P.nfc(c.name) === P.nfc(saveName));
+      if (!f) return;
+      const relay2 = /(^|\.)github\.io$/.test(location.hostname)
+        ? (LS.get('relay', '') || 'https://gamedana.d-shino.workers.dev')
+        : location.origin + '/relay';
+      const blob = await P.fetchFile(relay2, { fileid: f.fileid, host, auth });
+      const data = new Uint8Array(await blob.arrayBuffer());
+      const path = m.getSaveFilePath();
+      try { window.EJS_emulator.gameManager.FS.mkdirTree(path.split('/').slice(0, -1).join('/')); }
+      catch (e) {}
+      window.EJS_emulator.gameManager.FS.writeFile(path, data);
+      if (typeof m.loadSaveFiles === 'function') m.loadSaveFiles();
+      saveMark = mark(data);
+      say('棚のセーブを読みました（' + Math.round(data.length / 1024) + 'KB）');
+    } catch (e) { logNote('セーブを読めません: ' + (e.message || e)); }
+  }
+
+  async function pushSave(why) {
+    try {
+      const m = mgr();
+      if (!m || typeof m.getSaveFile !== 'function') return;
+      if (typeof m.saveSaveFiles === 'function') { try { m.saveSaveFiles(); } catch (e) {} }
+      const data = m.getSaveFile();
+      if (!data || !data.length) return;
+      const mk = mark(data);
+      if (mk === saveMark) return;                 /* 変わっていない。上げない */
+      const auth = LS.get('auth', ''), host = LS.get('host', P.HOSTS[0]);
+      const fid2 = await saveFolderId();
+      if (!fid2) return;
+      await P.uploadFile(fid2, saveName, new Blob([data]), { host, auth });
+      saveMark = mk;
+      logNote('セーブを棚へ上げた（' + why + '・' + Math.round(data.length / 1024) + 'KB）');
+    } catch (e) { logNote('セーブを上げられません: ' + (e.message || e)); }
+  }
 
   /* ---- ニンテンドーDS の**タッチ画面**（2026-09-15） ----
    **EmulatorJS は指をコアに渡していない。** 絵の上に置いているのは自前の
