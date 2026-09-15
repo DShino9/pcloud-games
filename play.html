@@ -177,14 +177,11 @@ async function bigGet(k, d) {
       STAGE = 'ROM の取り寄せ';
       blob = await P.fetchFile(relay, { fileid: fid, host, auth }, tell, g.bytes);
     } catch (e) { return fail('取り寄せられません: ' + e.message); }
-    /* 一度取れたら手元に置く。次からは圏外でも遊べる。
-       **ただし大きい本は置かない（#90・2026-09-15）。** PS1 は中央値 520MB・
-       PSP は 329MB あり、控えを作るとその場でもう一部ぶんの場所と時間が要る。
-       端末の置き場を埋めて**ほかの本まで道連れ**にするより、毎回取り寄せるほうがまし。 */
-    if (blob.size <= 300e6) {
+    /* **既定では端末に残さない**（2026-09-15 本人「基本軽量でも端末には残さない様に」）。
+       置けば次から圏外でも遊べるが、**黙って溜まって端末を食い潰す**ほうが害が大きい
+       （PSP は1本 300MB〜1.8GB）。置きたい本があるときだけ、設定で「手元に置く」を入れる。 */
+    if (LS.get('keep', false) && blob.size <= 300e6) {
       await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
-    } else {
-      say('大きい本なので手元には置きません（' + Math.round(blob.size / 1e6) + 'MB）');
     }
   }
 

@@ -423,6 +423,9 @@ function learnFrom(map, seen = []) {
 /* 束ね方・題名の直し方を変えたら上げる。上げた版で一度だけ束ね直す。
    2: 文字化けを戻す・枚の印の見分け／3: 半角カナの化け／4: 読み違えの表を5通りに（#93） */
 const BUNDLE_VER = 4;
+/* **拾える機種を増やしたら上げる。** 上げた版で一度だけ、棚が自分で走査し直す。
+   2: アーケード・ネオジオ（判定表つき）・PS1・PSP を拾うようにした（#89・#90） */
+const SCAN_VER = 2;
 
 function rebundle98() {
   if (!window.JA) return { merged: 0, books: 0 };
@@ -545,6 +548,7 @@ function render() {
     $('#hhome').onclick = () => go('#/lib');
   } catch (e) {}
   document.body.dataset.cell = S.cell;
+  heldLine();                       /* 端末に残っているものを見出しに出す */
   $('#hcell').classList.toggle('hide', !S.auth || !S.rootId);
   if (h === '#/log')   return screenLog();
   if (h === '#/set')   return screenSet();
@@ -1542,8 +1546,8 @@ function screenSet() {
      黙って溜まると端末の置き場を食い潰す。 */
   heldLine();
   $('#held').onclick = async () => {
-    const n = await heldCount();
-    if (!n) { toast('手元には何も置いていません'); return; }
+    const n = (await heldList()).length;
+    if (!n) { toast('端末には何も残っていません'); return; }
     if (!confirm(`手元に置いた ${n} 本を消します。\n\n倉庫の中身はそのままです。`
                + '\n次に遊ぶときは取り寄せ直します。')) return;
     const gone = await heldClear();
@@ -1829,33 +1833,78 @@ async function doUncache() {
   screenEdit();
 }
 
-/* ---- 手元に置いた ROM（`roms-v1`）を数える・消す ---- */
-async function heldCount() {
-  if (!('caches' in window)) return 0;
-  try { return (await (await caches.open('roms-v1')).keys()).length; }
-  catch (e) { return 0; }
-}
-async function heldClear() {
-  if (!('caches' in window)) return 0;
+/* ---- 手元に置いたもの（`roms-v1`）を数える・消す ----
+   **同じ置き場にセーブも入っている。** PC-98 のセーブの枠（`state-…`）と
+   本体の設定（`cfg-…`）、書き戻したディスクがここにある。
+   **消すのは取り寄せた本だけ。セーブには触らない。** */
+const HELD_KEEP = /^(state-|cfg-)/;
+const heldKey = req => { try { return decodeURIComponent(new URL(req.url).pathname.slice(1)); }
+                         catch (e) { return ''; } };
+
+async function heldList() {
+  if (!('caches' in window)) return [];
   try {
     const c = await caches.open('roms-v1');
-    const ks = await c.keys();
-    for (const k of ks) await c.delete(k);
-    return ks.length;
-  } catch (e) { return 0; }
+    return (await c.keys()).filter(k => !HELD_KEEP.test(heldKey(k)));
+  } catch (e) { return []; }
 }
-/* 端末の置き場の使い具合。**本数だけでは「あとどれだけ置けるか」が分からない。** */
-async function heldLine() {
-  const el = $('#heldsub');
-  if (!el) return;
-  const n = await heldCount();
-  let room = '';
+/* **大きさも出す。** 本数だけでは「どれだけ食っているか」が分からない。 */
+async function heldSize(ks) {
+  let n = 0;
   try {
-    const e = await navigator.storage.estimate();
-    if (e && e.quota) room = `　端末の置き場 ${size(e.usage || 0)} / ${size(e.quota)}`;
+    const c = await caches.open('roms-v1');
+    for (const k of ks) {
+      const r = await c.match(k);
+      if (!r) continue;
+      const len = Number(r.headers.get('content-length') || 0);
+      n += len || (await r.clone().blob()).size;
+    }
   } catch (e) {}
-  el.textContent = n ? `${n} 本${room}　押すと消せます（倉庫はそのまま）`
-                     : `何も置いていません${room}`;
+  return n;
+}
+async function heldClear() {
+  const ks = await heldList();
+  try {
+    const c = await caches.open('roms-v1');
+    for (const k of ks) await c.delete(k);
+  } catch (e) {}
+  return ks.length;
+}
+
+/* **見出しに出す（2026-09-15 本人「設定とか深いところに行ったら忘れる」）。**
+   端末に残っているものは、いつでも目に入る所に出し、そこから消せるようにする。 */
+let heldBusy = false;
+async function heldLine() {
+  if (heldBusy) return;
+  heldBusy = true;
+  try {
+    const ks = await heldList();
+    const bytes = ks.length ? await heldSize(ks) : 0;
+    const el = $('#heldsub');
+    if (el) {
+      let room = '';
+      try {
+        const e = await navigator.storage.estimate();
+        if (e && e.quota) room = `　端末の置き場 ${size(e.usage || 0)} / ${size(e.quota)}`;
+      } catch (e) {}
+      el.textContent = ks.length
+        ? `${ks.length} 本・${size(bytes)}${room}　押すと消せます（倉庫はそのまま）`
+        : `残していません${room}　（遊んだ本は端末に残しません）`;
+    }
+    const chip = $('#hheld');
+    if (chip) {
+      chip.classList.toggle('hide', !ks.length);
+      chip.textContent = `手元 ${ks.length}本 ${size(bytes)}`;
+      chip.title = '端末に残っている本。押すと消せます（倉庫はそのまま）';
+      chip.onclick = async () => {
+        if (!confirm(`端末に残っている ${ks.length} 本（${size(bytes)}）を消します。`
+                   + '\n\n倉庫の中身とセーブはそのままです。')) return;
+        const gone = await heldClear();
+        toast(`端末から ${gone} 本を消しました`);
+        heldLine();
+      };
+    }
+  } finally { heldBusy = false; }
 }
 
 async function removeCached(key) {
@@ -2009,6 +2058,23 @@ function screenLog() {
      本人に登録させない（「場所も分かってるんだから読んどきなよ」）。 */
   /* **探し方を変えたら、もう一度探す。** `autoDone` を立てっぱなしにしていたので、
      広い場所（`/EMU`）を見に行くようにした後も走らなかった。版を添えて覚える。 */
+  /* **拾える機種が増えたら、棚が自分で見直す（2026-09-15）。**
+     アーケード・ネオジオ・PS1・PSP を拾えるようにしても、**走査し直さないと札が出ない。**
+     本人に「設定 → 棚と倉庫 → いま見直す」を押させる作りだと、
+     **深い所にあるので忘れられる**（本人の指摘）。拾い方を変えた版で一度だけ自動で回す。
+     時間はかかるが、黙って古い棚を見せ続けるより良い。 */
+  if (S.auth && S.rootId && (LS.get('scanver', 0) | 0) < SCAN_VER) {
+    LS.set('scanver', SCAN_VER);
+    toast('新しく遊べる機種（アーケード・PS1・PSP）を拾うため、棚を見直しています…', 6000);
+    try {
+      const r = await scanAll(t => toast(t, 2500));
+      S.items = mergeCatalogs();
+      render();
+      toast(`見直しました: ${r.count} ファイル`
+        + (r.added ? `／${r.added} 本を新たに棚へ` : '／新しい本はありませんでした'), 6000);
+    } catch (e) { log.note('見直しに失敗: ' + (e.message || e)); }
+  }
+
   if (S.auth && S.rootId && LS.get('autoDone', '') !== 'v3-emu') {
     LS.set('autoDone', 'v3-emu');
     const found = await autoPlaces(t => toast(t));
