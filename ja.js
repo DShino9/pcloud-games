@@ -462,32 +462,123 @@ const CP437 = '\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e
             + '\u2261\u00b1\u2265\u2264\u2320\u2321\u00f7\u2248\u00b0\u2219\u00b7\u221a\u207f\u00b2\u25a0\u00a0';
 const JP  = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/;   /* かな・漢字・半角カナ */
 const JPG = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/g;
-/* **表は2つ要る。** 全角の漢字・かなは2バイトで CP437 の絵に化けるが、
-   **半角カナは1バイト（0xA1〜0xDF）**なので、そのまま Latin-1 の字に化ける
-   （`´Ù³Þ½Þ` ＝ `ｴﾙｳﾞｽﾞ`）。倉庫の実測で CP437 が 80 件・Latin-1 が 162 件。 */
+/* **読み違えの表は1つでは足りない。** 同じ Shift_JIS のバイトでも、
+   どの表で読まれたかで化け方が変わる。倉庫の実測（台帳 38,353 本）で出たのは5通り:
+     CP437   `ÄOÜáÄu·M`     → 三國志Ⅳ      （DOS/US。全角が絵になる）
+     Latin-1 `´Ù³Þ½Þ`       → ｴﾙｳﾞｽﾞ       （半角カナは1バイトなのでそのまま化ける）
+     CP850   `æÕìqèCÄ×æÒçU` → 大航海時代Ⅱ   （DOS/西欧）
+     CP1252  `“ìŠC`          → 南海          （Windows/西欧。`ƒ` `“` `‰` が目印）
+     CP866   `╪╫ця`          → ﾘﾗ…          （DOS/露）
+   **順に試して、日本語が2字以上になった最初のものを採る。** */
 const LATIN1 = Array.from({ length: 128 }, (_, i) => String.fromCharCode(0x80 + i)).join('');
+const CP850 = '\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e8\u00ef\u00ee\u00ec\u00c4\u00c5'
+            + '\u00c9\u00e6\u00c6\u00f4\u00f6\u00f2\u00fb\u00f9\u00ff\u00d6\u00dc\u00f8\u00a3\u00d8\u00d7\u0192'
+            + '\u00e1\u00ed\u00f3\u00fa\u00f1\u00d1\u00aa\u00ba\u00bf\u00ae\u00ac\u00bd\u00bc\u00a1\u00ab\u00bb'
+            + '\u2591\u2592\u2593\u2502\u2524\u00c1\u00c2\u00c0\u00a9\u2563\u2551\u2557\u255d\u00a2\u00a5\u2510'
+            + '\u2514\u2534\u252c\u251c\u2500\u253c\u00e3\u00c3\u255a\u2554\u2569\u2566\u2560\u2550\u256c\u00a4'
+            + '\u00f0\u00d0\u00ca\u00cb\u00c8\u0131\u00cd\u00ce\u00cf\u2518\u250c\u2588\u2584\u00a6\u00cc\u2580'
+            + '\u00d3\u00df\u00d4\u00d2\u00f5\u00d5\u00b5\u00fe\u00de\u00da\u00db\u00d9\u00fd\u00dd\u00af\u00b4'
+            + '\u00ad\u00b1\u2017\u00be\u00b6\u00a7\u00f7\u00b8\u00b0\u00a8\u00b7\u00b9\u00b3\u00b2\u25a0\u00a0';
+const CP1252 = '\u20ac\u0081\u201a\u0192\u201e\u2026\u2020\u2021\u02c6\u2030\u0160\u2039\u0152\u008d\u017d\u008f'
+            + '\u0090\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u02dc\u2122\u0161\u203a\u0153\u009d\u017e\u0178'
+            + '\u00a0\u00a1\u00a2\u00a3\u00a4\u00a5\u00a6\u00a7\u00a8\u00a9\u00aa\u00ab\u00ac\u00ad\u00ae\u00af'
+            + '\u00b0\u00b1\u00b2\u00b3\u00b4\u00b5\u00b6\u00b7\u00b8\u00b9\u00ba\u00bb\u00bc\u00bd\u00be\u00bf'
+            + '\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c6\u00c7\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf'
+            + '\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d7\u00d8\u00d9\u00da\u00db\u00dc\u00dd\u00de\u00df'
+            + '\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e6\u00e7\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef'
+            + '\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f7\u00f8\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff';
+const CP866 = '\u0410\u0411\u0412\u0413\u0414\u0415\u0416\u0417\u0418\u0419\u041a\u041b\u041c\u041d\u041e\u041f'
+            + '\u0420\u0421\u0422\u0423\u0424\u0425\u0426\u0427\u0428\u0429\u042a\u042b\u042c\u042d\u042e\u042f'
+            + '\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437\u0438\u0439\u043a\u043b\u043c\u043d\u043e\u043f'
+            + '\u2591\u2592\u2593\u2502\u2524\u2561\u2562\u2556\u2555\u2563\u2551\u2557\u255d\u255c\u255b\u2510'
+            + '\u2514\u2534\u252c\u251c\u2500\u253c\u255e\u255f\u255a\u2554\u2569\u2566\u2560\u2550\u256c\u2567'
+            + '\u2568\u2564\u2565\u2559\u2558\u2552\u2553\u256b\u256a\u2518\u250c\u2588\u2584\u258c\u2590\u2580'
+            + '\u0440\u0441\u0442\u0443\u0444\u0445\u0446\u0447\u0448\u0449\u044a\u044b\u044c\u044d\u044e\u044f'
+            + '\u0401\u0451\u0404\u0454\u0407\u0457\u040e\u045e\u00b0\u2219\u00b7\u221a\u2116\u00a4\u25a0\u00a0';
 function demojibake(name) {
   const s = String(name || '');
   if (!s || JP.test(s)) return s;                 /* もう日本語なら触らない */
   if (!/[\u0080-\u00ff\u0192\u0391-\u03c9\u2190-\u25ff\u20a7]/.test(s)) return s;
-  for (const table of [CP437, LATIN1]) {
+
+  /* **どの表で読まれたかは分からないので、全部試して一番それらしいものを採る。**
+     表を順番に試して「最初に日本語になったもの」にすると、
+     どの字も引き受ける Latin-1 が先に当たってしまい、
+     `éÃé½…`（本当は CP850 で「でぎ…」）が `鯏鮨…` になる。
+     **点の付け方: かな3点・漢字2点。英数字が残っていたら1つにつき3点引く。**
+     本物の題名はかなを含むことが多く、読み違えたものは珍しい漢字の列になる。
+     さらに、**読み違えると対がずれて英数字が中に取り残される**
+     （`ÄOÜáÄu·M` を CP1252 で読むと `トOワ眛uキM` になり、O・u・M が残る）。
+     この「取り残し」が一番効く目印なので、重く引く。 */
+  const dec = new TextDecoder('shift_jis', { fatal: true });
+  const KANA = /[\u3040-\u30ff\uff66-\uff9f]/g;
+  const KANJI = /[\u3400-\u9fff]/g;
+  /* **引くのは「日本語の字に挟まれて残った英数字」だけ。**
+     `下級生 DISK H` の DISK のように、離れて立っている英字は題名の一部なので引かない。 */
+  const JPX = /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/;
+  const stuck = t => {
+    let n = 0;
+    for (let i = 0; i < t.length; i++) {
+      if (!/[0-9A-Za-z]/.test(t[i])) continue;
+      if (JPX.test(t[i - 1] || '') || JPX.test(t[i + 1] || '')) n++;
+    }
+    return n;
+  };
+  const score = t => (t.match(KANA) || []).length * 3 + (t.match(KANJI) || []).length * 2
+                   - stuck(t) * 4;
+  const bytesOf = table => {
     const b = [];
-    let ok = true;
     for (const ch of s) {
       const c = ch.codePointAt(0);
       if (c < 0x80) { b.push(c); continue; }
       const i = table.indexOf(ch);
-      if (i < 0) { ok = false; break; }           /* その表に無い字 ＝ この道ではない */
+      if (i < 0) return null;                     /* その表に無い字 ＝ この道ではない */
       b.push(0x80 + i);
     }
-    if (!ok) continue;
+    return b;
+  };
+
+  const tries = [];
+  let best = null, bestScore = -1e9;
+  for (const table of [CP437, CP850, CP1252, CP866, LATIN1]) {
+    const b = bytesOf(table);
+    if (!b) continue;
+    tries.push(b);
     try {
-      const t = new TextDecoder('shift_jis', { fatal: true }).decode(new Uint8Array(b));
-      /* **日本語にならなければ元のまま。** 当てずっぽうで別の名前にしない。
-         1字だけ日本語になるものは（`√PWX2` → `瀨WX2`）まぐれ当たりなので採らない。 */
-      if ((t.match(JPG) || []).length >= 2) return t;
+      const t = dec.decode(new Uint8Array(b));
+      /* **日本語が2字以上にならなければ採らない。** 1字だけのまぐれ当たりは捨てる。 */
+      if ((t.match(JPG) || []).length < 2) continue;
+      const sc = score(t);
+      if (sc > bestScore) { best = t; bestScore = sc; }
     } catch (e) {}
   }
+  if (best) return best;
+
+  /* **バイトが1つ落ちている名前がある**（倉庫の実測で 160 本ほど）。
+     `éÃé½…âfü[â^éP` のように、ファイル名に使えない字が `+` `-` に
+     置き換わっていて、そこで対がずれる。**読める所だけ拾う**
+     —— 読めない1バイトは元の字のまま残す。
+     **読めなかった字が2割を超えたら採らない**（当てずっぽうにしない）。 */
+  for (const b of tries) {
+    let out = '', bad = 0, i = 0;
+    while (i < b.length) {
+      const c = b[i];
+      if (c < 0x80) { out += String.fromCharCode(c); i++; continue; }
+      if (c >= 0xa1 && c <= 0xdf) {                      /* 半角カナ（1バイト） */
+        try { out += dec.decode(new Uint8Array([c])); i++; continue; } catch (e) {}
+      }
+      if (i + 1 < b.length) {
+        try { out += dec.decode(new Uint8Array([c, b[i + 1]])); i += 2; continue; } catch (e) {}
+      }
+      out += s[i]; bad++; i++;                           /* 読めない字は元のまま */
+    }
+    if ((out.match(JPG) || []).length < 2) continue;
+    if (bad > Math.max(1, out.length * 0.2)) continue;
+    const sc = score(out);
+    if (sc > bestScore) { best = out; bestScore = sc; }
+  }
+  /* かなが1つも無い読み替えは、読み違えの可能性が高いので採らない。 */
+  if (best && (best.match(/[\u3040-\u30ff\uff66-\uff9f]/) || (best.match(JPG) || []).length >= 3))
+    return best;
   return s;
 }
 

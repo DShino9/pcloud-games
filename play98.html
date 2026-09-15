@@ -179,7 +179,15 @@ const MUTE = qs.get('mute') === '1';                 // 中で確かめるとき
 const JSPI_OK = typeof WebAssembly !== 'undefined' &&
                 typeof WebAssembly.Suspending === 'function' &&
                 typeof WebAssembly.promising === 'function';
-const CORE_KIND = qs.get('core') || (JSPI_OK ? 'jspi' : 'asyncify');
+/* **Safari の JSPI は遅い**（2026-09-15 実測）。
+   iPadOS 27 の Safari が JSPI を持つようになった途端、`jspi` に切り替わって
+   **1.7コマ/秒**に落ちた（同じ本を iPhone の asyncify では 6.5コマ/秒）。
+   入れ物が持っていることと、速いことは別。**Safari では asyncify を既定にする。**
+   本人が選んだものがあればそれが最優先（帯の「コア」で切り替えて比べられる）。 */
+const IS_SAFARI = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+const CORE_PICK = qs.get('core') || LS.get('core98', '');
+const CORE_KIND = (CORE_PICK === 'jspi' || CORE_PICK === 'asyncify') ? CORE_PICK
+                : (JSPI_OK && !IS_SAFARI) ? 'jspi' : 'asyncify';
 /* コアの版。**組み直したら必ず上げる。**
    .js だけ版を付けて .wasm に付けていなかったため、
    「新しい JS ＋ 古い wasm」になって起動が死んだ（missing Wasm export）。
@@ -492,6 +500,7 @@ function drawDisksInner() {
        '<button class="hbtn" id="thelp">使い方</button>' : '') +
     '<button class="hbtn" id="menu">メニュー</button>' +
     '<button class="hbtn" id="mouse">' + (MSCAP ? 'マウス:入' : 'マウス:切') + '</button>' +
+    '<button class="hbtn" id="core98">コア:' + (CORE_KIND === 'jspi' ? 'JSPI' : 'ASYNC') + '</button>' +
     '<button class="hbtn" id="rst">リセット</button>' +
     '<button class="hbtn" id="lgb">ログ</button>' +
     '<span class="lbl">Ctrl+F11 / Ctrl+F12 でも</span>' +
@@ -578,6 +587,17 @@ function drawDisksInner() {
   if (ms) ms.onclick = () => { msCapture(!MSCAP); drawDisks(); };
   const mc = $('#mcal');
   if (mc) mc.onclick = () => msCalibrate(true);
+  /* **コアを切り替えて比べられるようにする。**（2026-09-15）
+     どちらが速いかは端末と版で変わるので、決め打ちにせず**その場で比べられる**形にする。
+     選んだものは端末に残り、動きの記録にもコアの名が載るので、後から数字で比べられる。 */
+  const cb = $('#core98');
+  if (cb) cb.onclick = () => {
+    const next = CORE_KIND === 'jspi' ? 'asyncify' : 'jspi';
+    if (next === 'jspi' && !JSPI_OK) { toast98('この入れ物は JSPI を持っていません'); return; }
+    LS.set('core98', next);
+    toast98('コアを ' + (next === 'jspi' ? 'JSPI' : 'ASYNC') + ' にして開き直します…');
+    setTimeout(() => location.reload(), 600);
+  };
 
   const lb = $('#lgb');
   if (lb) lb.onclick = () => {
