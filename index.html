@@ -300,6 +300,16 @@ body{--ratio:3/4; --fit:contain}
   display:flex;flex-direction:column}
 #play.wide .top{display:none}
 #play.wide .back{display:flex}
+/* **全画面のとき、絵を「状態の帯」（時計の出る所）の下から始める。**（2026-09-15）
+   この頁は `viewport-fit=cover` なので、帯を畳むと絵が状態の帯の裏まで伸びる。
+   iOS はそこに**ぼかしを敷く**ので、絵の上の数行だけがぼやけて見える。
+   安全な余白のぶんだけ下げれば、ぼけない。下げ幅は端末が教えてくれる値のまま。 */
+#play.wide{padding-top:env(safe-area-inset-top)}
+/* ホーム画面から開いた（＝本当の全画面の）ときは、教えてくれる値が 0 のことがある。
+   そのときだけ最低限を確保する。 */
+@media (display-mode: standalone), (display-mode: fullscreen){
+  #play.wide{padding-top:max(env(safe-area-inset-top), 22px)}
+}
 .back{display:none;position:absolute;left:max(8px, env(safe-area-inset-left));
   top:max(8px, env(safe-area-inset-top));z-index:90;
   width:34px;height:34px;border-radius:50%;align-items:center;justify-content:center;
