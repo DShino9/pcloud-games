@@ -115,7 +115,14 @@ function mergeCatalogs() {
   const PIC = LS.get('pics', {});
   /* 目録（コレクションの HTML）で拾い直した題名。 */
   const RN = LS.get('renamed', {});
-  for (const g of ((S.cat && S.cat.games) || [])) {
+  /* **台帳にコアが書かれていない機種を、ここで補う（#90・2026-09-15）。**
+     PSP の 18本は OpenEmu 由来の台帳に入っているのに `core` が空で、
+     押すと「ブラウザでは動きません」で止まっていた。EmulatorJS は
+     PSP（ppsspp）も PS1（pcsx_rearmed）も持っている。 */
+  const CORE_BY_SYS = { 'Sony PSP': 'ppsspp', 'PlayStation': 'pcsx_rearmed',
+                        'プレイステーション': 'pcsx_rearmed' };
+  for (const g0 of ((S.cat && S.cat.games) || [])) {
+    const g = g0.core ? g0 : { ...g0, core: CORE_BY_SYS[g0.system] || null };
     if (!g.core) continue;                       // ブラウザで動かない機種は出さない
     out.push({
       id: g.id, name: RN[g.id] || g.name, sub: g.title || '', system: g.system, short: g.short,
@@ -328,7 +335,19 @@ function learnFrom(map, seen = []) {
                         base: name.replace(/\.[^.]+$/, ''), arc: true });
       continue;
     }
-    const sys = sysOf(name);
+    /* **`.iso` は置き場で見分ける（#90・2026-09-15）。**
+       PSP も PS1 も `.iso` なので拡張子では分からないが、倉庫は
+       `/ソニー/プレイステーション` と `/プレイステーションポータブル` に
+       分かれているので、**道を見れば分かる。**
+       **大きい。** PS1 は中央値 520MB・PSP は 329MB あり、遊ぶ画面は
+       まるごと読んでから起こす造りなので、端末によっては入らない。
+       それでも**棚に出さないと選べない**ので、出したうえで大きさを札に書く。 */
+    let sys = sysOf(name);
+    if (!sys.length && /\.(iso|cso)$/i.test(name)) {
+      const pp2 = (f.path || '') + '/';
+      if (/プレイステーションポータブル/.test(pp2)) sys = ['Sony PSP', 'PSP', 'ppsspp'];
+      else if (/ソニー\/プレイステーション/.test(pp2)) sys = ['プレイステーション', 'PS', 'pcsx_rearmed'];
+    }
     if (!sys.length) continue;
     if (/\b(bios|BIOS|font|sound)\b/i.test(name)) continue;
     const base = name.replace(/\.[^.]+$/, '');

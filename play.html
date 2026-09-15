@@ -142,6 +142,13 @@ async function bigGet(k, d) {
     } catch (err) {}
   }
   if (!g)      return fail('台帳にありません');
+  /* **台帳にコアが書かれていない機種を補う（#90・2026-09-15）。**
+     PSP の 18本は台帳に載っているのに `core` が空で、押すと必ずここで止まっていた。
+     EmulatorJS は PSP（ppsspp）も PS1（pcsx_rearmed）も持っている。
+     同じ表が `app.js` の `mergeCatalogs` にもある（棚に出すかどうかの判断に使う）。 */
+  const CORE_BY_SYS = { 'Sony PSP': 'ppsspp', 'PlayStation': 'pcsx_rearmed',
+                        'プレイステーション': 'pcsx_rearmed' };
+  if (!g.core && CORE_BY_SYS[g.system]) g = { ...g, core: CORE_BY_SYS[g.system] };
   if (!g.core) return fail(g.system + ' はブラウザでは動きません');
   GAME = g;
   $('#nm').textContent = g.name;
@@ -170,8 +177,15 @@ async function bigGet(k, d) {
       STAGE = 'ROM の取り寄せ';
       blob = await P.fetchFile(relay, { fileid: fid, host, auth }, tell, g.bytes);
     } catch (e) { return fail('取り寄せられません: ' + e.message); }
-    /* 一度取れたら手元に置く。次からは圏外でも遊べる。 */
-    await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
+    /* 一度取れたら手元に置く。次からは圏外でも遊べる。
+       **ただし大きい本は置かない（#90・2026-09-15）。** PS1 は中央値 520MB・
+       PSP は 329MB あり、控えを作るとその場でもう一部ぶんの場所と時間が要る。
+       端末の置き場を埋めて**ほかの本まで道連れ**にするより、毎回取り寄せるほうがまし。 */
+    if (blob.size <= 300e6) {
+      await ROMS.put(id, blob.slice(), { 'x-name': encodeURIComponent(g.file) });
+    } else {
+      say('大きい本なので手元には置きません（' + Math.round(blob.size / 1e6) + 'MB）');
+    }
   }
 
   /* **ネオジオは BIOS を一緒に渡さないと起動しない（#89）。**
