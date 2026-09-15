@@ -154,6 +154,10 @@ async function s2art() {
     const blob = await P.fetchFile(S.relay, { fileid: f.fileid, host: S.host, auth: S.auth });
     const j = JSON.parse(await blob.text());
     LS.set('artmap', j.map || {});
+    /* **絵は全端末で同じ住所から出す（2026-09-15）。**
+       公開コードがあれば `<img src>` に直に貼れるので、
+       端末ごとに取り寄せて控えを作る必要がない。 */
+    LS.set('artcode', j.公開コード || '');
     LS.set('genremap', j.ジャンル || {});
     LS.set('artAt', f.modified || '');
     S.items = mergeCatalogs();

@@ -1203,8 +1203,9 @@ function cellHtml(g) {
      どのファイルかは分かるようにしておく（手で名前を直せるように）。 */
   const nm = g.garbled ? '名前が読めないディスク' : g.name;
   const sub = g.garbled ? g.files[0] : (g.sub || '');
-  const cov = (S.covurl[g.id] || g.cover)
-    ? `<img loading="lazy" src="${esc(S.covurl[g.id] || g.cover)}" alt="">`
+  const c0 = S.covurl[g.id] || g.cover || artUrl(g);
+  const cov = c0
+    ? `<img loading="lazy" src="${esc(c0)}" alt="">`
                       : `<div class="ph">${esc(nm)}</div>`;
   return `<button class="item" data-id="${esc(g.id)}" data-s="${esc(g.short)}"${
     g.gkey ? ` data-g="${esc(g.gkey)}"` : ''}${has ? '' : ' data-no="1"'}>
@@ -2942,6 +2943,25 @@ function huntTried() {
   return HUNT.tried;
 }
 
+/* ---- 箱絵は全端末で同じ住所から出す（2026-09-15） ----
+   **これまでは端末ごとに1枚ずつ取り寄せて、その端末の中に控えを作っていた**（`MYCOV`）。
+   同じ絵を端末の数だけ落とす無駄で、新しい端末は棚が埋まるまで待たされる。
+
+   `_絵` に公開リンクを付けてあるので（`tools/art-link.py`）、
+
+     https://api.pcloud.com/getpubthumb?code=<公開コード>&fileid=<fileid>&…
+
+   が**画像そのもの**を返す（合鍵不要・CORS 開放）。`<img src>` に貼れば、
+   **どの端末も同じ住所を見るだけ**で済む。控えはブラウザに任せる。 */
+function artUrl(g) {
+  const code = LS.get('artcode', '');
+  if (!code || !g) return null;
+  const id = (LS.get('artmap', {}) || {})[g.system + '|' + P.nfc((g.files || [])[0] || '')];
+  if (!id) return null;
+  return 'https://api.pcloud.com/getpubthumb?code=' + encodeURIComponent(code)
+       + '&fileid=' + id + '&size=400x400&crop=0&type=auto';
+}
+
 /* 画面に出ている本のうち、絵の無いものを裏で探す。
    **見えている分だけ。** 7171本を総当たりしたら、置き場にも端末にも悪い。 */
 function huntCovers(items) {
@@ -2952,9 +2972,10 @@ function huntCovers(items) {
      （PC-98 342枚・MSX 10枚が置いたまま使われていなかった）。 */
   const AM = LS.get('artmap', {}) || {};
   const inArt = g => !!AM[g.system + '|' + P.nfc((g.files || [])[0] || '')];
+  /* **索引にある本は、もう取り寄せない**（共通の住所で出るため）。
+     探すのは「索引にまだ無い本」だけ。 */
   const add = items.filter(g => !g.cover && !S.covurl[g.id] && !t.has(g.id)
-    && (g.pic || LR_REPO[g.system] || inArt(g)));
-  /* **索引に載っている本を先に。** 1回取れば出るので、画面が早く埋まる。 */
+    && !artUrl(g) && (g.pic || LR_REPO[g.system] || inArt(g)));
   add.sort((a, b) => (inArt(b) ? 1 : 0) - (inArt(a) ? 1 : 0));
   for (const g of add) if (!HUNT.queue.some(x => x.id === g.id)) HUNT.queue.push(g);
   runHunt();

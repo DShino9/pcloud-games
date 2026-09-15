@@ -334,7 +334,8 @@ function l2rail() {
 
 /* ---- 中央 ---- */
 function l2card(g) {
-  const cov = S.covurl[g.id] || g.cover;
+  /* 手で入れた絵 → 台帳の絵 → **共通の住所**（`_絵` の公開リンク）。 */
+  const cov = S.covurl[g.id] || g.cover || artUrl(g);
   const nm = g._ja || (g.garbled ? '名前が読めないディスク' : g.name);
   return `<button class="item${L.sel === g.id ? ' sel' : ''}" data-id="${esc(g.id)}">
     <div class="cov">${cov ? `<img loading="lazy" src="${esc(cov)}" alt="">`
@@ -352,7 +353,7 @@ function l2card(g) {
   </button>`;
 }
 function l2row(g) {
-  const cov = S.covurl[g.id] || g.cover;
+  const cov = S.covurl[g.id] || g.cover || artUrl(g);
   return `<button class="l2r${L.sel === g.id ? ' sel' : ''}" data-id="${esc(g.id)}">
     <span class="rc">${cov ? `<img loading="lazy" src="${esc(cov)}" alt="">` : ''}</span>
     <span class="rn">${esc(g._ja || (g.garbled ? '名前が読めないディスク' : g.name))}</span>
@@ -430,7 +431,7 @@ function l2detail() {
   const g = l2items().find(x => x.id === L.sel)
         || (x => x && l2deco(x))(grouped(S.items).find(x => x.id === L.sel));
   if (!g) return '<div class="l2none">一覧から本を選ぶと<br>ここに札が出ます</div>';
-  const cov = S.covurl[g.id] || g.cover;
+  const cov = S.covurl[g.id] || g.cover || artUrl(g);
   const inWare = hasAll(g), onShelf = gotIt(g);
   const maker = g._maker || (window.Makers ? Makers.makerOf(g.name, g.path) : '') || '';
   const vers = g.gkey ? (S.gmap || {})[g.gkey] : null;
