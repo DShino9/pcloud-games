@@ -215,8 +215,14 @@ async function scanAll(say = () => {}) {
       for (const f of r.files) map[f.name] = f.fileid;   // 後に来る倉庫のフォルダが勝つ
       /* **在処つきの一覧もここで残す。** 「棚に上げる」で同じ所を
          もう一度歩かせるのは無駄（本人「もう持ってるでしょ」）。 */
+      /* **`.iso` はここで拾わないと、後の束ねまで届かない（#90・2026-09-15）。**
+         拡張子の表（`sysOf`）は `.iso` を機種に結び付けられない（PSP と PS1 で同じ）ので、
+         ここで落としていた。**置き場で見分けるのは束ねる側**なので、
+         運ぶところだけソニーの区画を通す。 */
       seen.push(...r.files.filter(f => sysOf(f.name).length
-        || /\.(rar|zip|lzh|7z)$/i.test(f.name)));   // 圧縮の本も拾う（PC-98・GB・MSX）
+        || /\.(rar|zip|lzh|7z)$/i.test(f.name)          // 圧縮の本も拾う（PC-98・GB・MSX）
+        || (/\.(iso|cso)$/i.test(f.name)
+            && /(ソニー\/プレイステーション|プレイステーションポータブル)/.test(f.path || ''))));
       /* **倉庫の中の絵を拾う。** 本と同じフォルダに箱絵が置いてある。
          外を探し回る前に、まずこれを使う（本人「絵も教えたのに」）。 */
       for (const f of r.files) {
@@ -1512,6 +1518,7 @@ function screenSet() {
       })()}</span></div>
       <button class="row" id="fixcov"><span class="nm">箱絵を直す</span><span class="sub">自分の絵を入れる</span></button>
       <button class="row" id="disks"><span class="nm">ディスクの道具箱</span><span class="sub">中を見る・作る・複製する</span></button>
+      <button class="row" id="held"><span class="nm">手元に置いた本</span><span class="sub" id="heldsub">調べています…</span></button>
       <button class="row" id="runs"><span class="nm">動きの記録</span><span class="sub">端末ごとの速さ</span></button>
       <button class="row" id="log"><span class="nm">押した記録</span><span class="sub">→</span></button>
     </div>
@@ -1529,6 +1536,20 @@ function screenSet() {
   $('#back').onclick   = () => go('#/lib');
   $('#log').onclick    = () => go('#/log');
   $('#runs').onclick   = () => go('#/runs');
+  /* **手元に何が残っているかを見せる（2026-09-15 本人「終わったら消されているのか」）。**
+     取り寄せた ROM は**端末の置き場に残る**（次から圏外でも遊べるように）。
+     残る以上、**見えて・消せる**必要がある。PSP は1本 300MB〜1.8GB あるので、
+     黙って溜まると端末の置き場を食い潰す。 */
+  heldLine();
+  $('#held').onclick = async () => {
+    const n = await heldCount();
+    if (!n) { toast('手元には何も置いていません'); return; }
+    if (!confirm(`手元に置いた ${n} 本を消します。\n\n倉庫の中身はそのままです。`
+               + '\n次に遊ぶときは取り寄せ直します。')) return;
+    const gone = await heldClear();
+    toast(`手元の ${gone} 本を消しました`);
+    heldLine();
+  };
   $('#relay').onclick  = () => go('#/relay');
   $('#store').onclick  = () => go('#/store');
   $('#disks').onclick  = () => go('#/disks');
@@ -1806,6 +1827,35 @@ async function doUncache() {
   await refreshHere();
   prog(`書庫へ ${moved} 本／端末からも ${dropped} 件消しました（倉庫はそのまま）`);
   screenEdit();
+}
+
+/* ---- 手元に置いた ROM（`roms-v1`）を数える・消す ---- */
+async function heldCount() {
+  if (!('caches' in window)) return 0;
+  try { return (await (await caches.open('roms-v1')).keys()).length; }
+  catch (e) { return 0; }
+}
+async function heldClear() {
+  if (!('caches' in window)) return 0;
+  try {
+    const c = await caches.open('roms-v1');
+    const ks = await c.keys();
+    for (const k of ks) await c.delete(k);
+    return ks.length;
+  } catch (e) { return 0; }
+}
+/* 端末の置き場の使い具合。**本数だけでは「あとどれだけ置けるか」が分からない。** */
+async function heldLine() {
+  const el = $('#heldsub');
+  if (!el) return;
+  const n = await heldCount();
+  let room = '';
+  try {
+    const e = await navigator.storage.estimate();
+    if (e && e.quota) room = `　端末の置き場 ${size(e.usage || 0)} / ${size(e.quota)}`;
+  } catch (e) {}
+  el.textContent = n ? `${n} 本${room}　押すと消せます（倉庫はそのまま）`
+                     : `何も置いていません${room}`;
 }
 
 async function removeCached(key) {
